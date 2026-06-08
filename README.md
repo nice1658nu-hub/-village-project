@@ -29,3 +29,4 @@ npm run preview
 - `src/App.jsx` re-export มาที่ `code.jsx`
 - `src/main.jsx` จุดเริ่มต้นของ React app
 - `src/index.css` Tailwind และ custom animation/classes
+# -village-project
