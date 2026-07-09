@@ -1,40 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Home, FileText, AlertTriangle, PieChart, Users, Settings, LogOut, 
   MapPin, Camera, CheckCircle, Clock, XCircle, Search, Plus, Trash2, 
   Menu, X, Calendar, Bell, Facebook, Phone, MessageCircle, ChevronRight, Upload, Map,
   Info, Edit
 } from 'lucide-react';
-
-// --- MOCK DATA ---
-const MOCK_USERS = [
-  { id: '1', name: 'ผู้ใหญ่บ้าน (Admin)', phone: 'admin', houseNo: '-', role: 'admin', password: 'admin1234' },
-  { id: '2', name: 'สมชาย ใจดี', phone: '0811111111', houseNo: '99/10', role: 'user', password: '123' },
-  { id: '3', name: 'สมหญิง รักสงบ', phone: '0822222222', houseNo: '99/11', role: 'user', password: '123' },
-];
-
-const MOCK_NEWS = [
-  { id: 'n1', title: 'ประกาศฉีดวัคซีนพิษสุนัขบ้าประจำปี', content: 'ขอเชิญลูกบ้านนำสัตว์เลี้ยงมาฉีดวัคซีน ณ ศาลาประชาคม ในวันที่ 15 ส.ค. นี้ ตั้งแต่เวลา 09.00 - 15.00 น. กรุณานำสมุดประจำตัวสัตว์เลี้ยงมาด้วย', image: 'https://images.unsplash.com/photo-1541364983171-a8ba01e95cfc?auto=format&fit=crop&q=80&w=400&h=300', date: '2026-03-10' },
-  { id: 'n2', title: 'แจ้งตัดไฟชั่วคราวซอย 3', content: 'การไฟฟ้าจะทำการปรับปรุงสายไฟบริเวณซอย 3 วันเสาร์นี้ เวลา 09:00 - 12:00 น. ขออภัยในความไม่สะดวกครับ', image: 'https://images.unsplash.com/photo-1520256860188-f5e27a6fdf94?auto=format&fit=crop&q=80&w=400&h=300', date: '2026-03-11' },
-];
-
-const MOCK_INCIDENTS = [
-  { id: 'i1', userId: '2', userName: 'สมชาย ใจดี', houseNo: '99/10', title: 'ไฟถนนดับ', category: 'ไฟฟ้า/แสงสว่าง', description: 'ไฟหน้าปากซอย 2 ดับมา 3 วันแล้วครับ มืดมากอันตราย', location: 'ปากซอย 2', lat: 16.82, lng: 100.26, image: 'https://images.unsplash.com/photo-1519998246738-9cb5fb0d6cb2?auto=format&fit=crop&q=80&w=400', status: 'pending', date: '2026-03-12T08:00:00', resolvedImage: null },
-  { id: 'i2', userId: '2', userName: 'สมชาย ใจดี', houseNo: '99/10', title: 'ท่อประปาแตก', category: 'น้ำประปา', description: 'น้ำเจิ่งนองเต็มถนนซอย 5 รบกวนมาดูด่วนครับ', location: 'กลางซอย 5', lat: 16.821, lng: 100.262, image: 'https://images.unsplash.com/photo-1584061556956-613866299d0e?auto=format&fit=crop&q=80&w=400', status: 'in_progress', date: '2026-03-11T14:30:00', resolvedImage: null },
-  { id: 'i3', userId: '2', userName: 'สมชาย ใจดี', houseNo: '99/10', title: 'กิ่งไม้หักขวางทาง', category: 'อื่นๆ', description: 'พายุเมื่อคืนทำให้กิ่งไม้ใหญ่ร่วงมาขวางถนนหน้าสวนสาธารณะ', location: 'หน้าสวนสาธารณะ', lat: 16.822, lng: 100.261, image: 'https://images.unsplash.com/photo-1574955684496-d877f88da207?auto=format&fit=crop&q=80&w=400', status: 'resolved', date: '2026-03-09T09:15:00', resolvedImage: 'https://images.unsplash.com/photo-1506450687799-d4da77395460?auto=format&fit=crop&q=80&w=400' },
-];
-
-const MOCK_NOTIFS = [
-  { id: 'not1', title: 'แจ้งเตือนข่าวสารใหม่', desc: 'ประกาศฉีดวัคซีนพิษสุนัขบ้าประจำปี', isRead: false, time: '2 ชม. ที่แล้ว' },
-  { id: 'not2', title: 'อัปเดตสถานะงาน', desc: 'เรื่อง "กิ่งไม้หักขวางทาง" ได้รับการแก้ไขแล้ว', isRead: true, time: '1 วันที่แล้ว' }
-];
+import { MOCK_INCIDENTS, MOCK_NEWS, MOCK_NOTIFS, MOCK_USERS } from './src/data/mockData';
+import { api } from './src/services/api';
+import { setupFirebaseNotifications } from './src/services/firebaseNotifications';
 
 const CATEGORIES = ['สาธารณูปโภค (ถนน/ท่อ)', 'ไฟฟ้า/แสงสว่าง', 'น้ำประปา', 'ความสะอาด/ขยะ', 'ความปลอดภัย/เสียงรบกวน', 'อื่นๆ'];
+const VILLAGE_NAME = 'หมู่บ้านไผ่ถ้ำ';
+const APP_NAME = `SmartVillage ${VILLAGE_NAME}`;
+const MAP_BOUNDS = {
+  minLat: 16.8195,
+  maxLat: 16.8235,
+  minLng: 100.2595,
+  maxLng: 100.2635,
+};
 
 // --- UTILS ---
 const getFormattedDate = () => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   return new Date().toLocaleDateString('th-TH', options);
+};
+
+const getHoursDiff = (start, end) => {
+  if (!start || !end) return null;
+  return Math.max(0, (new Date(end) - new Date(start)) / (1000 * 60 * 60));
+};
+
+const formatHours = (hours) => {
+  if (hours == null || Number.isNaN(hours)) return '-';
+  if (hours < 1) return `${Math.round(hours * 60)} นาที`;
+  if (hours < 24) return `${hours.toFixed(1)} ชม.`;
+  return `${(hours / 24).toFixed(1)} วัน`;
+};
+
+const getHeatLevel = (count) => {
+  if (count >= 3) return { label: 'รุนแรง', color: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50 border-red-200' };
+  if (count === 2) return { label: 'เฝ้าระวัง', color: 'bg-orange-500', text: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' };
+  return { label: 'ปกติ', color: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' };
+};
+
+const getSentimentScore = (text = '') => {
+  const normalized = text.toLowerCase();
+  const criticalKeywords = ['ด่วน', 'อันตราย', 'เร่งด่วน', 'เสี่ยง', 'กังวล', 'เดือดร้อน'];
+  const mediumKeywords = ['รบกวน', 'มืดมาก', 'ลำบาก', 'ซ้ำ', 'กะพริบ', 'หย่อน'];
+
+  let score = 1;
+  criticalKeywords.forEach(keyword => {
+    if (normalized.includes(keyword)) score += 2;
+  });
+  mediumKeywords.forEach(keyword => {
+    if (normalized.includes(keyword)) score += 1;
+  });
+
+  return Math.min(score, 5);
+};
+
+const getSentimentMeta = (score) => {
+  if (score >= 5) return { label: 'วิกฤต', text: 'text-red-700', bg: 'bg-red-50 border-red-200' };
+  if (score >= 3) return { label: 'ตึงเครียด', text: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' };
+  return { label: 'ทั่วไป', text: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' };
+};
+
+const getCredibilityMeta = (score) => {
+  if (score >= 85) return { label: 'สูง', text: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
+  if (score >= 70) return { label: 'ปานกลาง', text: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' };
+  return { label: 'ต้องตรวจสอบเพิ่ม', text: 'text-red-700', bg: 'bg-red-50 border-red-200' };
+};
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const latLngToPercent = (lat, lng) => {
+  const x = ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * 100;
+  const y = ((MAP_BOUNDS.maxLat - lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * 100;
+  return {
+    x: clamp(x, 4, 96),
+    y: clamp(y, 6, 94),
+  };
+};
+
+const percentToLatLng = (xPercent, yPercent) => {
+  const lng = MAP_BOUNDS.minLng + ((xPercent / 100) * (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng));
+  const lat = MAP_BOUNDS.maxLat - ((yPercent / 100) * (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat));
+  return {
+    lat: Number(lat.toFixed(6)),
+    lng: Number(lng.toFixed(6)),
+  };
 };
 
 // --- MAIN APP COMPONENT ---
@@ -49,10 +103,59 @@ export default function App() {
   const [news, setNews] = useState(MOCK_NEWS);
   const [incidents, setIncidents] = useState(MOCK_INCIDENTS);
   const [notifications, setNotifications] = useState(MOCK_NOTIFS);
+  const [apiStatus, setApiStatus] = useState('mock');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api.getBootstrapData()
+      .then((data) => {
+        if (!isMounted) return;
+        setUsers(data.users || MOCK_USERS);
+        setNews(data.news || MOCK_NEWS);
+        setIncidents(data.incidents || MOCK_INCIDENTS);
+        setNotifications(data.notifications || MOCK_NOTIFS);
+        setApiStatus('connected');
+      })
+      .catch(() => {
+        if (isMounted) setApiStatus('mock');
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let unsubscribe = null;
+
+    setupFirebaseNotifications(currentUser, (message) => {
+      setNotifications((prev) => [message, ...prev]);
+    })
+      .then((cleanup) => {
+        unsubscribe = cleanup;
+      })
+      .catch(() => {
+        unsubscribe = null;
+      });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [currentUser]);
   
   // Login Handler
-  const handleLogin = (phone, password) => {
-    const user = users.find(u => u.phone === phone && u.password === password);
+  const handleLogin = async (phone, password) => {
+    let user = null;
+
+    try {
+      const data = await api.login(phone, password);
+      user = data.user;
+      setApiStatus('connected');
+    } catch {
+      user = users.find(u => u.phone === phone && u.password === password);
+    }
+
     if (user) {
       setCurrentUser(user);
       setActiveTab(user.role === 'admin' ? 'stats' : 'news');
@@ -63,12 +166,22 @@ export default function App() {
   };
 
   // Register Handler
-  const handleRegister = (newUser) => {
+  const handleRegister = async (newUser) => {
     if (users.find(u => u.phone === newUser.phone)) {
       alert('เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว');
       return;
     }
-    const user = { ...newUser, id: Date.now().toString(), role: 'user' };
+
+    let user = null;
+
+    try {
+      const data = await api.register(newUser);
+      user = data.user;
+      setApiStatus('connected');
+    } catch {
+      user = { ...newUser, id: Date.now().toString(), role: 'user' };
+    }
+
     setUsers([...users, user]);
     setCurrentUser(user);
     setActiveTab('news');
@@ -146,7 +259,7 @@ function LandingPage({ onNavigate, news }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-2 text-2xl font-bold text-blue-600">
-              <Home className="w-8 h-8" /> SmartVillage
+              <Home className="w-8 h-8" /> {APP_NAME}
             </div>
             <div className="flex gap-4">
               <button onClick={() => onNavigate('auth')} className="text-gray-600 hover:text-blue-600 font-medium px-4 py-2 hidden sm:block">เข้าสู่ระบบ</button>
@@ -166,10 +279,10 @@ function LandingPage({ onNavigate, news }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
             ยกระดับคุณภาพชีวิต<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">เพื่อหมู่บ้านที่น่าอยู่ของเรา</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">เพื่อ{VILLAGE_NAME}ที่น่าอยู่ของเรา</span>
           </h1>
           <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-            แพลตฟอร์มแจ้งเหตุ ร้องทุกข์ และติดตามข่าวสารสำหรับลูกบ้าน ใช้งานง่าย รวดเร็ว และแก้ไขปัญหาได้อย่างตรงจุดโดยผู้ดูแลหมู่บ้าน
+            แพลตฟอร์มแจ้งเหตุ ร้องทุกข์ และติดตามข่าวสารสำหรับลูกบ้านใน{VILLAGE_NAME} ใช้งานง่าย รวดเร็ว และแก้ไขปัญหาได้อย่างตรงจุดโดยผู้ดูแลชุมชน
           </p>
           <button onClick={() => onNavigate('auth')} className="bg-blue-600 text-white text-lg px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition shadow-xl shadow-blue-200 flex items-center gap-2 mx-auto">
             เข้าสู่ระบบลูกบ้าน <ChevronRight className="w-5 h-5" />
@@ -212,10 +325,10 @@ function LandingPage({ onNavigate, news }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             <div>
               <div className="flex items-center gap-2 text-2xl font-bold text-white mb-6">
-                <Home className="w-8 h-8 text-blue-500" /> SmartVillage
+                <Home className="w-8 h-8 text-blue-500" /> {APP_NAME}
               </div>
               <p className="text-gray-400 max-w-xs">
-                ชุมชนน่าอยู่ ปลอดภัย สังคมแห่งการแบ่งปัน ร่วมสร้างหมู่บ้านของเราให้ดียิ่งขึ้นไปพร้อมกัน
+                ชุมชนน่าอยู่ ปลอดภัย สังคมแห่งการแบ่งปัน ร่วมสร้าง{VILLAGE_NAME}ให้ดียิ่งขึ้นไปพร้อมกัน
               </p>
             </div>
             <div>
@@ -232,14 +345,14 @@ function LandingPage({ onNavigate, news }) {
                   <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center"><Facebook className="w-5 h-5 text-blue-400" /></div>
                   <div>
                     <p className="text-sm text-gray-500">Facebook Page</p>
-                    <p className="font-semibold text-white">หมู่บ้านแสนสุข Official</p>
+                    <p className="font-semibold text-white">{VILLAGE_NAME} Official</p>
                   </div>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-            &copy; {new Date().getFullYear()} SmartVillage System. All rights reserved.
+            &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </div>
         </div>
       </footer>
@@ -369,7 +482,7 @@ function Sidebar({ currentUser, onLogout, activeTab, setActiveTab, isOpen, setIs
       <div className="h-20 flex items-center justify-between px-6 border-b border-gray-800 bg-gray-950">
         <div className="flex items-center">
           <Home className="w-6 h-6 text-blue-500 mr-2" />
-          <span className="font-bold text-lg tracking-wide">SmartVillage</span>
+          <span className="font-bold text-lg tracking-wide">{VILLAGE_NAME}</span>
         </div>
         <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setIsOpen(false)}>
           <X className="w-6 h-6" />
@@ -433,11 +546,11 @@ function Topbar({ currentUser, notifications, setNotifications, toggleSidebar })
         </button>
         <div className="flex items-center md:hidden">
           <Home className="w-6 h-6 text-blue-600 mr-2" />
-          <span className="font-bold text-lg text-gray-800">SmartVillage</span>
+          <span className="font-bold text-lg text-gray-800">{VILLAGE_NAME}</span>
         </div>
         <div className="hidden md:block">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-            {currentUser?.role === 'admin' ? 'ระบบจัดการหมู่บ้าน (Admin)' : 'ระบบบริการลูกบ้าน'}
+            {currentUser?.role === 'admin' ? `ระบบจัดการ${VILLAGE_NAME} (Admin)` : `ระบบบริการลูกบ้าน ${VILLAGE_NAME}`}
           </h2>
         </div>
       </div>
@@ -508,6 +621,7 @@ function UserDashboard({ activeTab, setActiveTab, currentUser, news, incidents, 
   const [desc, setDesc] = useState('');
   const [location, setLocation] = useState('');
   const [image, setImage] = useState(null);
+  const [selectedPoint, setSelectedPoint] = useState(null);
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -515,32 +629,50 @@ function UserDashboard({ activeTab, setActiveTab, currentUser, news, incidents, 
     }
   };
 
-  const submitReport = (e) => {
+  const submitReport = async (e) => {
     e.preventDefault();
-    if(!title || !desc || !location) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+    if(!title || !desc || !location || !selectedPoint) return alert('กรุณากรอกข้อมูลและปักหมุดตำแหน่งให้ครบถ้วน');
     
-    const newIncident = {
+    const incidentPayload = {
       id: 'i' + Date.now(),
       userId: currentUser.id,
       userName: currentUser.name,
       houseNo: currentUser.houseNo,
       title, category, description: desc, location,
+      lat: selectedPoint.lat,
+      lng: selectedPoint.lng,
       image: image || 'https://images.unsplash.com/photo-1541888086925-0c1bb6789c26?auto=format&fit=crop&q=80&w=400', // fallback image
       status: 'pending',
       date: new Date().toISOString(),
+      firstResponseAt: null,
+      resolvedAt: null,
       resolvedImage: null
     };
+
+    let newIncident = incidentPayload;
+
+    try {
+      const data = await api.createIncident(incidentPayload);
+      newIncident = data.incident || incidentPayload;
+    } catch {
+      newIncident = incidentPayload;
+    }
     
     setIncidents([newIncident, ...incidents]);
-    alert('แจ้งเหตุสำเร็จ ระบบได้ส่งเรื่องให้ผู้ดูแลหมู่บ้านแล้ว');
+    alert(`แจ้งเหตุสำเร็จ ระบบได้ส่งเรื่องให้ผู้ดูแล${VILLAGE_NAME}แล้ว`);
     
     // Reset form & go to history
-    setTitle(''); setCategory(CATEGORIES[0]); setDesc(''); setLocation(''); setImage(null);
+    setTitle(''); setCategory(CATEGORIES[0]); setDesc(''); setLocation(''); setImage(null); setSelectedPoint(null);
     setActiveTab('history');
   };
 
-  const handleDeleteIncident = (id) => {
+  const handleDeleteIncident = async (id) => {
     if(window.confirm('คุณต้องการยกเลิกการแจ้งเหตุนี้ใช่หรือไม่? (ลบได้เฉพาะรายการที่ยังไม่ดำเนินการ)')) {
+      try {
+        await api.deleteIncident(id);
+      } catch {
+        // Keep local fallback working while Laravel backend is not running.
+      }
       setIncidents(incidents.filter(i => i.id !== id));
     }
   };
@@ -560,7 +692,7 @@ function UserDashboard({ activeTab, setActiveTab, currentUser, news, incidents, 
       {activeTab === 'news' && (
         <div className="space-y-6 animate-fadeIn">
           <div className="flex items-center justify-between mb-2">
-             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">ประกาศจากหมู่บ้าน</h2>
+             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">ประกาศจาก{VILLAGE_NAME}</h2>
           </div>
           <div className="grid gap-6">
             {news.map(n => (
@@ -614,6 +746,7 @@ function UserDashboard({ activeTab, setActiveTab, currentUser, news, incidents, 
                     </div>
                     <input type="text" required value={location} onChange={e=>setLocation(e.target.value)} className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition text-lg" placeholder="เช่น หน้าบ้าน 99/10, เสาไฟฟ้าต้นที่ 3 ซอย 2" />
                   </div>
+                  <p className="text-xs text-gray-500 mt-2">ระบุตำแหน่งใน {VILLAGE_NAME} แล้วปักหมุดบนแผนที่ด้านขวาเพื่อบันทึกพิกัด GPS</p>
                 </div>
               </div>
               
@@ -621,6 +754,23 @@ function UserDashboard({ activeTab, setActiveTab, currentUser, news, incidents, 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">รายละเอียดเพิ่มเติม <span className="text-red-500">*</span></label>
                   <textarea required value={desc} onChange={e=>setDesc(e.target.value)} className="w-full px-4 py-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition text-lg h-32 resize-none" placeholder="อธิบายลักษณะปัญหาที่พบเจอ..."></textarea>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">ปักหมุดตำแหน่งบนแผนที่ <span className="text-red-500">*</span></label>
+                  <VillageMapPicker
+                    incidents={incidents}
+                    selectedPoint={selectedPoint}
+                    onSelectPoint={setSelectedPoint}
+                  />
+                  <div className="mt-3 text-sm text-gray-600">
+                    {selectedPoint ? (
+                      <span>
+                        พิกัดที่เลือก: <span className="font-bold text-gray-900">{selectedPoint.lat.toFixed(6)}, {selectedPoint.lng.toFixed(6)}</span>
+                      </span>
+                    ) : (
+                      <span>คลิกบนแผนที่เพื่อเลือกตำแหน่งเกิดเหตุจริง</span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">แนบรูปภาพประกอบ (ถ้ามี)</label>
@@ -712,6 +862,109 @@ function UserDashboard({ activeTab, setActiveTab, currentUser, news, incidents, 
 }
 
 // ==========================================
+// MAP COMPONENTS
+// ==========================================
+function VillageMapPicker({ incidents, selectedPoint, onSelectPoint }) {
+  const handleMapClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+    onSelectPoint(percentToLatLng(clamp(xPercent, 4, 96), clamp(yPercent, 6, 94)));
+  };
+
+  return (
+    <div className="rounded-3xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+      <div className="px-4 py-3 border-b border-gray-100 bg-slate-50">
+        <div className="font-bold text-gray-900">แผนที่ตำแหน่งเหตุใน{VILLAGE_NAME}</div>
+        <div className="text-xs text-gray-500 mt-1">คลิกบนแผนที่เพื่อปักหมุดตำแหน่งเกิดเหตุ และระบบจะเก็บพิกัด GPS ให้ทันที</div>
+      </div>
+      <div
+        className="relative h-72 cursor-crosshair overflow-hidden bg-[radial-gradient(circle_at_top_right,_rgba(59,130,246,0.18),_transparent_32%),linear-gradient(135deg,_#eff6ff_0%,_#dbeafe_48%,_#e0f2fe_100%)]"
+        onClick={handleMapClick}
+      >
+        <div className="absolute inset-0 opacity-50">
+          <div className="absolute inset-x-0 top-[24%] h-px bg-sky-200" />
+          <div className="absolute inset-x-0 top-[54%] h-px bg-sky-200" />
+          <div className="absolute inset-y-0 left-[32%] w-px bg-sky-200" />
+          <div className="absolute inset-y-0 left-[68%] w-px bg-sky-200" />
+          <div className="absolute left-[12%] top-[22%] h-24 w-24 rounded-full bg-blue-200/35 blur-2xl" />
+          <div className="absolute right-[10%] bottom-[14%] h-28 w-28 rounded-full bg-cyan-200/40 blur-2xl" />
+        </div>
+
+        <div className="absolute left-[18%] top-[18%] rounded-full bg-white/85 px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm">ทางเข้าหมู่บ้าน</div>
+        <div className="absolute left-[60%] top-[26%] rounded-full bg-white/85 px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm">ซอย 2</div>
+        <div className="absolute left-[56%] top-[58%] rounded-full bg-white/85 px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm">ซอย 5</div>
+        <div className="absolute left-[24%] top-[68%] rounded-full bg-white/85 px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm">สวนสาธารณะ</div>
+
+        {incidents.map(inc => {
+          const pos = latLngToPercent(inc.lat, inc.lng);
+          return (
+            <div
+              key={inc.id}
+              className="absolute -translate-x-1/2 -translate-y-full"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+            >
+              <div className="h-3 w-3 rounded-full border-2 border-white bg-slate-500 shadow-md opacity-70" />
+            </div>
+          );
+        })}
+
+        {selectedPoint && (() => {
+          const pos = latLngToPercent(selectedPoint.lat, selectedPoint.lng);
+          return (
+            <div
+              className="absolute -translate-x-1/2 -translate-y-full"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+            >
+              <div className="relative">
+                <MapPin className="w-8 h-8 text-red-600 drop-shadow-lg" fill="currentColor" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-ping" />
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    </div>
+  );
+}
+
+function SpatialAnalyticsMap({ incidents }) {
+  return (
+    <div className="relative h-80 rounded-3xl overflow-hidden border border-gray-200 bg-[radial-gradient(circle_at_top,_rgba(248,113,113,0.18),_transparent_24%),linear-gradient(135deg,_#fff7ed_0%,_#fee2e2_44%,_#eff6ff_100%)]">
+      <div className="absolute inset-0 opacity-50">
+        <div className="absolute inset-x-0 top-[24%] h-px bg-white/70" />
+        <div className="absolute inset-x-0 top-[54%] h-px bg-white/70" />
+        <div className="absolute inset-y-0 left-[32%] w-px bg-white/70" />
+        <div className="absolute inset-y-0 left-[68%] w-px bg-white/70" />
+      </div>
+      <div className="absolute left-4 top-4 rounded-2xl bg-white/85 px-4 py-3 shadow-sm border border-white/80">
+        <div className="text-sm font-bold text-gray-900">Heat Map จำลองของ{VILLAGE_NAME}</div>
+        <div className="text-xs text-gray-500 mt-1">ใช้พิกัดจากจุดร้องเรียนเพื่อแสดงพื้นที่หนาแน่นของปัญหา</div>
+      </div>
+      {incidents.map(inc => {
+        const pos = latLngToPercent(inc.lat, inc.lng);
+        const heat = getHeatLevel(
+          incidents.filter(other => other.location === inc.location).length
+        );
+        return (
+          <div key={inc.id}>
+            <div
+              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl opacity-45 ${heat.color}`}
+              style={{ left: `${pos.x}%`, top: `${pos.y}%`, width: 72, height: 72 }}
+            />
+            <div
+              className="absolute -translate-x-1/2 -translate-y-full"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+            >
+              <MapPin className="w-7 h-7 text-red-600 drop-shadow-md" fill="currentColor" />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // 4. ADMIN DASHBOARD
 // ==========================================
 function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, setIncidents, setNotifications, users, setUsers }) {
@@ -738,6 +991,139 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
   const pPending = total === 0 ? 0 : (pending / total) * 100;
   const pInProgress = total === 0 ? 0 : (inProgress / total) * 100;
   const pResolved = total === 0 ? 0 : (resolved / total) * 100;
+  const unresolvedCount = incidents.filter(i => i.status !== 'resolved').length;
+
+  const spatialAnalytics = Object.values(incidents.reduce((acc, inc) => {
+    const key = inc.location;
+    if (!acc[key]) {
+      acc[key] = {
+        location: inc.location,
+        lat: inc.lat,
+        lng: inc.lng,
+        count: 0,
+        pending: 0,
+        inProgress: 0,
+        resolved: 0,
+      };
+    }
+    acc[key].count += 1;
+    acc[key][inc.status === 'in_progress' ? 'inProgress' : inc.status] += 1;
+    return acc;
+  }, {})).sort((a, b) => b.count - a.count);
+
+  const issueBreakdown = Object.values(incidents.reduce((acc, inc) => {
+    if (!acc[inc.category]) {
+      acc[inc.category] = { category: inc.category, count: 0 };
+    }
+    acc[inc.category].count += 1;
+    return acc;
+  }, {})).sort((a, b) => b.count - a.count);
+
+  const firstResponseHours = incidents
+    .map(inc => getHoursDiff(inc.date, inc.firstResponseAt))
+    .filter(hours => hours != null);
+
+  const resolveHours = incidents
+    .map(inc => getHoursDiff(inc.date, inc.resolvedAt))
+    .filter(hours => hours != null);
+
+  const avgFirstResponse = firstResponseHours.length
+    ? firstResponseHours.reduce((sum, hours) => sum + hours, 0) / firstResponseHours.length
+    : null;
+  const avgResolveTime = resolveHours.length
+    ? resolveHours.reduce((sum, hours) => sum + hours, 0) / resolveHours.length
+    : null;
+  const firstResponseWithinTarget = firstResponseHours.filter(hours => hours <= 1).length;
+  const resolveWithinTarget = resolveHours.filter(hours => hours <= 24).length;
+  const responseCompliance = firstResponseHours.length ? Math.round((firstResponseWithinTarget / firstResponseHours.length) * 100) : 0;
+  const resolveCompliance = resolveHours.length ? Math.round((resolveWithinTarget / resolveHours.length) * 100) : 0;
+
+  const oldestOpenIncident = [...incidents]
+    .filter(inc => inc.status !== 'resolved')
+    .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+
+  const predictiveMaintenance = Object.values(incidents.reduce((acc, inc) => {
+    const key = `${inc.location}-${inc.category}`;
+    if (!acc[key]) {
+      acc[key] = {
+        id: key,
+        location: inc.location,
+        category: inc.category,
+        count: 0,
+        riskScore: 0,
+      };
+    }
+    const statusWeight = inc.status === 'resolved' ? 1 : inc.status === 'in_progress' ? 2 : 3;
+    acc[key].count += 1;
+    acc[key].riskScore += statusWeight;
+    return acc;
+  }, {})).sort((a, b) => b.riskScore - a.riskScore);
+
+  const credibilityScoring = Object.values(incidents.reduce((acc, inc) => {
+    if (!acc[inc.userId]) {
+      acc[inc.userId] = {
+        userId: inc.userId,
+        userName: inc.userName,
+        houseNo: inc.houseNo,
+        totalReports: 0,
+        withImage: 0,
+        detailedReports: 0,
+        resolvedReports: 0,
+      };
+    }
+
+    acc[inc.userId].totalReports += 1;
+    if (inc.image) acc[inc.userId].withImage += 1;
+    if ((inc.description || '').length >= 30) acc[inc.userId].detailedReports += 1;
+    if (inc.status === 'resolved') acc[inc.userId].resolvedReports += 1;
+    return acc;
+  }, {})).map(user => {
+    const imageRatio = user.withImage / user.totalReports;
+    const detailRatio = user.detailedReports / user.totalReports;
+    const resolvedRatio = user.resolvedReports / user.totalReports;
+    const score = Math.round(Math.min(98, 55 + (imageRatio * 15) + (detailRatio * 15) + (resolvedRatio * 15)));
+    return { ...user, score, meta: getCredibilityMeta(score) };
+  }).sort((a, b) => b.score - a.score);
+
+  const sentimentAnalytics = incidents
+    .map(inc => {
+      const score = getSentimentScore(inc.description);
+      return {
+        ...inc,
+        sentimentScore: score,
+        sentimentMeta: getSentimentMeta(score),
+      };
+    })
+    .sort((a, b) => b.sentimentScore - a.sentimentScore);
+
+  const topHotspot = spatialAnalytics[0];
+  const topPrediction = predictiveMaintenance[0];
+  const topEmotionalCase = sentimentAnalytics[0];
+  const topIssueCategory = issueBreakdown[0];
+  const annualBudgetBase = 120000;
+  const budgetRecommendations = issueBreakdown.map(item => ({
+    ...item,
+    percent: Math.round((item.count / Math.max(total, 1)) * 100),
+    suggestedBudget: Math.round((item.count / Math.max(total, 1)) * annualBudgetBase),
+    owner: item.category.includes('ไฟ') ? 'ทีมไฟฟ้า' : item.category.includes('น้ำ') ? 'ทีมประปา' : item.category.includes('ความสะอาด') ? 'ทีมสิ่งแวดล้อม' : 'ทีมช่างชุมชน',
+  }));
+  const priorityQueue = incidents
+    .map(inc => {
+      const hotspotWeight = spatialAnalytics.find(area => area.location === inc.location)?.count || 1;
+      const urgency = getSentimentScore(inc.description);
+      const credibility = credibilityScoring.find(user => user.userId === inc.userId)?.score || 70;
+      const statusWeight = inc.status === 'pending' ? 3 : inc.status === 'in_progress' ? 2 : 1;
+      const priorityScore = (statusWeight * 20) + (hotspotWeight * 10) + (urgency * 8) + Math.round(credibility / 10);
+      const lane = priorityScore >= 90 ? 'Critical' : priorityScore >= 75 ? 'High' : 'Normal';
+      return { ...inc, priorityScore, lane };
+    })
+    .sort((a, b) => b.priorityScore - a.priorityScore)
+    .slice(0, 3);
+  const predictivePlan = predictiveMaintenance.slice(0, 3).map((item, index) => ({
+    ...item,
+    riskLevel: item.riskScore >= 7 ? 'สูง' : item.riskScore >= 4 ? 'กลาง' : 'ต่ำ',
+    nextInspection: `${index + 3} วัน`,
+  }));
 
   // CSS for Mock Pie Chart
   const pieStyle = {
@@ -749,7 +1135,13 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
   };
 
   // --- Incident Handlers ---
-  const updateIncidentStatus = (id, newStatus, resolvedImage = null) => {
+  const updateIncidentStatus = async (id, newStatus, resolvedImage = null) => {
+    try {
+      await api.updateIncidentStatus(id, { status: newStatus, resolvedImage });
+    } catch {
+      // Local state remains available for classroom demo before Laravel is running.
+    }
+
     const updated = incidents.map(inc => {
       if (inc.id === id) {
         // Send Notification
@@ -762,7 +1154,13 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
           time: 'เพิ่งกระทำ'
         }, ...prev]);
 
-        return { ...inc, status: newStatus, resolvedImage: resolvedImage || inc.resolvedImage };
+        return {
+          ...inc,
+          status: newStatus,
+          firstResponseAt: inc.firstResponseAt || (newStatus !== 'pending' ? new Date().toISOString() : null),
+          resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null,
+          resolvedImage: resolvedImage || inc.resolvedImage
+        };
       }
       return inc;
     });
@@ -770,34 +1168,57 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
     setSelectedIncident(null);
   };
 
-  const deleteIncident = (id) => {
+  const deleteIncident = async (id) => {
     if(window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบการแจ้งเหตุนี้?')) {
+      try {
+        await api.deleteIncident(id);
+      } catch {
+        // Keep local fallback working while Laravel backend is not running.
+      }
       setIncidents(incidents.filter(i => i.id !== id));
       setSelectedIncident(null);
     }
   };
 
   // --- News Handlers ---
-  const saveNews = (e) => {
+  const saveNews = async (e) => {
     e.preventDefault();
     if(editingNews.id) {
       // Edit
-      setNews(news.map(n => n.id === editingNews.id ? { ...editingNews, ...newsForm } : n));
+      const updatedNews = { ...editingNews, ...newsForm };
+      try {
+        await api.saveNews(updatedNews, editingNews.id);
+      } catch {
+        // Keep local fallback working while Laravel backend is not running.
+      }
+      setNews(news.map(n => n.id === editingNews.id ? updatedNews : n));
     } else {
       // Add
-      const newN = { 
+      const newN = {
         id: 'n' + Date.now(), 
         ...newsForm, 
         image: newsForm.image || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=400',
         date: new Date().toISOString().split('T')[0] 
       };
-      setNews([newN, ...news]);
+      let savedNews = newN;
+      try {
+        const data = await api.saveNews(newN);
+        savedNews = data.news || newN;
+      } catch {
+        savedNews = newN;
+      }
+      setNews([savedNews, ...news]);
     }
     setEditingNews(null);
   };
 
-  const deleteNews = (id) => {
+  const deleteNews = async (id) => {
     if(window.confirm('ยืนยันการลบข่าวสารนี้?')) {
+      try {
+        await api.deleteNews(id);
+      } catch {
+        // Keep local fallback working while Laravel backend is not running.
+      }
       setNews(news.filter(n => n.id !== id));
     }
   };
@@ -808,8 +1229,13 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
   };
 
   // --- User Handlers ---
-  const deleteUser = (id) => {
+  const deleteUser = async (id) => {
     if(window.confirm('แน่ใจหรือไม่ที่จะลบลูกบ้านท่านนี้ออกจากระบบ?')) {
+      try {
+        await api.deleteUser(id);
+      } catch {
+        // Keep local fallback working while Laravel backend is not running.
+      }
       setUsers(users.filter(u => u.id !== id));
     }
   };
@@ -831,7 +1257,7 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-3xl shadow-sm border border-gray-100 gap-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-800">ภาพรวมระบบ (Dashboard)</h2>
-              <p className="text-gray-500">สรุปข้อมูลการแจ้งเหตุและสถิติต่างๆ ภายในหมู่บ้าน</p>
+              <p className="text-gray-500">สรุปข้อมูลการแจ้งเหตุ สถานะงาน และตัวชี้วัดการปฏิบัติงานภายใน{VILLAGE_NAME}</p>
             </div>
             <div className="flex items-center gap-3 bg-blue-50 text-blue-800 px-5 py-3 rounded-2xl font-bold border border-blue-100">
               <Calendar className="w-5 h-5 text-blue-600" />
@@ -887,6 +1313,404 @@ function AdminDashboard({ activeTab, setActiveTab, news, setNews, incidents, set
                   ดูทั้งหมด
                 </button>
               )}
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-700">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold">ศูนย์วิเคราะห์ข้อมูลและจัดลำดับงาน</h3>
+                <p className="text-slate-300 mt-1 max-w-3xl text-sm">
+                  ประมวลผลข้อมูลร้องเรียนเพื่อแสดงจุดเสี่ยง เวลาตอบสนอง แนวโน้มความเสียหาย และคิวงานสำคัญแบบรวมศูนย์
+                </p>
+              </div>
+              <div className="bg-white/10 rounded-2xl px-4 py-3 border border-white/10">
+                <div className="text-xs text-slate-300">เคสที่ยังต้องติดตาม</div>
+                <div className="text-2xl font-black">{unresolvedCount}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="text-xs text-gray-500">จุดเสี่ยงสูงสุด</div>
+              <div className="text-lg font-black text-gray-900 mt-1">{topHotspot?.location || '-'}</div>
+              <div className="text-xs text-red-600 mt-1">เกิดซ้ำ {topHotspot?.count || 0} เคส</div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="text-xs text-gray-500">หมวดใช้งบมากสุด</div>
+              <div className="text-lg font-black text-gray-900 mt-1">{topIssueCategory?.category || '-'}</div>
+              <div className="text-xs text-indigo-600 mt-1">{budgetRecommendations[0]?.percent || 0}% ของทั้งหมด</div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="text-xs text-gray-500">เคสอารมณ์สูงสุด</div>
+              <div className="text-lg font-black text-gray-900 mt-1 line-clamp-1">{topEmotionalCase?.title || '-'}</div>
+              <div className="text-xs text-pink-600 mt-1">{topEmotionalCase?.sentimentMeta.label || '-'}</div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="text-xs text-gray-500">เป้าหมายเชิงรุก</div>
+              <div className="text-lg font-black text-gray-900 mt-1 line-clamp-1">{topPrediction?.location || '-'}</div>
+              <div className="text-xs text-amber-600 mt-1">Risk Score {topPrediction?.riskScore || 0}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Spatial Analytics</h3>
+                  <p className="text-sm text-gray-500">Heat Map จากพิกัด GPS เพื่อดูจุดเสี่ยงซ้ำซากใน {VILLAGE_NAME}</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-red-50 text-red-600 border border-red-100">
+                  <MapPin className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="mb-4">
+                <SpatialAnalyticsMap incidents={incidents} />
+              </div>
+              <div className="space-y-3">
+                {spatialAnalytics.map(area => {
+                  const heat = getHeatLevel(area.count);
+                  const width = `${Math.max((area.count / Math.max(topHotspot?.count || 1, 1)) * 100, 22)}%`;
+                  return (
+                    <div key={area.location} className={`rounded-2xl border p-4 ${heat.bg}`}>
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div>
+                          <div className="font-bold text-gray-900">{area.location}</div>
+                          <div className="text-xs text-gray-500">พิกัด {area.lat?.toFixed(3)}, {area.lng?.toFixed(3)}</div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white border ${heat.text}`}>
+                          {heat.label}
+                        </span>
+                      </div>
+                      <div className="h-3 bg-white/80 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${heat.color}`} style={{ width }} />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-600">
+                        <span>รวม {area.count} เคส</span>
+                        <span>รอรับเรื่อง {area.pending}</span>
+                        <span>กำลังดำเนินการ {area.inProgress}</span>
+                        <span>แก้ไขแล้ว {area.resolved}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {topHotspot && (
+                <div className="mt-4 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-700">
+                  จุดที่ควรจับตาที่สุดตอนนี้คือ <span className="font-bold">{topHotspot.location}</span> เพราะมีการแจ้งสะสมสูงสุด
+                  เหมาะกับการวางแผนซ่อมเชิงรุกแทนการซ่อมรายครั้ง
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                  <div className="text-xs text-gray-500">ตำแหน่งที่เฝ้าระวัง</div>
+                  <div className="text-lg font-black text-gray-900 mt-1">{topHotspot?.location || '-'}</div>
+                </div>
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                  <div className="text-xs text-gray-500">จำนวนพิกัดสะสม</div>
+                  <div className="text-lg font-black text-gray-900 mt-1">{topHotspot?.count || 0} เคส</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Response Time</h3>
+                  <p className="text-sm text-gray-500">ตัวชี้วัด KPI การรับเรื่องและการปิดงาน</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100">
+                  <Clock className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                  <div className="text-sm text-blue-700 font-semibold">รับเรื่องเฉลี่ย</div>
+                  <div className="text-2xl font-black text-blue-900 mt-2">{formatHours(avgFirstResponse)}</div>
+                </div>
+                <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
+                  <div className="text-sm text-green-700 font-semibold">ปิดงานเฉลี่ย</div>
+                  <div className="text-2xl font-black text-green-900 mt-2">{formatHours(avgResolveTime)}</div>
+                </div>
+                <div className="rounded-2xl border border-orange-100 bg-orange-50 p-4">
+                  <div className="text-sm text-orange-700 font-semibold">งานค้างนานสุด</div>
+                  <div className="text-lg font-black text-orange-900 mt-2">
+                    {oldestOpenIncident ? oldestOpenIncident.title : '-'}
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                {oldestOpenIncident ? (
+                  <>
+                    เคส <span className="font-bold">{oldestOpenIncident.title}</span> ที่ <span className="font-bold">{oldestOpenIncident.location}</span>
+                    คือคอขวดสำคัญของ backlog ตอนนี้ ถ้ารับเรื่องได้ไวแต่ปิดงานช้า ควรตรวจสต็อกอุปกรณ์และการจัดทีมภาคสนามเพิ่ม
+                  </>
+                ) : (
+                  'ยังไม่มีงานค้างในระบบ'
+                )}
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-gray-100 p-3 bg-gray-50">
+                  <div className="text-xs text-gray-500">SLA รับเรื่อง</div>
+                  <div className="text-base font-black text-gray-900 mt-1">{avgFirstResponse != null && avgFirstResponse <= 1 ? 'ปกติ' : 'ต้องติดตาม'}</div>
+                  <div className="text-xs text-blue-700 mt-1">{responseCompliance}% ภายใน 1 ชั่วโมง</div>
+                </div>
+                <div className="rounded-2xl border border-gray-100 p-3 bg-gray-50">
+                  <div className="text-xs text-gray-500">SLA ปิดงาน</div>
+                  <div className="text-base font-black text-gray-900 mt-1">{avgResolveTime != null && avgResolveTime <= 24 ? 'ปกติ' : 'เสี่ยงล่าช้า'}</div>
+                  <div className="text-xs text-green-700 mt-1">{resolveCompliance}% ภายใน 24 ชั่วโมง</div>
+                </div>
+                <div className="rounded-2xl border border-gray-100 p-3 bg-gray-50">
+                  <div className="text-xs text-gray-500">Backlog เปิดค้าง</div>
+                  <div className="text-base font-black text-gray-900 mt-1">{unresolvedCount} งาน</div>
+                  <div className="text-xs text-orange-700 mt-1">เก่าสุด: {oldestOpenIncident ? new Date(oldestOpenIncident.date).toLocaleDateString('th-TH') : '-'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Issue Breakdown</h3>
+                  <p className="text-sm text-gray-500">สัดส่วนประเภทปัญหาเพื่อใช้วางงบประมาณ</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+                  <PieChart className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                {issueBreakdown.map(item => {
+                  const width = `${(item.count / Math.max(total, 1)) * 100}%`;
+                  return (
+                    <div key={item.category}>
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="font-semibold text-gray-800">{item.category}</span>
+                        <span className="text-gray-500">{item.count} เคส</span>
+                      </div>
+                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500" style={{ width }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {issueBreakdown[0] && (
+                <div className="mt-4 p-3 rounded-2xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-900">
+                  หมวดที่พบมากที่สุดคือ <span className="font-bold">{issueBreakdown[0].category}</span>
+                  ควรได้รับงบและแผนงานเชิงป้องกันมากเป็นพิเศษในรอบถัดไป
+                </div>
+              )}
+              <div className="mt-3 overflow-hidden rounded-2xl border border-gray-100">
+                <div className="grid grid-cols-[1.4fr_.6fr_.6fr_.9fr_.9fr] bg-gray-50 px-4 py-2 text-xs font-bold text-gray-500">
+                  <div>หมวดงาน</div>
+                  <div>จำนวน</div>
+                  <div>สัดส่วน</div>
+                  <div>งบแนะนำ</div>
+                  <div>หน่วยงาน</div>
+                </div>
+                {budgetRecommendations.map(item => (
+                  <div key={item.category} className="grid grid-cols-[1.4fr_.6fr_.6fr_.9fr_.9fr] px-4 py-2.5 text-sm border-t border-gray-100">
+                    <div className="font-medium text-gray-800">{item.category}</div>
+                    <div className="text-gray-600">{item.count}</div>
+                    <div className="text-indigo-700 font-semibold">{item.percent}%</div>
+                    <div className="text-gray-700">{item.suggestedBudget.toLocaleString()} บ.</div>
+                    <div className="text-gray-600">{item.owner}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Predictive Maintenance</h3>
+                  <p className="text-sm text-gray-500">คาดการณ์จุดเสี่ยงจากสถิติการเกิดเหตุซ้ำ</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {predictivePlan.map(item => (
+                  <div key={item.id} className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                    <div className="flex justify-between items-start gap-3">
+                      <div>
+                        <div className="font-bold text-gray-900">{item.location}</div>
+                        <div className="text-sm text-amber-800">{item.category}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-amber-700">Risk Score</div>
+                        <div className="text-2xl font-black text-amber-900">{item.riskScore}</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-xl bg-white/70 px-3 py-2 text-gray-700">เกิดซ้ำ {item.count} ครั้ง</div>
+                      <div className="rounded-xl bg-white/70 px-3 py-2 text-gray-700">ความเสี่ยง {item.riskLevel}</div>
+                      <div className="rounded-xl bg-white/70 px-3 py-2 text-gray-700">ตรวจรอบถัดไป {item.nextInspection}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {topPrediction && (
+                <div className="mt-4 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-700">
+                  ข้อเสนอเชิงรุก: วางแผน preventive maintenance ที่ <span className="font-bold">{topPrediction.location}</span>
+                  ในหมวด <span className="font-bold">{topPrediction.category}</span> ก่อนจุดอื่น
+                </div>
+              )}
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-gray-100 p-3 bg-gray-50">
+                  <div className="text-xs text-gray-500">จุดเสี่ยงอันดับ 1</div>
+                  <div className="text-base font-black text-gray-900 mt-1">{topPrediction?.location || '-'}</div>
+                </div>
+                <div className="rounded-2xl border border-gray-100 p-3 bg-gray-50">
+                  <div className="text-xs text-gray-500">หมวดงาน</div>
+                  <div className="text-base font-black text-gray-900 mt-1">{topPrediction?.category || '-'}</div>
+                </div>
+                <div className="rounded-2xl border border-gray-100 p-3 bg-gray-50">
+                  <div className="text-xs text-gray-500">Risk Score</div>
+                  <div className="text-base font-black text-gray-900 mt-1">{topPrediction?.riskScore || 0}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Credibility Scoring</h3>
+                  <p className="text-sm text-gray-500">ต้นแบบคะแนนความน่าเชื่อถือของผู้แจ้ง</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <Search className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {credibilityScoring.map(user => (
+                  <div key={user.userId} className={`rounded-2xl border p-4 ${user.meta.bg}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-gray-900">{user.userName}</div>
+                        <div className="text-xs text-gray-500">บ้านเลขที่ {user.houseNo} • แจ้งทั้งหมด {user.totalReports} เคส</div>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold bg-white border ${user.meta.text}`}>
+                        {user.meta.label}
+                      </div>
+                    </div>
+                    <div className="mt-3 h-3 bg-white/90 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" style={{ width: `${user.score}%` }} />
+                    </div>
+                    <div className="mt-2 text-sm text-gray-700">คะแนน {user.score}/100</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm text-gray-700">
+                เวอร์ชันต้นแบบนี้ให้คะแนนจากความครบถ้วนของข้อมูล รูปภาพ และประวัติการปิดงาน
+                หากเก็บข้อมูลแจ้งเท็จในอนาคต ระบบสามารถหักคะแนนและลด priority ได้อัตโนมัติ
+              </div>
+              <div className="mt-3 space-y-2">
+                {credibilityScoring.slice(0, 3).map(user => (
+                  <div key={user.userId} className="grid grid-cols-[1.3fr_.8fr_.8fr] items-center rounded-2xl border border-gray-100 bg-gray-50 px-4 py-2.5 text-sm">
+                    <div className="font-medium text-gray-800">{user.userName}</div>
+                    <div className="text-gray-600">รายงาน {user.totalReports} เคส • {user.meta.label}</div>
+                    <div className="text-right font-bold text-emerald-700">{user.score}/100</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Sentiment Analysis</h3>
+                  <p className="text-sm text-gray-500">วิเคราะห์ระดับความเร่งด่วนจากข้อความของผู้แจ้ง</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-pink-50 text-pink-600 border border-pink-100">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {sentimentAnalytics.slice(0, 4).map(item => (
+                  <div key={item.id} className={`rounded-2xl border p-4 ${item.sentimentMeta.bg}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-gray-900">{item.title}</div>
+                        <div className="text-xs text-gray-500 mt-1">{item.location}</div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white border ${item.sentimentMeta.text}`}>
+                        {item.sentimentMeta.label}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-3 line-clamp-2">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+              {topEmotionalCase && (
+                <div className="mt-4 p-3 rounded-2xl bg-pink-50 border border-pink-100 text-sm text-pink-900">
+                  เคสที่มีความตึงเครียดสูงสุดตอนนี้คือ <span className="font-bold">{topEmotionalCase.title}</span>
+                  ระบบจึงสามารถช่วยให้เจ้าหน้าที่จัดลำดับตอบสนองเคสที่กระทบความรู้สึกประชาชนก่อน
+                </div>
+              )}
+              <div className="mt-3 space-y-2">
+                {sentimentAnalytics.slice(0, 3).map(item => (
+                  <div key={item.id} className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-2.5">
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-800 line-clamp-1">{item.title}</div>
+                      <div className="text-xs text-gray-500">{item.location}</div>
+                    </div>
+                    <div className="ml-3 flex items-center gap-2">
+                      <div className="text-xs font-bold text-gray-500">S{item.sentimentScore}</div>
+                      <div className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold border ${item.sentimentMeta.bg} ${item.sentimentMeta.text}`}>
+                        {item.sentimentMeta.label}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 xl:col-span-2">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Priority Queue และแผนปฏิบัติการ</h3>
+                  <p className="text-sm text-gray-500">จัดลำดับคิวงานจากสถานะ จุดเสี่ยง ระดับอารมณ์ และความน่าเชื่อถือของข้อมูล</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-50 text-slate-700 border border-slate-100">
+                  <Bell className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                  <div className="text-xs text-amber-700">Maintenance Focus</div>
+                  <div className="font-bold text-gray-900 mt-1">{topPrediction?.location || '-'}</div>
+                  <div className="text-sm text-gray-700 mt-1">{topPrediction?.category || '-'} • Score {topPrediction?.riskScore || 0}</div>
+                </div>
+                <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+                  <div className="text-xs text-indigo-700">Budget Focus</div>
+                  <div className="font-bold text-gray-900 mt-1">{topIssueCategory?.category || '-'}</div>
+                  <div className="text-sm text-gray-700 mt-1">{budgetRecommendations[0]?.percent || 0}% ของรายการทั้งหมด</div>
+                </div>
+                <div className="rounded-2xl border border-pink-100 bg-pink-50 p-4">
+                  <div className="text-xs text-pink-700">Urgency Focus</div>
+                  <div className="font-bold text-gray-900 mt-1 line-clamp-1">{priorityQueue[0]?.title || '-'}</div>
+                  <div className="text-sm text-gray-700 mt-1">Priority {priorityQueue[0]?.priorityScore || 0}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                {priorityQueue.map(item => (
+                  <div key={item.id} className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-bold text-gray-900 line-clamp-1">{item.title}</div>
+                      <span className="text-xs font-bold text-slate-600">P{item.priorityScore}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">{item.location} • {item.category}</div>
+                    <p className="text-sm text-gray-700 mt-2 line-clamp-2">{item.description}</p>
+                    <div className="mt-3 flex items-center justify-between text-xs">
+                      <span className="rounded-full bg-white px-2.5 py-1 font-bold text-gray-600 border border-gray-200">{item.lane}</span>
+                      <span className="text-gray-500">สถานะ {item.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
