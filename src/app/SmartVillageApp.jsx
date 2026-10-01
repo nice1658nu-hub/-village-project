@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   CircleMarker,
   LayersControl,
@@ -2206,82 +2206,6 @@ function CitizenFeedback({ incident, onSaved }) {
   );
 }
 
-function LiveCameraModal({ open, onClose, onCapture }) {
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const [cameraError, setCameraError] = useState("");
-
-  useEffect(() => {
-    if (!open) return undefined;
-    let active = true;
-    setCameraError("");
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError("อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดกล้องจากเว็บไซต์");
-      return undefined;
-    }
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false })
-      .then((stream) => {
-        if (!active) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      })
-      .catch(() => setCameraError("เปิดกล้องไม่ได้ กรุณาอนุญาตสิทธิ์กล้องในเบราว์เซอร์"));
-
-    return () => {
-      active = false;
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    };
-  }, [open]);
-
-  if (!open) return null;
-
-  const takePhoto = () => {
-    const video = videoRef.current;
-    if (!video?.videoWidth) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        onCapture(new File([blob], `incident-${Date.now()}.jpg`, { type: "image/jpeg" }));
-        onClose();
-      },
-      "image/jpeg",
-      0.9,
-    );
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-3">
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-black text-white shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="font-bold">ถ่ายรูปเหตุการณ์ปัจจุบัน</div>
-          <button type="button" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-full bg-white/15" aria-label="ปิดกล้อง">
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-        {cameraError ? (
-          <div className="m-4 rounded-xl bg-red-950/70 p-5 text-center text-sm text-red-100">{cameraError}</div>
-        ) : (
-          <video ref={videoRef} autoPlay playsInline muted className="aspect-[3/4] max-h-[70dvh] w-full bg-black object-cover sm:aspect-video" />
-        )}
-        <div className="flex justify-center p-5">
-          <button type="button" disabled={Boolean(cameraError)} onClick={takePhoto} className="flex min-h-14 items-center gap-2 rounded-full bg-white px-7 py-3 font-bold text-blue-700 disabled:opacity-40">
-            <Camera className="h-6 w-6" /> ถ่ายภาพนี้
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function UserDashboard({
   activeTab,
   setActiveTab,
@@ -2302,13 +2226,20 @@ function UserDashboard({
   const [location, setLocation] = useState("");
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [cameraOpen, setCameraOpen] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
 
-  const handleCameraCapture = (file) => {
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert("รูปภาพต้องมีขนาดไม่เกิน 10MB");
+      event.target.value = "";
+      return;
+    }
     if (image) URL.revokeObjectURL(image);
     setImageFile(file);
     setImage(URL.createObjectURL(file));
+    event.target.value = "";
   };
 
   const submitReport = async (e) => {
@@ -2573,7 +2504,7 @@ function UserDashboard({
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     แนบรูปภาพประกอบ (ถ้ามี)
                   </label>
-                  <button type="button" onClick={() => setCameraOpen(true)} className="group relative mt-1 flex h-40 w-full cursor-pointer justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 px-6 pb-6 pt-5 transition hover:bg-gray-50">
+                  <div className="relative mt-1 flex h-40 w-full justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
                     {image ? (
                       <div className="absolute inset-0 w-full h-full">
                         <img
@@ -2581,27 +2512,29 @@ function UserDashboard({
                           alt="preview"
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                          <span className="text-white font-bold flex items-center gap-2">
-                            <Camera className="w-5 h-5" /> ถ่ายรูปใหม่
-                          </span>
-                        </div>
                       </div>
                     ) : (
                       <div className="space-y-2 text-center flex flex-col items-center justify-center h-full">
-                        <Camera className="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-500 transition" />
+                        <Camera className="mx-auto h-12 w-12 text-gray-400" />
                         <div className="text-sm text-gray-600">
-                          <span className="text-blue-600 font-bold">
-                            เปิดกล้องถ่ายรูป
-                          </span>{" "}
-                          จากเหตุการณ์จริง
+                          เลือกถ่ายภาพใหม่ หรือเลือกรูปจากแกลเลอรี
                         </div>
                         <p className="text-xs text-gray-500">
-                          ใช้กล้องโทรศัพท์เท่านั้น
+                          PNG, JPG ไม่เกิน 10MB
                         </p>
                       </div>
                     )}
-                  </button>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-bold text-white shadow-sm active:bg-blue-700">
+                      <Camera className="h-5 w-5 shrink-0" /> ถ่ายรูป
+                      <input type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="sr-only" />
+                    </label>
+                    <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-3 text-center text-sm font-bold text-blue-700 active:bg-blue-100">
+                      <Image className="h-5 w-5 shrink-0" /> เลือกจากแกลเลอรี
+                      <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2924,11 +2857,6 @@ function UserDashboard({
           </div>
         </div>
       )}
-      <LiveCameraModal
-        open={cameraOpen}
-        onClose={() => setCameraOpen(false)}
-        onCapture={handleCameraCapture}
-      />
     </div>
   );
 }
