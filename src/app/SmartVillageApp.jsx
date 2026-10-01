@@ -1656,7 +1656,7 @@ function Sidebar({
               : `ประชาชน · หมู่ ${currentUser?.villageMoo || "-"}`}
         </div>
       </div>
-      <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+      <div className="hide-scrollbar flex-1 py-6 px-4 space-y-2 overflow-y-auto">
         <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
           {isTaoRole(currentUser?.role)
             ? "เมนู อบต."
