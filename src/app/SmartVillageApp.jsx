@@ -4717,8 +4717,9 @@ function AdminReports({ incidents }) {
   );
 }
 
-function DateRangePicker({ from, to, onChange, label = "ช่วงวันที่" }) {
+function DateRangePicker({ from, to, onChange, label = "วันที่ / ช่วงวันที่" }) {
   const [open, setOpen] = useState(false);
+  const [selectingEnd, setSelectingEnd] = useState(false);
   const initialDate = from ? new Date(`${from}T12:00:00`) : new Date();
   const [viewMonth, setViewMonth] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
   const toKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -4729,12 +4730,14 @@ function DateRangePicker({ from, to, onChange, label = "ช่วงวันท
   const selectDay = (day) => {
     const selected = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
     const key = toKey(selected);
-    if (!from || to) {
-      onChange(key, "");
+    if (!selectingEnd || !from) {
+      onChange(key, key);
+      setSelectingEnd(true);
       return;
     }
     if (selected < fromDate) onChange(key, from);
     else onChange(from, key);
+    setSelectingEnd(false);
   };
   const displayDate = (value) => value
     ? new Date(`${value}T12:00:00`).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
@@ -4745,11 +4748,18 @@ function DateRangePicker({ from, to, onChange, label = "ช่วงวันท
       <label className="mb-1.5 block text-sm font-bold text-inherit">{label}</label>
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setSelectingEnd(false);
+          setOpen((value) => !value);
+        }}
         className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-left text-sm font-bold text-slate-800 shadow-sm"
       >
         <span className={from ? "text-slate-900" : "text-slate-400"}>
-          {from ? `${displayDate(from)}${to ? ` – ${displayDate(to)}` : " – เลือกวันสิ้นสุด"}` : "เลือกช่วงวันที่"}
+          {from
+            ? to && to !== from
+              ? `${displayDate(from)} – ${displayDate(to)}`
+              : displayDate(from)
+            : "เลือกวันที่หรือช่วงวันที่"}
         </span>
         <Calendar className="h-5 w-5 shrink-0 text-slate-500" />
       </button>
@@ -4778,8 +4788,11 @@ function DateRangePicker({ from, to, onChange, label = "ช่วงวันท
             })}
           </div>
           <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <button type="button" onClick={() => onChange("", "")} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600">ล้างวันที่</button>
-            <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white">ตกลง</button>
+            <button type="button" onClick={() => { onChange("", ""); setSelectingEnd(false); }} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600">ล้างวันที่</button>
+            <div className="flex items-center gap-3">
+              {selectingEnd && from && <span className="text-xs font-bold text-blue-600">กดอีกวันเพื่อเลือกเป็นช่วง</span>}
+              <button type="button" onClick={() => { setSelectingEnd(false); setOpen(false); }} className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white">ตกลง</button>
+            </div>
           </div>
         </div>
       )}
