@@ -32,17 +32,36 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
             'account_status' => 'approved',
             'approved_at' => now(),
-            'password' => 'admin1234',
+            'password' => 'Admin@69',
         ]);
-        User::updateOrCreate(['phone' => 'staff'], [
-            'name' => 'ผู้ประสานงานบ้านไผ่ถ้ำ',
-            'house_no' => '-',
-            'email' => 'staff@smartvillage.local',
-            'role' => 'staff',
-            'village_id' => Village::where('moo', 5)->value('id'),
-            'account_status' => 'approved',
-            'approved_at' => now(),
-            'password' => 'staff1234',
-        ]);
+
+        // Preserve any records linked to the original demo staff account by
+        // promoting it to the permanent Village05 account before upserting all
+        // village administrators.
+        $legacyStaff = User::where('phone', 'staff')->first();
+        if ($legacyStaff && ! User::where('phone', 'Village05')->exists()) {
+            $legacyStaff->phone = 'Village05';
+            $legacyStaff->save();
+        } elseif ($legacyStaff) {
+            $legacyStaff->phone = 'legacy-staff-'.$legacyStaff->id;
+            $legacyStaff->account_status = 'rejected';
+            $legacyStaff->password = bin2hex(random_bytes(24));
+            $legacyStaff->save();
+        }
+
+        foreach (array_keys($villages) as $moo) {
+            $number = str_pad((string) $moo, 2, '0', STR_PAD_LEFT);
+
+            User::updateOrCreate(['phone' => 'Village'.$number], [
+                'name' => 'ผู้ประสานงานหมู่ '.$moo,
+                'house_no' => '-',
+                'email' => 'village'.$number.'@smartvillage.local',
+                'role' => 'staff',
+                'village_id' => Village::where('moo', $moo)->value('id'),
+                'account_status' => 'approved',
+                'approved_at' => now(),
+                'password' => 'Moo'.$number.'@69',
+            ]);
+        }
     }
 }
