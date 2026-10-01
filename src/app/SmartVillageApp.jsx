@@ -2583,6 +2583,21 @@ function UserDashboard({
                   key={inc.id}
                   className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col md:flex-row gap-5 hover:shadow-md transition"
                 >
+                  <div className="md:hidden">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <StatusBadge status={inc.status} />
+                        <h3 className="mt-3 text-lg font-black text-gray-900">{inc.title}</h3>
+                        <p className="mt-1 text-sm font-medium text-blue-600">{inc.category}</p>
+                      </div>
+                      {inc.status === "pending" && (
+                        <button onClick={() => handleDeleteIncident(inc.id)} className="shrink-0 rounded-lg p-2 text-red-500 hover:bg-red-50" title="ยกเลิกการแจ้งเหตุ (ลบ)">
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-gray-600">{inc.description}</p>
+                  </div>
                   <button
                     type="button"
                     onClick={() =>
@@ -2612,7 +2627,7 @@ function UserDashboard({
                         ไม่มีรูปก่อนแก้ไข
                       </span>
                     )}
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 left-2 hidden md:block">
                       <StatusBadge status={inc.status} />
                     </div>
                     {inc.image && (
@@ -2623,7 +2638,7 @@ function UserDashboard({
                   </button>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <div className="flex justify-between items-start">
+                      <div className="hidden justify-between items-start md:flex">
                         <h3 className="text-lg font-bold text-gray-900 mb-1">
                           {inc.title}
                         </h3>
@@ -2637,10 +2652,10 @@ function UserDashboard({
                           </button>
                         )}
                       </div>
-                      <p className="text-sm text-blue-600 font-medium mb-2">
+                      <p className="mb-2 hidden text-sm font-medium text-blue-600 md:block">
                         {inc.category}
                       </p>
-                      <p className="text-gray-600 text-sm line-clamp-2">
+                      <p className="hidden text-sm text-gray-600 line-clamp-2 md:block">
                         {inc.description}
                       </p>
                       {inc.budgetRequest && (
@@ -2697,18 +2712,6 @@ function UserDashboard({
                         <Camera className="w-4 h-4" /> ดูรูปหลังแก้ไข /
                         ซ่อมเสร็จ
                       </button>
-                    )}
-                    {inc.status === "resolved" && (
-                      <CitizenFeedback
-                        incident={inc}
-                        onSaved={(feedback) =>
-                          setIncidents((items) =>
-                            items.map((item) =>
-                              item.id === inc.id ? { ...item, feedback } : item,
-                            ),
-                          )
-                        }
-                      />
                     )}
                     <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
@@ -2783,6 +2786,18 @@ function UserDashboard({
                             ))}
                         </div>
                       </details>
+                    )}
+                    {inc.status === "resolved" && (
+                      <CitizenFeedback
+                        incident={inc}
+                        onSaved={(feedback) =>
+                          setIncidents((items) =>
+                            items.map((item) =>
+                              item.id === inc.id ? { ...item, feedback } : item,
+                            ),
+                          )
+                        }
+                      />
                     )}
                   </div>
                 </div>
