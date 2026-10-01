@@ -29,7 +29,10 @@ return [
     ],
 
     'firebase' => [
-        'credentials' => env('FIREBASE_CREDENTIALS'),
+        // Use the conventional private storage location by default so production
+        // push notifications do not silently stop when the optional env value is
+        // absent. The JSON file is uploaded separately and is never committed.
+        'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase/service-account.json')),
     ],
 
     'slack' => [

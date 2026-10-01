@@ -2228,6 +2228,7 @@ function UserDashboard({
   const [imageFile, setImageFile] = useState(null);
   const [showImageSource, setShowImageSource] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [historyStatus, setHistoryStatus] = useState("all");
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -2323,6 +2324,27 @@ function UserDashboard({
   };
 
   const myIncidents = incidents.filter((i) => i.userId === currentUser.id);
+  const historyFilters = [
+    { id: "all", label: "ทั้งหมด", count: myIncidents.length },
+    {
+      id: "pending",
+      label: "รอรับเรื่อง",
+      count: myIncidents.filter((incident) => incident.status === "pending").length,
+    },
+    {
+      id: "in_progress",
+      label: "กำลังดำเนินการ",
+      count: myIncidents.filter((incident) => incident.status === "in_progress").length,
+    },
+    {
+      id: "resolved",
+      label: "แก้ไขเสร็จ",
+      count: myIncidents.filter((incident) => incident.status === "resolved").length,
+    },
+  ];
+  const filteredMyIncidents = historyStatus === "all"
+    ? myIncidents
+    : myIncidents.filter((incident) => incident.status === historyStatus);
   const activeIncidentCount = myIncidents.filter(
     (incident) => !["resolved", "rejected", "cancelled"].includes(incident.status),
   ).length;
@@ -2558,6 +2580,35 @@ function UserDashboard({
             </h2>
           </div>
 
+          {myIncidents.length > 0 && (
+            <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-w-max gap-2" role="tablist" aria-label="กรองประวัติการแจ้งเหตุ">
+                {historyFilters.map((filter) => {
+                  const active = historyStatus === filter.id;
+                  return (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setHistoryStatus(filter.id)}
+                      className={`flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
+                        active
+                          ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-100"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600"
+                      }`}
+                    >
+                      <span>{filter.label}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
+                        {filter.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {myIncidents.length === 0 ? (
             <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center shadow-sm">
               <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -2576,9 +2627,21 @@ function UserDashboard({
                 ไปที่หน้าแจ้งเหตุ
               </button>
             </div>
+          ) : filteredMyIncidents.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center shadow-sm">
+              <FileText className="mx-auto h-10 w-10 text-slate-300" />
+              <p className="mt-3 font-bold text-slate-700">ไม่มีรายการในสถานะนี้</p>
+              <button
+                type="button"
+                onClick={() => setHistoryStatus("all")}
+                className="mt-3 font-bold text-blue-600"
+              >
+                ดูรายการทั้งหมด
+              </button>
+            </div>
           ) : (
             <div className="grid gap-4">
-              {myIncidents.map((inc) => (
+              {filteredMyIncidents.map((inc) => (
                 <div
                   key={inc.id}
                   className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col md:flex-row gap-5 hover:shadow-md transition"
