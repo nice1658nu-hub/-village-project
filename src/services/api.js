@@ -73,7 +73,13 @@ export const api = {
   forwardIncidentToTao: (id, note = null) => request(`/incidents/${id}/forward-to-tao`, { method: 'PATCH', body: JSON.stringify({ note }) }),
   saveIncidentBudget: (id, payload) => request(`/incidents/${id}/budget`, { method: 'PUT', body: JSON.stringify(payload) }),
   reviewIncidentBudget: (id, payload) => request(`/incidents/${id}/budget/review`, { method: 'PATCH', body: JSON.stringify(payload) }),
-  recordBudgetActual: (id, payload) => request(`/incidents/${id}/budget/actual`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  recordBudgetActual: (id, payload) => {
+    if (payload instanceof FormData) {
+      payload.append('_method', 'PATCH');
+      return request(`/incidents/${id}/budget/actual`, { method: 'POST', body: payload });
+    }
+    return request(`/incidents/${id}/budget/actual`, { method: 'PATCH', body: JSON.stringify(payload) });
+  },
   updateProject: (id, payload) => {
     if (payload instanceof FormData) {
       payload.append('_method', 'PATCH');

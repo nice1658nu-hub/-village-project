@@ -4850,6 +4850,9 @@ function SimpleAnalyticsDashboard({
     (sum, item) => sum + Number(item.budgetRequest?.actual_amount || 0),
     0,
   );
+  const hasActualBudget = budgetRequests.some(
+    (item) => item.budgetRequest?.actual_amount !== null && item.budgetRequest?.actual_amount !== undefined,
+  );
   const activeProjects = budgetRequests.filter((item) =>
     ["planned", "in_progress", "waiting_review"].includes(
       item.budgetRequest?.project_status,
@@ -5009,7 +5012,7 @@ function SimpleAnalyticsDashboard({
             ["รอพิจารณา", `${submittedBudgetCount} เรื่อง`, "text-amber-700"],
             ["ยอดที่เสนอ", formatMoney(proposedBudget), "text-blue-700"],
             ["ยอดอนุมัติ", formatMoney(approvedBudget), "text-emerald-700"],
-            ["ยอดใช้จริง", formatMoney(actualBudget), "text-violet-700"],
+            ["ยอดใช้จริง", hasActualBudget ? formatMoney(actualBudget) : "ยังไม่บันทึก", "text-violet-700"],
           ].map(([label, value, tone]) => (
             <div key={label} className="rounded-2xl bg-slate-50 p-4">
               <div className={`text-xl font-black ${tone}`}>{value}</div>
@@ -5017,11 +5020,16 @@ function SimpleAnalyticsDashboard({
             </div>
           ))}
         </div>
-        {approvedBudget > 0 && (
+        {approvedBudget > 0 && hasActualBudget && (
           <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
             ใช้งบแล้ว <b>{formatMoney(actualBudget)}</b> จากยอดอนุมัติ{" "}
             <b>{formatMoney(approvedBudget)}</b> · คงเหลือ{" "}
             <b>{formatMoney(Math.max(0, approvedBudget - actualBudget))}</b>
+          </div>
+        )}
+        {approvedBudget > 0 && !hasActualBudget && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">
+            ยังไม่มีการบันทึกค่าใช้จ่ายจริง กรุณาเปิดเมนูข้อเสนอโครงการ เลือกโครงการที่อนุมัติแล้ว และบันทึกยอดพร้อมหลักฐาน
           </div>
         )}
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -7534,6 +7542,11 @@ function VillageBudgetWorkspace({ incidents, setIncidents }) {
     urgency: "normal",
     estimated_amount: "",
   });
+  const [expenseForm, setExpenseForm] = useState({
+    actual_amount: "",
+    document_reference: "",
+  });
+  const [expenseEvidence, setExpenseEvidence] = useState(null);
   const [saving, setSaving] = useState(false);
   const selected = incidents.find((item) => item.id === selectedId) || null;
   const candidates = incidents.filter((item) => {
@@ -7574,6 +7587,11 @@ function VillageBudgetWorkspace({ incidents, setIncidents }) {
       urgency: item.budgetRequest?.urgency || "normal",
       estimated_amount: item.budgetRequest?.estimated_amount || "",
     });
+    setExpenseForm({
+      actual_amount: item.budgetRequest?.actual_amount ?? "",
+      document_reference: item.budgetRequest?.document_reference || "",
+    });
+    setExpenseEvidence(null);
   };
   const submitBudget = async (event) => {
     event.preventDefault();
@@ -7604,6 +7622,45 @@ function VillageBudgetWorkspace({ incidents, setIncidents }) {
       alert("ส่งข้อเสนอโครงการให้ อบต.พิจารณาแล้ว");
     } catch (error) {
       alert(error?.message || "ส่งคำของบประมาณไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveActualExpense = async (event) => {
+    event.preventDefault();
+    const actual = Number(expenseForm.actual_amount);
+    const approved = Number(selected?.budgetRequest?.approved_amount || 0);
+    if (expenseForm.actual_amount === "" || actual < 0)
+      return alert("กรุณาระบุยอดใช้จริง");
+    if (actual > approved)
+      return alert("ยอดใช้จริงเกินวงเงินอนุมัติ กรุณาติดต่อ อบต.");
+    if (!expenseEvidence && !expenseForm.document_reference.trim() && !selected?.budgetRequest?.evidence_url)
+      return alert("กรุณาแนบหลักฐานหรือระบุเลขที่เอกสาร");
+
+    const payload = new FormData();
+    payload.append("actual_amount", String(actual));
+    if (expenseForm.document_reference.trim())
+      payload.append("document_reference", expenseForm.document_reference.trim());
+    if (expenseEvidence) payload.append("evidence", expenseEvidence);
+
+    setSaving(true);
+    try {
+      const updated = normalizeIncident(
+        await api.recordBudgetActual(selected.id, payload),
+      );
+      setIncidents((items) =>
+        items.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setSelectedId(updated.id);
+      setExpenseEvidence(null);
+      setExpenseForm({
+        actual_amount: updated.budgetRequest?.actual_amount ?? "",
+        document_reference: updated.budgetRequest?.document_reference || "",
+      });
+      alert("บันทึกยอดใช้จริงและหลักฐานแล้ว");
+    } catch (error) {
+      alert(error?.message || "บันทึกค่าใช้จ่ายจริงไม่สำเร็จ");
     } finally {
       setSaving(false);
     }
@@ -7793,6 +7850,68 @@ function VillageBudgetWorkspace({ incidents, setIncidents }) {
                     </div>
                   </dl>
                 </div>
+              )}
+
+              {request.status === "approved" && (
+                <form onSubmit={saveActualExpense} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+                  <h3 className="font-black text-emerald-950">
+                    บันทึกค่าใช้จ่ายจริงของหมู่บ้าน
+                  </h3>
+                  <p className="mt-1 text-sm text-emerald-800">
+                    กรอกยอดที่จ่ายจริงและแนบใบเสร็จหรือหลักฐาน ระบบจะคำนวณเงินคงเหลือจากวงเงินอนุมัติ
+                  </p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <label className="text-sm font-bold text-slate-700">
+                      ยอดใช้จริง (บาท)
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={expenseForm.actual_amount}
+                        onChange={(event) => setExpenseForm({ ...expenseForm, actual_amount: event.target.value })}
+                        className="mt-1.5 w-full rounded-xl border border-emerald-200 bg-white p-3 font-normal outline-none focus:border-emerald-500"
+                        placeholder="เช่น 2500"
+                      />
+                    </label>
+                    <label className="text-sm font-bold text-slate-700">
+                      เลขที่ใบเสร็จ/เอกสาร (ถ้ามี)
+                      <input
+                        value={expenseForm.document_reference}
+                        onChange={(event) => setExpenseForm({ ...expenseForm, document_reference: event.target.value })}
+                        className="mt-1.5 w-full rounded-xl border border-emerald-200 bg-white p-3 font-normal outline-none focus:border-emerald-500"
+                        placeholder="เช่น INV-2569-001"
+                      />
+                    </label>
+                    <label className="text-sm font-bold text-slate-700 sm:col-span-2">
+                      แนบใบเสร็จหรือหลักฐาน (รูปภาพ/PDF ไม่เกิน 10MB)
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                        onChange={(event) => setExpenseEvidence(event.target.files?.[0] || null)}
+                        className="mt-1.5 w-full rounded-xl border border-emerald-200 bg-white p-3 font-normal"
+                      />
+                    </label>
+                  </div>
+                  {expenseForm.actual_amount !== "" && (
+                    <div className={`mt-4 rounded-xl px-4 py-3 text-sm font-bold ${Number(expenseForm.actual_amount) <= Number(request.approved_amount || 0) ? "bg-white text-emerald-800" : "bg-red-100 text-red-700"}`}>
+                      {Number(expenseForm.actual_amount) <= Number(request.approved_amount || 0)
+                        ? `เงินคงเหลือ ${Math.max(0, Number(request.approved_amount || 0) - Number(expenseForm.actual_amount || 0)).toLocaleString("th-TH")} บาท`
+                        : `เกินวงเงินอนุมัติ ${(Number(expenseForm.actual_amount) - Number(request.approved_amount || 0)).toLocaleString("th-TH")} บาท`}
+                    </div>
+                  )}
+                  {request.evidence_url && (
+                    <a href={normalizeMediaUrl(request.evidence_url)} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-bold text-blue-700 underline">
+                      ดูหลักฐานที่บันทึกไว้
+                    </a>
+                  )}
+                  <button
+                    disabled={saving}
+                    className="mt-4 w-full rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white disabled:opacity-50 sm:w-auto"
+                  >
+                    {saving ? "กำลังบันทึก..." : "บันทึกยอดใช้จริง"}
+                  </button>
+                </form>
               )}
             </div>
           )}

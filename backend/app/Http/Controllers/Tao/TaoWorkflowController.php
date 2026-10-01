@@ -155,9 +155,23 @@ class TaoWorkflowController extends Controller
         abort_unless($user->isTao() || ($user->isVillageAdmin() && $user->village_id === $incident->village_id), 403);
         $budget = $incident->budgetRequest;
         abort_unless($budget && $budget->status === 'approved', 409, 'Budget must be approved first.');
-        $data = $request->validate(['actual_amount' => ['required', 'numeric', 'min:0', 'max:9999999999.99'], 'document_reference' => ['nullable', 'string', 'max:255']]);
+        $data = $request->validate([
+            'actual_amount' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
+            'document_reference' => ['nullable', 'string', 'max:255'],
+            'evidence' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:10240'],
+        ]);
+        abort_if((float) $data['actual_amount'] > (float) $budget->approved_amount, 422, 'ค่าใช้จ่ายจริงเกินวงเงินอนุมัติ กรุณาติดต่อ อบต.');
+        if ($request->hasFile('evidence')) {
+            $path = $request->file('evidence')->store('project-evidence', 'public');
+            $data['evidence_url'] = Storage::disk('public')->url($path);
+        }
+        abort_if(empty($data['document_reference'] ?? null) && empty($data['evidence_url'] ?? null) && empty($budget->evidence_url), 422, 'กรุณาแนบหลักฐานหรือระบุเลขที่เอกสาร');
         $old = $budget->toArray();
-        $budget->update(['actual_amount' => $data['actual_amount'], 'document_reference' => $data['document_reference'] ?? $budget->document_reference, 'status' => 'completed']);
+        $budget->update([
+            'actual_amount' => $data['actual_amount'],
+            'document_reference' => $data['document_reference'] ?? $budget->document_reference,
+            'evidence_url' => $data['evidence_url'] ?? $budget->evidence_url,
+        ]);
         $this->audit($request, 'budget.actual_recorded', $budget, $old, $budget->fresh()->toArray());
         return response()->json($this->load($incident));
     }
