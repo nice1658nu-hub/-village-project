@@ -114,6 +114,9 @@ export const api = {
     body: JSON.stringify(payload),
   }),
   getNotifications: () => request('/notifications'),
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, {
+    method: 'PATCH',
+  }),
 };
 
 export { API_BASE_URL };

@@ -9,10 +9,19 @@ if (encodedConfig) {
     firebase.initializeApp(JSON.parse(atob(decodeURIComponent(encodedConfig))));
     firebase.messaging().onBackgroundMessage(payload => {
       const title = payload.notification?.title || payload.data?.title || 'SmartVillage';
+      const data = { ...(payload.data || {}) };
+      const params = new URLSearchParams();
+      if (data.type) params.set('notification_type', data.type);
+      if (data.notification_id) params.set('notification_id', data.notification_id);
+      if (data.incident_id) params.set('incident_id', data.incident_id);
+      if (data.user_id) params.set('user_id', data.user_id);
+      if (data.project_id) params.set('project_id', data.project_id);
+      data.targetUrl = `/${params.toString() ? `?${params.toString()}` : ''}`;
       self.registration.showNotification(title, {
         body: payload.notification?.body || payload.data?.description || 'มีการอัปเดตใหม่',
         icon: '/favicon.ico',
-        data: payload.data || {},
+        badge: '/favicon.ico',
+        data,
       });
     });
   } catch (error) {
@@ -22,8 +31,10 @@ if (encodedConfig) {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const targetUrl = new URL(event.notification.data?.targetUrl || '/', self.location.origin).href;
   event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
-    const existing = windows.find(client => 'focus' in client);
-    return existing ? existing.focus() : clients.openWindow('/');
+    const existing = windows.find(client => 'focus' in client && 'navigate' in client);
+    if (existing) return existing.navigate(targetUrl).then(client => client.focus());
+    return clients.openWindow(targetUrl);
   }));
 });

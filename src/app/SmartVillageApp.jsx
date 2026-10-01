@@ -160,6 +160,32 @@ const normalizeNotification = (item) => {
   };
 };
 
+const getNotificationTargetTab = (role, notification = {}) => {
+  const type = notification.type || notification.data?.type || "";
+
+  if (isTaoRole(role)) {
+    if (["budget", "project", "project_status"].includes(type))
+      return "tao_budget";
+    if (type.includes("incident") || ["assignment", "revision", "review"].includes(type))
+      return "tao_forwarded";
+    return "tao_overview";
+  }
+
+  if (isVillageAdminRole(role)) {
+    if (type === "user_registration") return "users";
+    if (["budget", "project", "project_status"].includes(type)) return "budgets";
+    if (type === "news") return "news";
+    if (type.includes("incident") || ["assignment", "revision", "review"].includes(type))
+      return "incidents";
+    return "stats";
+  }
+
+  if (type === "news") return "news";
+  if (type.includes("incident") || ["assignment", "revision", "review"].includes(type))
+    return "history";
+  return "news";
+};
+
 const formatThaiDateTime = (value) => {
   if (!value) return "-";
   const date = new Date(value);
@@ -262,6 +288,31 @@ export default function App() {
       if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser || currentView !== "dashboard") return;
+    const params = new URLSearchParams(window.location.search);
+    const notificationType = params.get("notification_type");
+    if (!notificationType) return;
+
+    setActiveTab(
+      getNotificationTargetTab(currentUser.role, {
+        type: notificationType,
+        data: {
+          incident_id: params.get("incident_id"),
+          user_id: params.get("user_id"),
+          project_id: params.get("project_id"),
+        },
+      }),
+    );
+    params.delete("notification_type");
+    params.delete("notification_id");
+    params.delete("incident_id");
+    params.delete("user_id");
+    params.delete("project_id");
+    const query = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+  }, [currentUser, currentView]);
 
   useEffect(() => {
     if (!currentUser || !api.hasSession()) return undefined;
@@ -468,6 +519,7 @@ export default function App() {
           onLogout={handleLogout}
           notifications={notifications}
           setNotifications={setNotifications}
+          setActiveTab={setActiveTab}
           toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <main className="app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-7">
@@ -1706,6 +1758,7 @@ function Topbar({
   onLogout,
   notifications,
   setNotifications,
+  setActiveTab,
   toggleSidebar,
 }) {
   const [showNotif, setShowNotif] = useState(false);
@@ -1729,6 +1782,19 @@ function Topbar({
 
   const markAllRead = () => {
     setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+  };
+
+  const openNotification = (notification) => {
+    setNotifications((items) =>
+      items.map((item) =>
+        item.id === notification.id ? { ...item, isRead: true } : item,
+      ),
+    );
+    if (notification.id && !String(notification.id).startsWith("firebase-")) {
+      api.markNotificationRead(notification.id).catch(() => null);
+    }
+    setActiveTab(getNotificationTargetTab(currentUser?.role, notification));
+    setShowNotif(false);
   };
 
   const openAccount = () => {
@@ -1841,9 +1907,11 @@ function Topbar({
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div
+                    <button
+                      type="button"
                       key={notif.id}
-                      className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer ${notif.isRead ? "opacity-60" : "bg-blue-50/30"}`}
+                      onClick={() => openNotification(notif)}
+                      className={`block w-full p-4 border-b border-gray-50 text-left hover:bg-gray-50 transition cursor-pointer ${notif.isRead ? "opacity-60" : "bg-blue-50/30"}`}
                     >
                       <div className="flex justify-between items-start mb-1">
                         <h4
@@ -1861,7 +1929,7 @@ function Topbar({
                       <span className="text-[10px] text-gray-400 mt-2 block">
                         {notif.time}
                       </span>
-                    </div>
+                    </button>
                   ))
                 )}
               </div>
