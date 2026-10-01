@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\BudgetRequest;
 use App\Models\Incident;
+use App\Models\User;
 use App\Models\VillageNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -171,8 +172,23 @@ class TaoWorkflowController extends Controller
             'actual_amount' => $data['actual_amount'],
             'document_reference' => $data['document_reference'] ?? $budget->document_reference,
             'evidence_url' => $data['evidence_url'] ?? $budget->evidence_url,
+            'progress_percent' => 100,
+            'project_status' => 'waiting_review',
         ]);
         $this->audit($request, 'budget.actual_recorded', $budget, $old, $budget->fresh()->toArray());
+
+        $remaining = max(0, (float) $budget->approved_amount - (float) $data['actual_amount']);
+        User::query()
+            ->whereIn('role', ['tao', 'admin'])
+            ->where('account_status', 'approved')
+            ->pluck('id')
+            ->each(fn ($taoId) => VillageNotification::create([
+                'user_id' => $taoId,
+                'title' => 'มีค่าใช้จ่ายโครงการรอตรวจสอบ',
+                'description' => ($budget->project_title ?: $incident->title).' · ใช้จริง '.number_format((float) $data['actual_amount'], 2).' บาท · คงเหลือ '.number_format($remaining, 2).' บาท',
+                'type' => 'project',
+                'data' => ['incident_id' => $incident->id, 'project_status' => 'waiting_review'],
+            ]));
         return response()->json($this->load($incident));
     }
 

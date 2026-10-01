@@ -4737,12 +4737,21 @@ function SimpleAnalyticsDashboard({
 }) {
   const isTao = scope === "tao";
   const [villageFilter, setVillageFilter] = useState("all");
-  const analyzedIncidents =
+  const [analysisDateFrom, setAnalysisDateFrom] = useState("");
+  const [analysisDateTo, setAnalysisDateTo] = useState("");
+  const villageIncidents =
     isTao && villageFilter !== "all"
       ? incidents.filter(
           (item) => String(item.villageId || "") === String(villageFilter),
         )
       : incidents;
+  const analyzedIncidents = villageIncidents.filter((item) => {
+    const date = new Date(item.date);
+    if (Number.isNaN(date.getTime())) return !analysisDateFrom && !analysisDateTo;
+    const from = analysisDateFrom ? new Date(`${analysisDateFrom}T00:00:00`) : null;
+    const to = analysisDateTo ? new Date(`${analysisDateTo}T23:59:59`) : null;
+    return (!from || date >= from) && (!to || date <= to);
+  });
   const selectedVillage = villages.find(
     (village) => String(village.id) === String(villageFilter),
   );
@@ -4924,6 +4933,7 @@ function SimpleAnalyticsDashboard({
             </p>
           </div>
           {isTao && (
+            <div className="grid gap-2 sm:grid-cols-3">
             <label className="text-sm font-bold text-blue-100">
               <select
                 value={villageFilter}
@@ -4938,6 +4948,18 @@ function SimpleAnalyticsDashboard({
                 ))}
               </select>
             </label>
+            <label className="text-sm font-bold text-blue-100">
+              ตั้งแต่วันที่
+              <input type="date" value={analysisDateFrom} onChange={(event) => setAnalysisDateFrom(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/20 bg-white px-3 py-3 text-slate-900" />
+            </label>
+            <label className="text-sm font-bold text-blue-100">
+              ถึงวันที่
+              <input type="date" min={analysisDateFrom || undefined} value={analysisDateTo} onChange={(event) => setAnalysisDateTo(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/20 bg-white px-3 py-3 text-slate-900" />
+            </label>
+            {(analysisDateFrom || analysisDateTo) && (
+              <button type="button" onClick={() => { setAnalysisDateFrom(""); setAnalysisDateTo(""); }} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white sm:col-span-3">ล้างช่วงวันที่</button>
+            )}
+            </div>
           )}
         </div>
       </section>
@@ -6260,6 +6282,9 @@ function TaoDashboard({
   setNews,
 }) {
   const [selectedCase, setSelectedCase] = useState(null);
+  const [taoDateFrom, setTaoDateFrom] = useState("");
+  const [taoDateTo, setTaoDateTo] = useState("");
+  const [contentDate, setContentDate] = useState("");
   const [reviewForm, setReviewForm] = useState({
     approved_amount: "",
     fiscal_year: String(new Date().getFullYear() + 543),
@@ -6313,8 +6338,17 @@ function TaoDashboard({
     (sum, item) => sum + Number(item.budgetRequest?.actual_amount || 0),
     0,
   );
+  const inTaoDateRange = (item) => {
+    const value = item.budgetRequest?.created_at || item.forwardedToTaoAt || item.date;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return !taoDateFrom && !taoDateTo;
+    const from = taoDateFrom ? new Date(`${taoDateFrom}T00:00:00`) : null;
+    const to = taoDateTo ? new Date(`${taoDateTo}T23:59:59`) : null;
+    return (!from || date >= from) && (!to || date <= to);
+  };
+  const datedIncidents = incidents.filter(inTaoDateRange);
   const villageRows = (villages || []).map((village) => {
-    const rows = incidents.filter(
+    const rows = datedIncidents.filter(
       (item) => String(item.villageId || "") === String(village.id),
     );
     const sent = rows.filter((item) => item.requiresTao || item.budgetRequest);
@@ -6452,8 +6486,15 @@ function TaoDashboard({
     }
   };
   const generalForwarded = forwarded.filter((item) => !item.budgetRequest);
-  const list = activeTab === "tao_budget" ? budgetQueue : generalForwarded;
-  const publicNews = (news || []).filter((item) => item.village_id == null);
+  const baseList = activeTab === "tao_budget" ? budgetQueue : generalForwarded;
+  const list = baseList.filter(inTaoDateRange);
+  const publicNews = (news || []).filter((item) => {
+    if (item.village_id != null) return false;
+    if (!contentDate) return true;
+    const date = new Date(item.date);
+    if (Number.isNaN(date.getTime())) return false;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` === contentDate;
+  });
   const closePublicNewsForm = () => {
     if (publicNewsImagePreview?.startsWith("blob:"))
       URL.revokeObjectURL(publicNewsImagePreview);
@@ -6546,21 +6587,6 @@ function TaoDashboard({
   };
   return (
     <div className="mx-auto max-w-7xl space-y-5 animate-fadeIn">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-950 to-slate-950 p-6 text-white shadow-xl md:p-8">
-        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="relative">
-          <div className="text-sm font-bold text-cyan-200">
-            ศูนย์ประสานงานระดับตำบล
-          </div>
-          <h2 className="mt-1 text-3xl font-black">
-            ระบบปฏิบัติการ อบต.มะต้อง
-          </h2>
-          <p className="mt-2 max-w-3xl text-slate-300">
-            รับเฉพาะเรื่องที่แอดมินหมู่บ้านส่งต่อ พิจารณาการสนับสนุนงบประมาณ
-            และติดตามผลข้ามหมู่บ้าน
-          </p>
-        </div>
-      </section>
       {activeTab === "tao_overview" && (
         <>
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -6657,6 +6683,19 @@ function TaoDashboard({
                 : "หมู่บ้านส่งเรื่องที่แก้เองไม่ได้มาให้ อบต.รับดำเนินการ อัปเดตผล และปิดเรื่อง"}
             </p>
           </div>
+          <div className="mb-5 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <label className="text-sm font-bold text-slate-700">
+              ตั้งแต่วันที่
+              <input type="date" value={taoDateFrom} onChange={(event) => setTaoDateFrom(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
+            </label>
+            <label className="text-sm font-bold text-slate-700">
+              ถึงวันที่
+              <input type="date" min={taoDateFrom || undefined} value={taoDateTo} onChange={(event) => setTaoDateTo(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
+            </label>
+            <button type="button" disabled={!taoDateFrom && !taoDateTo} onClick={() => { setTaoDateFrom(""); setTaoDateTo(""); }} className="min-h-11 rounded-xl bg-slate-200 px-4 font-bold text-slate-700 disabled:opacity-40">
+              ล้างวันที่
+            </button>
+          </div>
           <div className="grid gap-3">
             {list.map((item) => (
               <button
@@ -6672,6 +6711,9 @@ function TaoDashboard({
                   <div className="mt-1 text-lg font-black">{item.title}</div>
                   <div className="mt-1 text-sm text-slate-500">
                     {item.location} · {getStatusLabel(item.status)}
+                  </div>
+                  <div className="mt-1 text-xs font-medium text-slate-400">
+                    {activeTab === "tao_budget" ? "ยื่นคำขอ" : "ส่งต่อ"} {formatThaiDateTime(item.budgetRequest?.created_at || item.forwardedToTaoAt || item.date)} น.
                   </div>
                 </div>
                 <div className="md:text-right">
@@ -6701,6 +6743,17 @@ function TaoDashboard({
             <p className="text-sm text-slate-500">
               ใช้ติดตามจำนวนเรื่องที่ส่งต่อมายัง อบต. และวงเงินอนุมัติ
             </p>
+            <div className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+              <label className="text-sm font-bold text-slate-700">
+                ตั้งแต่วันที่
+                <input type="date" value={taoDateFrom} onChange={(event) => setTaoDateFrom(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
+              </label>
+              <label className="text-sm font-bold text-slate-700">
+                ถึงวันที่
+                <input type="date" min={taoDateFrom || undefined} value={taoDateTo} onChange={(event) => setTaoDateTo(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
+              </label>
+              <button type="button" disabled={!taoDateFrom && !taoDateTo} onClick={() => { setTaoDateFrom(""); setTaoDateTo(""); }} className="min-h-11 rounded-xl bg-slate-200 px-4 font-bold text-slate-700 disabled:opacity-40">ล้างวันที่</button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px]">
@@ -6929,6 +6982,15 @@ function TaoDashboard({
               </div>
             </form>
           )}
+          <div className="flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+            <label className="text-sm font-bold text-slate-700 sm:max-w-xs sm:flex-1">
+              เลือกวันที่เผยแพร่
+              <input type="date" value={contentDate} onChange={(event) => setContentDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal" />
+            </label>
+            {contentDate && (
+              <button type="button" onClick={() => setContentDate("")} className="min-h-11 rounded-xl bg-slate-100 px-4 font-bold text-slate-700">ล้างวันที่</button>
+            )}
+          </div>
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {publicNews.map((item) => (
               <article
@@ -6955,6 +7017,9 @@ function TaoDashboard({
                       : item.displaySection === "video"
                         ? "ส่วนที่ 3 · วิดีโอแนะนำตำบล"
                         : "ส่วนที่ 2 · ข่าวและกิจกรรม"}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-400">
+                    เผยแพร่ {formatThaiDateTime(item.date)} น.
                   </div>
                   <h4 className="mt-1 line-clamp-2 text-lg font-black">
                     {item.title}
@@ -6985,7 +7050,7 @@ function TaoDashboard({
               <div className="rounded-3xl border border-dashed bg-white p-12 text-center text-slate-500 md:col-span-2 xl:col-span-3">
                 <Image className="mx-auto mb-3 h-10 w-10 opacity-40" />
                 <div className="font-bold">
-                  ยังไม่มีข่าวหรือภาพประชาสัมพันธ์จาก อบต.
+                  {contentDate ? "ไม่มีเนื้อหาในวันที่เลือก" : "ยังไม่มีข่าวหรือภาพประชาสัมพันธ์จาก อบต."}
                 </div>
                 <div className="mt-1 text-sm">
                   กด “เพิ่มข่าวหรือกิจกรรม” เพื่อสร้างสไลด์แรก
@@ -7534,6 +7599,7 @@ function VillageOverviewDashboard({
 
 function VillageBudgetWorkspace({ incidents, setIncidents }) {
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedEvidence, setSelectedEvidence] = useState(null);
   const [filter, setFilter] = useState("all");
   const [form, setForm] = useState({
     project_title: "",
@@ -7852,7 +7918,7 @@ function VillageBudgetWorkspace({ incidents, setIncidents }) {
                 </div>
               )}
 
-              {request.status === "approved" && (
+              {request.status === "approved" && request.project_status !== "waiting_review" && (
                 <form onSubmit={saveActualExpense} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
                   <h3 className="font-black text-emerald-950">
                     บันทึกค่าใช้จ่ายจริงของหมู่บ้าน
@@ -7900,22 +7966,70 @@ function VillageBudgetWorkspace({ incidents, setIncidents }) {
                         : `เกินวงเงินอนุมัติ ${(Number(expenseForm.actual_amount) - Number(request.approved_amount || 0)).toLocaleString("th-TH")} บาท`}
                     </div>
                   )}
-                  {request.evidence_url && (
-                    <a href={normalizeMediaUrl(request.evidence_url)} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-bold text-blue-700 underline">
-                      ดูหลักฐานที่บันทึกไว้
-                    </a>
-                  )}
-                  <button
-                    disabled={saving}
-                    className="mt-4 w-full rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white disabled:opacity-50 sm:w-auto"
-                  >
-                    {saving ? "กำลังบันทึก..." : "บันทึกยอดใช้จริง"}
-                  </button>
+                  <div className="mt-4 flex flex-col gap-3 border-t border-emerald-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      {request.evidence_url ? (
+                        <button type="button" onClick={() => setSelectedEvidence(normalizeMediaUrl(request.evidence_url))} className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">
+                          <FileText className="mr-2 h-4 w-4" /> ดูหลักฐานที่บันทึกไว้
+                        </button>
+                      ) : (
+                        <span className="text-sm text-emerald-800">ยังไม่มีหลักฐานที่บันทึก</span>
+                      )}
+                    </div>
+                    <button
+                      disabled={saving}
+                      className="min-h-12 w-full rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white shadow-sm hover:bg-emerald-800 disabled:opacity-50 sm:w-auto"
+                    >
+                      {saving ? "กำลังส่ง..." : "ส่งยอดให้ อบต. ตรวจสอบ"}
+                    </button>
+                  </div>
                 </form>
+              )}
+              {request.status === "approved" && request.project_status === "waiting_review" && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+                  <div className="font-black">ส่งยอดแล้ว กำลังรอ อบต. ตรวจสอบ</div>
+                  <div className="mt-1 text-sm">
+                    ยอดใช้จริง {Number(request.actual_amount || 0).toLocaleString("th-TH")} บาท · เงินคงเหลือ {Math.max(0, Number(request.approved_amount || 0) - Number(request.actual_amount || 0)).toLocaleString("th-TH")} บาท
+                  </div>
+                  {request.evidence_url && (
+                    <button type="button" onClick={() => setSelectedEvidence(normalizeMediaUrl(request.evidence_url))} className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-blue-700">
+                      <FileText className="mr-2 h-4 w-4" /> ดูหลักฐานที่ส่งแล้ว
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
         </section>
+        {selectedEvidence && (
+          <div
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
+            onMouseDown={() => setSelectedEvidence(null)}
+          >
+            <div
+              className="relative flex h-[90dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <div className="flex min-h-16 items-center justify-between border-b bg-white px-4 sm:px-5">
+                <h3 className="font-black text-slate-900">หลักฐานค่าใช้จ่าย</h3>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEvidence(null)}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 font-bold text-slate-700 hover:bg-slate-200"
+                >
+                  <X className="h-5 w-5" /> ปิด
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-auto bg-slate-100 p-3 sm:p-5">
+                {/\.pdf(?:\?|$)/i.test(selectedEvidence) ? (
+                  <iframe src={selectedEvidence} title="หลักฐานค่าใช้จ่าย PDF" className="h-full min-h-[70dvh] w-full rounded-xl bg-white" />
+                ) : (
+                  <img src={selectedEvidence} alt="หลักฐานค่าใช้จ่าย" className="mx-auto max-h-full max-w-full rounded-xl object-contain shadow" />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
