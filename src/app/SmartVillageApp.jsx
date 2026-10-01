@@ -2320,9 +2320,6 @@ function UserDashboard({
   const activeIncidentCount = myIncidents.filter(
     (incident) => !["resolved", "rejected", "cancelled"].includes(incident.status),
   ).length;
-  const resolvedIncidentCount = myIncidents.filter(
-    (incident) => incident.status === "resolved",
-  ).length;
   const villageNews = news.filter(
     (item) =>
       String(item.villageId || "") === String(currentUser.villageId || ""),
@@ -2341,24 +2338,6 @@ function UserDashboard({
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
               ข่าวสารจาก{citizenVillageLabel}
             </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setActiveTab("history")}
-              className="min-h-20 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left active:scale-[0.98] transition"
-            >
-              <span className="block text-2xl font-black text-amber-700">{activeIncidentCount}</span>
-              <span className="text-xs font-bold text-amber-800">กำลังดำเนินการ</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("history")}
-              className="min-h-20 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left active:scale-[0.98] transition"
-            >
-              <span className="block text-2xl font-black text-emerald-700">{resolvedIncidentCount}</span>
-              <span className="text-xs font-bold text-emerald-800">แก้ไขเสร็จแล้ว</span>
-            </button>
           </div>
           <div className="grid gap-6">
             {villageNews.map((n) => (
