@@ -649,11 +649,13 @@ function LandingPage({ onNavigate, news }) {
             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white/30 bg-white/15 shadow-lg">
               <Home className="h-11 w-11" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-sm font-bold text-blue-100">
-                องค์การบริหารส่วนตำบล
+                {VILLAGE_NAME}
               </div>
-              <div className="text-4xl font-black leading-none">มะต้อง</div>
+              <div className="mt-1 max-w-sm text-lg font-black leading-tight sm:text-xl">
+                {APP_NAME}
+              </div>
             </div>
           </div>
           <form
@@ -1177,8 +1179,8 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
               <Home className="h-8 w-8" />
             </div>
-            <div className="mt-7 text-sm font-bold text-cyan-200">
-              ศูนย์บริการประชาชนออนไลน์
+            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200">
+              {APP_NAME}
             </div>
             <h1 className="mt-2 text-4xl font-black leading-tight">
               องค์การบริหารส่วน
@@ -1213,8 +1215,8 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-700 lg:hidden">
                 <Home className="h-6 w-6" />
               </div>
-              <p className="text-sm font-bold text-blue-600">
-                ระบบบริการประชาชน อบต.มะต้อง
+              <p className="text-sm font-bold leading-6 text-blue-600">
+                {APP_NAME}
               </p>
               <h2 className="mt-1 text-3xl font-black text-slate-900">
                 {pageTitle}
@@ -1708,12 +1710,15 @@ function Sidebar({
     <aside
       className={`app-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(18rem,86vw)] shrink-0 flex-col overflow-hidden text-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:relative lg:w-72 lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
-      <div className="flex h-20 shrink-0 items-center justify-between border-b border-white/10 px-6">
-        <div className="flex items-center">
-          <Home className="w-6 h-6 text-blue-500 mr-2" />
-          <span className="font-bold text-lg tracking-wide">
-            {VILLAGE_NAME}
-          </span>
+      <div className="flex min-h-20 shrink-0 items-center justify-between border-b border-white/10 px-5 py-3">
+        <div className="flex min-w-0 items-center">
+          <Home className="mr-2 h-6 w-6 shrink-0 text-blue-500" />
+          <div className="min-w-0">
+            <div className="line-clamp-2 text-sm font-bold leading-5">
+              {APP_NAME}
+            </div>
+            <div className="truncate text-xs text-slate-400">{VILLAGE_NAME}</div>
+          </div>
         </div>
         <button
           className="lg:hidden text-gray-400 hover:text-white"
@@ -1884,18 +1889,21 @@ function Topbar({
         </button>
         <div className="flex min-w-0 items-center lg:hidden">
           <Home className="hidden min-[380px]:block w-5 sm:w-6 h-5 sm:h-6 shrink-0 text-blue-600 mr-1.5 sm:mr-2" />
-          <span className="truncate font-bold text-sm min-[380px]:text-base sm:text-lg text-gray-800">
-            {VILLAGE_NAME}
+          <span className="truncate text-sm font-bold text-gray-800 min-[380px]:text-base sm:text-lg">
+            {APP_NAME}
           </span>
         </div>
         <div className="hidden lg:block min-w-0">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-            {isTaoRole(currentUser?.role)
-              ? `ศูนย์ปฏิบัติการ ${VILLAGE_NAME}`
-              : isVillageAdminRole(currentUser?.role)
-                ? `ระบบแอดมินหมู่ ${currentUser?.villageMoo || "-"} ${currentUser?.villageName || ""}`
-                : `ระบบบริการประชาชน ${VILLAGE_NAME}`}
+          <h2 className="truncate text-xl font-bold tracking-tight text-gray-800">
+            {APP_NAME}
           </h2>
+          <div className="truncate text-xs font-medium text-slate-500">
+            {isTaoRole(currentUser?.role)
+              ? `เจ้าหน้าที่ ${VILLAGE_NAME}`
+              : isVillageAdminRole(currentUser?.role)
+                ? `แอดมินหมู่ ${currentUser?.villageMoo || "-"} ${currentUser?.villageName || ""}`
+                : `ประชาชน ${VILLAGE_NAME}`}
+          </div>
         </div>
       </div>
 
