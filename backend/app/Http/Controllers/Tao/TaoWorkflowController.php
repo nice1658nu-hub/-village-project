@@ -127,6 +127,9 @@ class TaoWorkflowController extends Controller
 
         if ($data['project_status'] === 'completed') {
             abort_if((int) $data['progress_percent'] !== 100, 422, 'Completed projects must have 100% progress.');
+            abort_if(($data['actual_amount'] ?? null) === null, 422, 'กรุณาระบุค่าใช้จ่ายจริงก่อนปิดโครงการ');
+            abort_if((float) ($data['actual_amount'] ?? 0) > (float) $budget->approved_amount, 422, 'ค่าใช้จ่ายจริงเกินวงเงินอนุมัติ กรุณาขออนุมัติเพิ่มก่อน');
+            abort_if(empty($data['evidence_url'] ?? null), 422, 'กรุณาแนบใบเสร็จหรือหลักฐานก่อนปิดโครงการ');
         }
 
         $old = $budget->toArray();

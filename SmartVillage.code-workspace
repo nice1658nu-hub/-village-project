@@ -55,6 +55,24 @@
           "clear": true
         },
         "problemMatcher": []
+      },
+      {
+        "label": "Deploy Backend to Alwaysdata",
+        "type": "shell",
+        "command": "powershell",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder:11 — สคริปต์ดูแลระบบ}\\deploy-backend.ps1"
+        ],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "clear": true
+        },
+        "problemMatcher": []
       }
     ]
   }

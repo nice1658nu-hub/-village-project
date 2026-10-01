@@ -7102,6 +7102,13 @@ function TaoDashboard({
                           }
                           className="mt-1 w-full rounded-xl border p-3 font-normal"
                         />
+                        {projectForm.actual_amount !== "" && (
+                          <span className={`mt-2 block rounded-lg px-3 py-2 text-xs font-bold ${Number(projectForm.actual_amount) <= Number(selectedCase.budgetRequest.approved_amount || 0) ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>
+                            {Number(projectForm.actual_amount) <= Number(selectedCase.budgetRequest.approved_amount || 0)
+                              ? `เงินคงเหลือต้องคืน ${currency(Number(selectedCase.budgetRequest.approved_amount || 0) - Number(projectForm.actual_amount || 0))}`
+                              : `ใช้เกินวงเงิน ${currency(Number(projectForm.actual_amount || 0) - Number(selectedCase.budgetRequest.approved_amount || 0))} — ต้องขออนุมัติเพิ่มก่อน`}
+                          </span>
+                        )}
                       </label>
                       <label className="text-sm font-bold sm:col-span-2">
                         บันทึกความคืบหน้า
