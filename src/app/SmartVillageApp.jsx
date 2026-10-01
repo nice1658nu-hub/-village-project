@@ -940,7 +940,7 @@ function PasswordInput({ label, className = "", ...props }) {
         <button
           type="button"
           onClick={() => setIsVisible((visible) => !visible)}
-          className="absolute inset-y-1.5 right-1.5 z-10 flex w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-blue-600 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="absolute inset-y-1.5 right-1.5 z-10 flex w-10 items-center justify-center rounded-lg bg-transparent text-blue-600 transition hover:bg-blue-100/60 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
           aria-label={isVisible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
           aria-pressed={isVisible}
           title={isVisible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
