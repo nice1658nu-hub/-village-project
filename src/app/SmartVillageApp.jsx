@@ -2229,6 +2229,7 @@ function UserDashboard({
   const [showImageSource, setShowImageSource] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [historyStatus, setHistoryStatus] = useState("all");
+  const [historyDate, setHistoryDate] = useState("");
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -2324,27 +2325,38 @@ function UserDashboard({
   };
 
   const myIncidents = incidents.filter((i) => i.userId === currentUser.id);
+  const toLocalDateKey = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const dateFilteredIncidents = historyDate
+    ? myIncidents.filter((incident) => toLocalDateKey(incident.date) === historyDate)
+    : myIncidents;
   const historyFilters = [
-    { id: "all", label: "ทั้งหมด", count: myIncidents.length },
+    { id: "all", label: "ทั้งหมด", count: dateFilteredIncidents.length },
     {
       id: "pending",
       label: "รอรับเรื่อง",
-      count: myIncidents.filter((incident) => incident.status === "pending").length,
+      count: dateFilteredIncidents.filter((incident) => incident.status === "pending").length,
     },
     {
       id: "in_progress",
       label: "กำลังดำเนินการ",
-      count: myIncidents.filter((incident) => incident.status === "in_progress").length,
+      count: dateFilteredIncidents.filter((incident) => incident.status === "in_progress").length,
     },
     {
       id: "resolved",
       label: "แก้ไขเสร็จ",
-      count: myIncidents.filter((incident) => incident.status === "resolved").length,
+      count: dateFilteredIncidents.filter((incident) => incident.status === "resolved").length,
     },
   ];
   const filteredMyIncidents = historyStatus === "all"
-    ? myIncidents
-    : myIncidents.filter((incident) => incident.status === historyStatus);
+    ? dateFilteredIncidents
+    : dateFilteredIncidents.filter((incident) => incident.status === historyStatus);
   const activeIncidentCount = myIncidents.filter(
     (incident) => !["resolved", "rejected", "cancelled"].includes(incident.status),
   ).length;
@@ -2581,6 +2593,29 @@ function UserDashboard({
           </div>
 
           {myIncidents.length > 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex sm:items-end sm:justify-between sm:gap-4">
+              <label className="block flex-1 text-sm font-bold text-slate-700">
+                เลือกวันที่แจ้งเหตุ
+                <input
+                  type="date"
+                  value={historyDate}
+                  onChange={(event) => setHistoryDate(event.target.value)}
+                  className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+              {historyDate && (
+                <button
+                  type="button"
+                  onClick={() => setHistoryDate("")}
+                  className="mt-2 min-h-11 w-full rounded-xl bg-slate-100 px-4 py-2 font-bold text-slate-600 sm:mt-0 sm:w-auto"
+                >
+                  ล้างวันที่
+                </button>
+              )}
+            </div>
+          )}
+
+          {myIncidents.length > 0 && (
             <div className="grid grid-cols-2 gap-2 sm:flex" role="tablist" aria-label="กรองประวัติการแจ้งเหตุ">
                 {historyFilters.map((filter) => {
                   const active = historyStatus === filter.id;
@@ -2628,13 +2663,18 @@ function UserDashboard({
           ) : filteredMyIncidents.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center shadow-sm">
               <FileText className="mx-auto h-10 w-10 text-slate-300" />
-              <p className="mt-3 font-bold text-slate-700">ไม่มีรายการในสถานะนี้</p>
+              <p className="mt-3 font-bold text-slate-700">
+                {historyDate ? "ไม่มีรายการในวันที่และสถานะที่เลือก" : "ไม่มีรายการในสถานะนี้"}
+              </p>
               <button
                 type="button"
-                onClick={() => setHistoryStatus("all")}
+                onClick={() => {
+                  setHistoryStatus("all");
+                  setHistoryDate("");
+                }}
                 className="mt-3 font-bold text-blue-600"
               >
-                ดูรายการทั้งหมด
+                ล้างตัวกรองและดูทั้งหมด
               </button>
             </div>
           ) : (
@@ -2650,6 +2690,9 @@ function UserDashboard({
                         <StatusBadge status={inc.status} />
                         <h3 className="mt-3 text-lg font-black text-gray-900">{inc.title}</h3>
                         <p className="mt-1 text-sm font-medium text-blue-600">{inc.category}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-400">
+                          เลขที่เรื่อง {inc.referenceNo || `#${inc.id}`}
+                        </p>
                       </div>
                       {inc.status === "pending" && (
                         <button onClick={() => handleDeleteIncident(inc.id)} className="shrink-0 rounded-lg p-2 text-red-500 hover:bg-red-50" title="ยกเลิกการแจ้งเหตุ (ลบ)">
@@ -2715,6 +2758,9 @@ function UserDashboard({
                       </div>
                       <p className="mb-2 hidden text-sm font-medium text-blue-600 md:block">
                         {inc.category}
+                      </p>
+                      <p className="mb-2 hidden text-xs font-bold text-slate-400 md:block">
+                        เลขที่เรื่อง {inc.referenceNo || `#${inc.id}`}
                       </p>
                       <p className="hidden text-sm text-gray-600 line-clamp-2 md:block">
                         {inc.description}
@@ -8242,19 +8288,45 @@ function AdminDashboard({
     setSelectedIncident(null);
   };
 
-  const deleteIncident = async (id) => {
-    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบการแจ้งเหตุนี้?")) {
-      try {
-        await api.deleteIncident(id);
-      } catch (error) {
-        if (!USE_MOCK_DATA) {
-          alert(error?.message || "ลบรายการไม่สำเร็จ");
-          return;
-        }
+  const deleteIncident = async (id, reason) => {
+    const cleanReason = reason?.trim();
+    if (!cleanReason) return alert("กรุณาระบุเหตุผลที่ยุติเรื่อง");
+
+    try {
+      const data = await api.updateIncidentStatus(id, {
+        status: "cancelled",
+        note: `ยุติเรื่อง: ${cleanReason}`,
+      });
+      const cancelledIncident = normalizeIncident(data);
+      setIncidents((items) =>
+        items.map((item) => item.id === id ? cancelledIncident : item),
+      );
+    } catch (error) {
+      if (!USE_MOCK_DATA) {
+        alert(error?.message || "ยุติรายการไม่สำเร็จ");
+        return;
       }
-      setIncidents(incidents.filter((i) => i.id !== id));
-      setSelectedIncident(null);
+      setIncidents((items) => items.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "cancelled",
+              histories: [
+                ...(item.histories || []),
+                {
+                  id: `cancel-${Date.now()}`,
+                  created_at: new Date().toISOString(),
+                  from_status: item.status,
+                  to_status: "cancelled",
+                  note: `ยุติเรื่อง: ${cleanReason}`,
+                },
+              ],
+            }
+          : item,
+      ));
     }
+    setSelectedIncident(null);
+    alert("ยุติเรื่องและแจ้งเหตุผลให้ผู้ใช้แล้ว");
   };
 
   // --- News Handlers ---
@@ -10182,7 +10254,7 @@ function AdminDashboard({
           inc={selectedIncident}
           onClose={() => setSelectedIncident(null)}
           onUpdate={updateIncidentStatus}
-          onDelete={() => deleteIncident(selectedIncident.id)}
+          onDelete={(reason) => deleteIncident(selectedIncident.id, reason)}
           staff={users.filter(
             (user) =>
               isVillageAdminRole(user.role) &&
@@ -10234,6 +10306,8 @@ function AdminIncidentModal({
   const [inspectionNote, setInspectionNote] = useState("");
   const [inspectionImage, setInspectionImage] = useState(null);
   const [inspectionSaving, setInspectionSaving] = useState(false);
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const saveInspection = async () => {
     if (!inspectionNote.trim() && !inspectionImage)
@@ -10587,10 +10661,10 @@ function AdminIncidentModal({
                   </div>
                   <div className="flex gap-3 w-full sm:w-auto">
                     <button
-                      onClick={onDelete}
+                      onClick={() => setShowCancelForm(true)}
                       className="flex-1 sm:flex-none px-6 py-3 bg-red-100 text-red-600 font-bold rounded-xl hover:bg-red-200 transition"
                     >
-                      ลบเหตุนี้
+                      ยุติเรื่องนี้
                     </button>
                     <button
                       onClick={() => setEditingStatus(true)}
@@ -10601,6 +10675,43 @@ function AdminIncidentModal({
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {showCancelForm && (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5">
+              <h3 className="font-black text-red-900">ระบุเหตุผลที่ยุติเรื่อง</h3>
+              <p className="mt-1 text-sm text-red-700">
+                ผู้แจ้งจะเห็นเหตุผลนี้ในสถานะและ Timeline ของรายการ
+              </p>
+              <textarea
+                autoFocus
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+                className="mt-3 h-24 w-full rounded-xl border border-red-200 bg-white p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                placeholder="เช่น ตรวจสอบแล้วเป็นข้อมูลเท็จ, แจ้งซ้ำ, อยู่นอกพื้นที่รับผิดชอบ"
+                maxLength={500}
+              />
+              <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCancelForm(false);
+                    setCancelReason("");
+                  }}
+                  className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-600"
+                >
+                  กลับ
+                </button>
+                <button
+                  type="button"
+                  disabled={!cancelReason.trim()}
+                  onClick={() => onDelete(cancelReason)}
+                  className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ยืนยันยุติเรื่อง
+                </button>
+              </div>
             </div>
           )}
         </div>
