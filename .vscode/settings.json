@@ -1,0 +1,21 @@
+{
+  "explorer.excludeGitIgnore": true,
+  "files.exclude": {
+    "**/.tools": true,
+    "**/.vscode": true,
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/dist": true,
+    "**/*.log": true,
+    "**/bootstrap/cache/*.php": true,
+    "**/storage/framework/views/*": true,
+    "**/storage/framework/testing/*": true,
+    "**/.env.example": true,
+    "**/.env.production.example": true,
+    "**/package-lock.json": true,
+    ".gitignore": true,
+    "index.html": true,
+    "package.json": true,
+    "vite.config.js": true
+  }
+}

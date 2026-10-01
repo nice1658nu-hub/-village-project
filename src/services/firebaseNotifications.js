@@ -9,37 +9,37 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
+const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean) && Boolean(vapidKey);
 
 export async function setupFirebaseNotifications(currentUser, onForegroundMessage) {
-  if (!currentUser || !hasFirebaseConfig || !('Notification' in window)) {
-    return null;
-  }
+  if (!currentUser || !hasFirebaseConfig || !('Notification' in window) || !('serviceWorker' in navigator)) return null;
 
   const permission = await Notification.requestPermission();
-  if (permission !== 'granted') {
-    return null;
-  }
+  if (permission !== 'granted') return null;
 
-  const token = [
-    'web-notification-ready',
-    firebaseConfig.projectId,
-    currentUser.id,
-  ].join(':');
+  const [{ initializeApp }, { getMessaging, getToken, isSupported, onMessage }] = await Promise.all([
+    import('firebase/app'),
+    import('firebase/messaging'),
+  ]);
+  if (!await isSupported()) return null;
 
-  await api.saveNotificationToken({
-    userId: currentUser.id,
-    token,
-    provider: 'firebase',
+  const workerConfig = encodeURIComponent(btoa(JSON.stringify(firebaseConfig)));
+  const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?config=${workerConfig}`);
+  const messaging = getMessaging(initializeApp(firebaseConfig));
+  const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: registration });
+  if (!token) return null;
+
+  await api.saveNotificationToken({ token, provider: 'firebase' });
+
+  return onMessage(messaging, payload => {
+    onForegroundMessage?.({
+      id: `firebase-${payload.messageId || Date.now()}`,
+      title: payload.notification?.title || payload.data?.title || 'การแจ้งเตือนใหม่',
+      desc: payload.notification?.body || payload.data?.description || '',
+      isRead: false,
+      time: 'เมื่อสักครู่',
+      data: payload.data || {},
+    });
   });
-
-  onForegroundMessage?.({
-    id: `firebase-ready-${Date.now()}`,
-    title: 'เปิดใช้งานการแจ้งเตือนแล้ว',
-    desc: 'ระบบพร้อมรับการแจ้งเตือนผ่าน Firebase Cloud Messaging เมื่อเชื่อมต่อ Laravel Backend',
-    isRead: false,
-    time: 'เมื่อสักครู่',
-  });
-
-  return null;
 }

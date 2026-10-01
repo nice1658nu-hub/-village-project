@@ -50,12 +50,20 @@ npm run build
 
 ## โครงสร้างหลัก
 
-- `code.jsx` หน้าจอหลักของระบบ SmartVillage
-- `src/data/mockData.js` ข้อมูลตัวอย่างสำหรับเดโม่ระหว่างรอ Backend
-- `src/services/api.js` จุดเชื่อมต่อ Laravel API
-- `src/services/firebaseNotifications.js` จุดเตรียมเชื่อม Firebase notification
-- `backend/routes/api.php` ตัวอย่าง route ของ Laravel API
-- `backend/database/migrations/` ตัวอย่าง migration สำหรับ MySQL
+- `src/` เว็บไซต์ React ทั้งหมด
+  - `App.jsx` หน้าจอและการทำงานหลัก
+  - `config/` ชื่อระบบและค่ากลาง
+  - `data/` ข้อมูลตัวอย่างสำหรับเดโม่
+  - `services/` การเชื่อม Laravel API และ Firebase
+  - `utils/` ฟังก์ชันคำนวณและแปลงข้อมูล
+- `backend/` Laravel API, Models, Controllers และฐานข้อมูล
+- `public/` ไฟล์สาธารณะที่เบราว์เซอร์เรียกใช้
+- `docs/` เอกสารระบบ คู่มือ และสถานะโครงการ
+- `scripts/` สคริปต์เปิดระบบ ตรวจระบบ และตั้งค่า Gmail
+
+ไฟล์ `.cmd` ที่รากโปรเจกต์มีไว้สำหรับดับเบิลคลิกเปิดระบบ ตรวจระบบ และตั้งค่า Gmail เท่านั้น ส่วนไฟล์ระบบที่ไม่จำเป็นต่อการแก้โค้ดถูกซ่อนจาก VS Code Explorer แล้ว
+
+หากไม่ทราบว่าต้องแก้ไฟล์ใด ให้เปิด [`docs/PROJECT-STRUCTURE.md`](docs/PROJECT-STRUCTURE.md) ซึ่งมีตาราง “งานที่ต้องการทำ → ตำแหน่งไฟล์” ภาษาไทย
 
 ## หมายเหตุสำหรับอธิบายอาจารย์
 

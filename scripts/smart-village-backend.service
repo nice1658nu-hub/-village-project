@@ -1,0 +1,16 @@
+[Unit]
+Description=SmartVillage Laravel Backend
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=asus
+WorkingDirectory=/mnt/c/Users/ASUS/Downloads/-village-project-main/-village-project-main/backend
+ExecStartPre=/usr/bin/php artisan optimize
+ExecStart=/usr/bin/php -d opcache.enable_cli=1 -d opcache.validate_timestamps=0 -d opcache.memory_consumption=192 -d opcache.max_accelerated_files=20000 -d realpath_cache_size=16384K -d realpath_cache_ttl=3600 artisan serve --host=0.0.0.0 --port=8000
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

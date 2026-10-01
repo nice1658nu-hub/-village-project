@@ -1,0 +1,34 @@
+{
+  "folders": [
+    { "name": "1 — หน้าสาธารณะ", "path": "src/features/public" },
+    { "name": "2 — ประชาชน", "path": "src/features/citizen" },
+    { "name": "3 — ผู้ดูแลหมู่บ้าน", "path": "src/features/village" },
+    { "name": "4 — ฝ่าย อบต.", "path": "src/features/tao" },
+    { "name": "5 — Frontend ส่วนกลาง", "path": "src" },
+    { "name": "6 — Backend Controllers", "path": "backend/app/Http/Controllers" },
+    { "name": "7 — Models และ Services", "path": "backend/app" },
+    { "name": "8 — เส้นทาง API", "path": "backend/routes" },
+    { "name": "9 — ฐานข้อมูล", "path": "backend/database" },
+    { "name": "10 — เอกสาร", "path": "docs" },
+    { "name": "11 — สคริปต์ดูแลระบบ", "path": "scripts" }
+  ],
+  "settings": {
+    "explorer.compactFolders": false,
+    "explorer.excludeGitIgnore": true,
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/vendor": true,
+      "**/dist": true,
+      "**/*.log": true,
+      "**/.env*": true,
+      "**/package-lock.json": true,
+      "**/composer.lock": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/vendor": true,
+      "**/storage": true,
+      "**/dist": true
+    }
+  }
+}

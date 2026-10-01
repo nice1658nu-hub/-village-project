@@ -1,23 +1,29 @@
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
+/* global firebase */
+importScripts('https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.0.0/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-  apiKey: 'replace-with-env-value-when-deploying',
-  authDomain: 'replace-with-env-value-when-deploying',
-  projectId: 'replace-with-env-value-when-deploying',
-  storageBucket: 'replace-with-env-value-when-deploying',
-  messagingSenderId: 'replace-with-env-value-when-deploying',
-  appId: 'replace-with-env-value-when-deploying',
-});
+const encodedConfig = new URL(self.location.href).searchParams.get('config');
 
-const messaging = firebase.messaging();
+if (encodedConfig) {
+  try {
+    firebase.initializeApp(JSON.parse(atob(decodeURIComponent(encodedConfig))));
+    firebase.messaging().onBackgroundMessage(payload => {
+      const title = payload.notification?.title || payload.data?.title || 'SmartVillage';
+      self.registration.showNotification(title, {
+        body: payload.notification?.body || payload.data?.description || 'มีการอัปเดตใหม่',
+        icon: '/favicon.ico',
+        data: payload.data || {},
+      });
+    });
+  } catch (error) {
+    console.error('Firebase messaging service worker configuration failed.', error);
+  }
+}
 
-messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'SmartVillage';
-  const options = {
-    body: payload.notification?.body || 'มีการแจ้งเตือนใหม่จากระบบ',
-    icon: '/vite.svg',
-  };
-
-  self.registration.showNotification(title, options);
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+    const existing = windows.find(client => 'focus' in client);
+    return existing ? existing.focus() : clients.openWindow('/');
+  }));
 });
