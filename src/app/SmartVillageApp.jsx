@@ -2504,7 +2504,7 @@ function UserDashboard({
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     แนบรูปภาพประกอบ (ถ้ามี)
                   </label>
-                  <div className="relative mt-1 flex h-40 w-full justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
+                  <label className="group relative mt-1 flex h-40 w-full cursor-pointer justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 pb-6 pt-5 transition hover:bg-blue-50">
                     {image ? (
                       <div className="absolute inset-0 w-full h-full">
                         <img
@@ -2512,29 +2512,32 @@ function UserDashboard({
                           alt="preview"
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
+                          <span className="flex items-center gap-2 font-bold text-white">
+                            <Camera className="h-5 w-5" /> ถ่ายหรือเลือกรูปใหม่
+                          </span>
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-2 text-center flex flex-col items-center justify-center h-full">
                         <Camera className="mx-auto h-12 w-12 text-gray-400" />
                         <div className="text-sm text-gray-600">
-                          เลือกถ่ายภาพใหม่ หรือเลือกรูปจากแกลเลอรี
+                          <span className="font-bold text-blue-600">อัปโหลดรูปภาพ</span>{" "}
+                          หรือกดเพื่อเปิดกล้อง
                         </div>
                         <p className="text-xs text-gray-500">
                           PNG, JPG ไม่เกิน 10MB
                         </p>
                       </div>
                     )}
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-bold text-white shadow-sm active:bg-blue-700">
-                      <Camera className="h-5 w-5 shrink-0" /> ถ่ายรูป
-                      <input type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="sr-only" />
-                    </label>
-                    <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-3 text-center text-sm font-bold text-blue-700 active:bg-blue-100">
-                      <Image className="h-5 w-5 shrink-0" /> เลือกจากแกลเลอรี
-                      <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
-                    </label>
-                  </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
                 </div>
               </div>
             </div>
