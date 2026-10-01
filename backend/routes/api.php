@@ -6,6 +6,7 @@ use App\Http\Controllers\Cases\IncidentController;
 use App\Http\Controllers\Cases\IncidentFeedbackController;
 use App\Http\Controllers\Shared\NewsController;
 use App\Http\Controllers\Shared\NotificationController;
+use App\Http\Controllers\Shared\MediaController;
 use App\Http\Controllers\Village\UserApprovalController;
 use App\Http\Controllers\Village\StaffWorkflowController;
 use App\Http\Controllers\Tao\BudgetSettingController;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 // สาธารณะ: หน้าแรก สมัครสมาชิก และกู้รหัสผ่าน
 Route::get('/bootstrap', [BootstrapController::class, 'publicData']);
+Route::get('/media/{path}', [MediaController::class, 'show'])->where('path', '.*');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
