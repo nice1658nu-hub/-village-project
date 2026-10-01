@@ -35,7 +35,7 @@ class NewsController extends Controller
         $data['content'] = $data['content'] ?? '';
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('news', 'public');
-            $data['image'] = $request->getSchemeAndHttpHost().Storage::url($path);
+            $data['image'] = Storage::disk('public')->url($path);
         } else {
             unset($data['image']);
         }

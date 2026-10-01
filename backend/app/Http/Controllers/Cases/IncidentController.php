@@ -37,7 +37,7 @@ class IncidentController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('incidents', 'public');
-            $data['image'] = $request->getSchemeAndHttpHost().Storage::url($path);
+            $data['image'] = Storage::disk('public')->url($path);
         }
         $incident = $request->user()->incidents()->create($data + ['status' => 'pending', 'village_id' => $request->user()->village_id]);
         $incident->update(['reference_no' => sprintf('MT-%s-%02d-%04d', now()->addYears(543)->format('Y'), $incident->village?->moo ?? 0, $incident->id)]);
@@ -64,7 +64,7 @@ class IncidentController extends Controller
         $data = $this->validateIncident($request);
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('incidents', 'public');
-            $data['image'] = $request->getSchemeAndHttpHost().Storage::url($path);
+            $data['image'] = Storage::disk('public')->url($path);
         }
         $incident->update($data);
         return response()->json($incident);
@@ -82,7 +82,7 @@ class IncidentController extends Controller
         $resolvedImage = $incident->resolved_image;
         if ($request->hasFile('resolvedImage')) {
             $path = $request->file('resolvedImage')->store('incident-resolutions', 'public');
-            $resolvedImage = $request->getSchemeAndHttpHost().Storage::url($path);
+            $resolvedImage = Storage::disk('public')->url($path);
         }
         $from = $incident->status;
         $incident->update([

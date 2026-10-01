@@ -76,7 +76,7 @@ class StaffWorkflowController extends Controller
         $image = null;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('incident-progress', 'public');
-            $image = $request->getSchemeAndHttpHost().Storage::url($path);
+            $image = Storage::disk('public')->url($path);
         }
         $update = IncidentUpdate::create(['incident_id' => $incident->id, 'user_id' => $request->user()->id, 'message' => $data['message'] ?? null, 'image' => $image, 'type' => 'progress']);
         return response()->json(['update' => $update->load('user'), 'incident' => $this->load($incident)], 201);
@@ -91,7 +91,7 @@ class StaffWorkflowController extends Controller
             'resolvedImage' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
         ]);
         $path = $request->file('resolvedImage')->store('incident-resolutions', 'public');
-        $image = $request->getSchemeAndHttpHost().Storage::url($path);
+        $image = Storage::disk('public')->url($path);
         IncidentUpdate::create(['incident_id' => $incident->id, 'user_id' => $request->user()->id, 'message' => $data['message'] ?? 'ส่งงานให้ผู้ดูแลตรวจรับ', 'image' => $image, 'type' => 'completion']);
         $from = $incident->status;
         $incident->update(['status' => 'waiting_review', 'resolved_image' => $image, 'submitted_for_review_at' => now()]);

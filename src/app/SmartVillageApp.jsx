@@ -81,8 +81,13 @@ const normalizeUser = (user) => ({
 const normalizeMediaUrl = (value) => {
   if (!value || /^(data:|blob:)/i.test(value)) return value;
   try {
+    // Older uploads could contain two absolute URLs joined together, for
+    // example https://api.examplehttps://api.example/storage/file.jpg.
+    // Keep the second (real storage) URL so existing images work again.
+    const duplicatedAbsoluteUrl = String(value).match(/^https?:\/\/[^/]+?(https?:\/\/.+)$/i);
+    const cleanValue = duplicatedAbsoluteUrl?.[1] || value;
     const apiOrigin = new URL(API_BASE_URL, window.location.origin).origin;
-    const mediaUrl = new URL(value, `${apiOrigin}/`);
+    const mediaUrl = new URL(cleanValue, `${apiOrigin}/`);
     if (window.location.protocol === "https:" && mediaUrl.protocol === "http:") {
       mediaUrl.protocol = "https:";
     }

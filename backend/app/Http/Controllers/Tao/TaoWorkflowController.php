@@ -121,7 +121,7 @@ class TaoWorkflowController extends Controller
 
         if ($request->hasFile('evidence')) {
             $path = $request->file('evidence')->store('project-evidence', 'public');
-            $data['evidence_url'] = $request->getSchemeAndHttpHost().Storage::url($path);
+            $data['evidence_url'] = Storage::disk('public')->url($path);
         }
         unset($data['evidence']);
 
