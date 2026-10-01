@@ -1698,7 +1698,7 @@ function Sidebar({
     <aside
       className={`app-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(18rem,86vw)] shrink-0 flex-col overflow-hidden text-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:relative lg:w-72 lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
-      <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
+      <div className="flex h-20 shrink-0 items-center justify-between border-b border-white/10 px-6">
         <div className="flex items-center">
           <Home className="w-6 h-6 text-blue-500 mr-2" />
           <span className="font-bold text-lg tracking-wide">
@@ -1713,7 +1713,7 @@ function Sidebar({
           <X className="w-6 h-6" />
         </button>
       </div>
-      <div className="mx-4 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+      <div className="mx-4 shrink-0 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
         <div className="text-sm text-gray-400 mb-1">ยินดีต้อนรับ,</div>
         <div className="font-bold text-blue-400 truncate text-lg">
           {currentUser?.name}
@@ -1726,7 +1726,7 @@ function Sidebar({
               : `ประชาชน · หมู่ ${currentUser?.villageMoo || "-"}`}
         </div>
       </div>
-      <div className="hide-scrollbar flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+      <div className="hide-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-6">
         <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
           {isTaoRole(currentUser?.role)
             ? "เมนู อบต."
@@ -1744,7 +1744,7 @@ function Sidebar({
           />
         ))}
       </div>
-      <div className="p-4 border-t border-gray-800">
+      <div className="shrink-0 border-t border-gray-800 p-4">
         <button
           onClick={onLogout}
           className="flex items-center w-full px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold"
@@ -2559,7 +2559,7 @@ function UserDashboard({
               </div>
             </div>
 
-            <div className="sticky bottom-[76px] z-20 -mx-4 border-t border-gray-100 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-6 sm:pb-0 sm:flex sm:justify-end">
+            <div className="border-t border-gray-100 pt-5 sm:flex sm:justify-end sm:pt-6">
               <button
                 type="submit"
                 className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
@@ -2965,7 +2965,7 @@ function CurrentLocationButton({ onSelectPoint }) {
 
 function RealVillageMapPicker({ incidents, selectedPoint, onSelectPoint }) {
   return (
-    <div className="rounded-3xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+    <div className="relative isolate z-0 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
       <div className="px-4 py-3 border-b border-gray-100 bg-slate-50">
         <div className="font-bold text-gray-900">
           แผนที่ตำแหน่งเหตุใน{VILLAGE_NAME}
@@ -2981,7 +2981,7 @@ function RealVillageMapPicker({ incidents, selectedPoint, onSelectPoint }) {
         maxBounds={VILLAGE_MAP_BOUNDS}
         maxBoundsViscosity={1}
         scrollWheelZoom
-        className="h-64 sm:h-72 w-full cursor-crosshair"
+        className="relative z-0 h-64 w-full cursor-crosshair sm:h-72"
       >
         <LayersControl position="topright">
           <LayersControl.BaseLayer name="แผนที่ถนน">
