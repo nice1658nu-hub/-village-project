@@ -17,6 +17,24 @@ class IncidentController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateIncident($request);
+        $duplicate = $request->user()->incidents()
+            ->where('created_at', '>=', now()->subMinutes(2))
+            ->where('title', $data['title'])
+            ->where('category', $data['category'])
+            ->where('description', $data['description'])
+            ->where('location', $data['location'])
+            ->latest()
+            ->first();
+
+        // A slow mobile connection can submit the same form more than once.
+        // Return the existing record instead of creating duplicate incidents.
+        if ($duplicate) {
+            return response()->json([
+                'incident' => $duplicate->load(['user.village', 'village']),
+                'duplicate_prevented' => true,
+            ]);
+        }
+
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('incidents', 'public');
             $data['image'] = $request->getSchemeAndHttpHost().Storage::url($path);

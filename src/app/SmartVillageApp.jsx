@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   CircleMarker,
   LayersControl,
@@ -2230,6 +2230,8 @@ function UserDashboard({
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [historyStatus, setHistoryStatus] = useState("all");
   const [historyDate, setHistoryDate] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const reportSubmitLock = useRef(false);
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -2248,8 +2250,12 @@ function UserDashboard({
 
   const submitReport = async (e) => {
     e.preventDefault();
+    if (reportSubmitLock.current) return;
     if (!title || !desc || !location || !selectedPoint)
       return alert("กรุณากรอกข้อมูลและปักหมุดตำแหน่งให้ครบถ้วน");
+
+    reportSubmitLock.current = true;
+    setReportSubmitting(true);
 
     const incidentPayload = {
       id: "i" + Date.now(),
@@ -2286,12 +2292,17 @@ function UserDashboard({
     } catch (error) {
       if (!USE_MOCK_DATA) {
         alert(error?.message || "บันทึกการแจ้งเหตุไม่สำเร็จ");
+        reportSubmitLock.current = false;
+        setReportSubmitting(false);
         return;
       }
       newIncident = incidentPayload;
     }
 
-    setIncidents([newIncident, ...incidents]);
+    setIncidents((items) => [
+      newIncident,
+      ...items.filter((item) => String(item.id) !== String(newIncident.id)),
+    ]);
     alert(`แจ้งเหตุสำเร็จ ระบบได้ส่งเรื่องให้ผู้ดูแล${VILLAGE_NAME}แล้ว`);
 
     // Reset form & go to history
@@ -2304,6 +2315,8 @@ function UserDashboard({
     setImageFile(null);
     setSelectedPoint(null);
     setActiveTab("history");
+    reportSubmitLock.current = false;
+    setReportSubmitting(false);
   };
 
   const handleDeleteIncident = async (id) => {
@@ -2324,7 +2337,47 @@ function UserDashboard({
     }
   };
 
-  const myIncidents = incidents.filter((i) => i.userId === currentUser.id);
+  const rawMyIncidents = incidents.filter((i) => i.userId === currentUser.id);
+  const incidentStatusRank = {
+    cancelled: 0,
+    pending: 1,
+    in_progress: 2,
+    waiting_review: 3,
+    revision_requested: 3,
+    resolved: 4,
+  };
+  const duplicateWindowMs = 2 * 60 * 60 * 1000;
+  const myIncidents = rawMyIncidents
+    .reduce((visible, incident) => {
+      const signature = [
+        incident.title,
+        incident.category,
+        incident.description,
+        incident.location,
+      ].map((value) => String(value || "").trim().toLocaleLowerCase("th-TH")).join("|");
+      const incidentTime = new Date(incident.date).getTime();
+      const duplicateIndex = visible.findIndex((existing) => {
+        if (existing._signature !== signature) return false;
+        const existingTime = new Date(existing.date).getTime();
+        return Number.isFinite(incidentTime) && Number.isFinite(existingTime)
+          && Math.abs(incidentTime - existingTime) <= duplicateWindowMs;
+      });
+
+      if (duplicateIndex === -1) {
+        visible.push({ ...incident, _signature: signature });
+        return visible;
+      }
+
+      const existing = visible[duplicateIndex];
+      const existingRank = incidentStatusRank[existing.status] ?? 0;
+      const incidentRank = incidentStatusRank[incident.status] ?? 0;
+      if (incidentRank > existingRank || (incidentRank === existingRank && incidentTime > new Date(existing.date).getTime())) {
+        visible[duplicateIndex] = { ...incident, _signature: signature };
+      }
+      return visible;
+    }, [])
+    .map(({ _signature, ...incident }) => incident)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
   const toLocalDateKey = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
@@ -2574,9 +2627,11 @@ function UserDashboard({
             <div className="border-t border-gray-100 pt-5 sm:flex sm:justify-end sm:pt-6">
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+                disabled={reportSubmitting}
+                className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2 disabled:cursor-wait disabled:opacity-60"
               >
-                <CheckCircle className="w-6 h-6" /> ยืนยันการแจ้งเหตุ
+                <CheckCircle className="w-6 h-6" />
+                {reportSubmitting ? "กำลังส่ง กรุณารอ..." : "ยืนยันการแจ้งเหตุ"}
               </button>
             </div>
           </form>
