@@ -4790,7 +4790,6 @@ function DateRangePicker({ from, to, onChange, label = "วันที่ / ช
           <div className="mt-4 flex items-center justify-between border-t pt-3">
             <button type="button" onClick={() => { onChange("", ""); setSelectingEnd(false); }} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600">ล้างวันที่</button>
             <div className="flex items-center gap-3">
-              {selectingEnd && from && <span className="text-xs font-bold text-blue-600">กดอีกวันเพื่อเลือกเป็นช่วง</span>}
               <button type="button" onClick={() => { setSelectingEnd(false); setOpen(false); }} className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white">ตกลง</button>
             </div>
           </div>
