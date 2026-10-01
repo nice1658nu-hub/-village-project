@@ -2332,7 +2332,7 @@ function UserDashboard({
     : "หมู่บ้านของคุณ";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-24 lg:pb-0">
+    <div className="citizen-dashboard mx-auto max-w-4xl space-y-4 pb-24 sm:space-y-6 lg:pb-0">
 
       {/* VIEW: NEWS */}
       {activeTab === "news" && (

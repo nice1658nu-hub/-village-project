@@ -347,6 +347,101 @@ textarea {
   scrollbar-width: none;
 }
 
+/* Citizen pages: comfortable reading and touch targets on phones. */
+@media (max-width: 640px) {
+  .app-shell[data-role="user"] .app-main {
+    padding: 0.75rem;
+  }
+
+  .app-shell[data-role="user"] .app-topbar {
+    min-height: 4rem;
+    gap: 0.375rem;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+
+  .app-shell[data-role="user"] .app-topbar button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .app-shell[data-role="user"] .app-sidebar button {
+    min-height: 48px;
+  }
+
+  .citizen-dashboard {
+    width: 100%;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .citizen-dashboard h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.35 !important;
+    letter-spacing: -0.015em;
+  }
+
+  .citizen-dashboard h3 {
+    font-size: 1.0625rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .citizen-dashboard p,
+  .citizen-dashboard label,
+  .citizen-dashboard summary {
+    line-height: 1.55;
+  }
+
+  .citizen-dashboard button,
+  .citizen-dashboard select,
+  .citizen-dashboard input:not([type="file"]),
+  .citizen-dashboard textarea {
+    min-height: 44px;
+  }
+
+  .citizen-dashboard input:not([type="file"]),
+  .citizen-dashboard select,
+  .citizen-dashboard textarea {
+    width: 100%;
+    font-size: 16px !important;
+    line-height: 1.45;
+  }
+
+  .citizen-dashboard textarea {
+    min-height: 7rem;
+  }
+
+  .citizen-dashboard form {
+    gap: 1rem;
+  }
+
+  .citizen-dashboard .leaflet-container {
+    min-height: 15rem;
+    font-size: 0.75rem;
+  }
+
+  .citizen-dashboard .leaflet-control-zoom a {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+  }
+
+  .citizen-dashboard img {
+    max-width: 100%;
+  }
+
+  .citizen-dashboard > nav {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+  }
+
+  .citizen-dashboard > nav button {
+    min-height: 3.5rem;
+    font-size: 0.75rem;
+  }
+}
+
 @media (max-width: 767px) {
   .overflow-x-auto > table {
     min-width: 680px;
