@@ -2226,6 +2226,7 @@ function UserDashboard({
   const [location, setLocation] = useState("");
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [showImageSource, setShowImageSource] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
 
   const handleImageChange = (event) => {
@@ -2239,6 +2240,7 @@ function UserDashboard({
     if (image) URL.revokeObjectURL(image);
     setImageFile(file);
     setImage(URL.createObjectURL(file));
+    setShowImageSource(false);
     event.target.value = "";
   };
 
@@ -2504,7 +2506,7 @@ function UserDashboard({
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     แนบรูปภาพประกอบ (ถ้ามี)
                   </label>
-                  <label className="group relative mt-1 flex h-40 w-full cursor-pointer justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 pb-6 pt-5 transition hover:bg-blue-50">
+                  <button type="button" onClick={() => setShowImageSource(true)} className="group relative mt-1 flex h-40 w-full cursor-pointer justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 pb-6 pt-5 transition hover:bg-blue-50">
                     {image ? (
                       <div className="absolute inset-0 w-full h-full">
                         <img
@@ -2530,14 +2532,7 @@ function UserDashboard({
                         </p>
                       </div>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleImageChange}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    />
-                  </label>
+                  </button>
                 </div>
               </div>
             </div>
@@ -2856,6 +2851,39 @@ function UserDashboard({
             />
             <div className="mt-3 text-center text-white font-bold text-lg">
               {selectedIncidentImage.title}
+            </div>
+          </div>
+        </div>
+      )}
+      {showImageSource && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/55 p-3 sm:items-center"
+          onClick={() => setShowImageSource(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-white p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between px-1">
+              <div>
+                <div className="font-black text-slate-900">แนบรูปภาพ</div>
+                <div className="text-xs text-slate-500">เลือกวิธีนำรูปเข้าระบบ</div>
+              </div>
+              <button type="button" onClick={() => setShowImageSource(false)} className="grid h-11 w-11 place-items-center rounded-full bg-slate-100" aria-label="ปิด">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl bg-blue-600 p-4 text-center font-bold text-white active:bg-blue-700">
+                <Camera className="h-7 w-7" />
+                ถ่ายรูป
+                <input type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="sr-only" />
+              </label>
+              <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center font-bold text-blue-700 active:bg-blue-100">
+                <Image className="h-7 w-7" />
+                เลือกจากแกลเลอรี
+                <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+              </label>
             </div>
           </div>
         </div>
