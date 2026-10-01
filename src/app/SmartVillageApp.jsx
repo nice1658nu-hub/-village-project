@@ -4998,6 +4998,91 @@ function SimpleAnalyticsDashboard({
   const avgRating = averageOf(
     feedbackRows.map((item) => Number(item.feedback.rating)),
   );
+  const isOpenIncident = (item) =>
+    !["resolved", "cancelled"].includes(item.status);
+  const recurrenceKey = (item) => {
+    const hasCoordinates =
+      Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng));
+    const placeKey = hasCoordinates
+      ? `${Number(item.lat).toFixed(3)},${Number(item.lng).toFixed(3)}`
+      : String(item.location || "ไม่ระบุสถานที่").trim().toLowerCase();
+    return `${item.villageId || "-"}|${item.category || "ไม่ระบุหมวดหมู่"}|${placeKey}`;
+  };
+  const recurrenceGroups = Object.values(
+    analyzedIncidents.reduce((groups, item) => {
+      const key = recurrenceKey(item);
+      groups[key] ??= {
+        key,
+        category: item.category || "ไม่ระบุหมวดหมู่",
+        location: item.location || "ไม่ระบุสถานที่",
+        villageMoo: item.villageMoo,
+        count: 0,
+        open: 0,
+        coordinates: [],
+      };
+      groups[key].count += 1;
+      if (isOpenIncident(item)) groups[key].open += 1;
+      if (Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng))) {
+        groups[key].coordinates.push([Number(item.lat), Number(item.lng)]);
+      }
+      return groups;
+    }, {}),
+  )
+    .filter((group) => group.count >= 2)
+    .sort((a, b) => b.count - a.count || b.open - a.open);
+  const recurrenceCountByKey = Object.fromEntries(
+    recurrenceGroups.map((group) => [group.key, group.count]),
+  );
+  const intelligentPriority = analyzedIncidents
+    .filter(isOpenIncident)
+    .map((item) => {
+      const ageHours = getHoursDiff(item.date, new Date().toISOString()) || 0;
+      const repeatCount = recurrenceCountByKey[recurrenceKey(item)] || 1;
+      const affectedPeople = Number(item.budgetRequest?.affected_people || 0);
+      const reasons = [];
+      let score = Number(item.priority || 1) * 15;
+      if (Number(item.priority || 1) >= 3) reasons.push("เจ้าหน้าที่กำหนดว่าเร่งด่วน");
+      if (ageHours >= 72) {
+        score += 25;
+        reasons.push(`ค้าง ${Math.floor(ageHours / 24)} วัน`);
+      } else if (ageHours >= 24) {
+        score += 15;
+        reasons.push("ค้างเกิน 24 ชั่วโมง");
+      } else if (ageHours >= 8) {
+        score += 7;
+        reasons.push("ยังเปิดเกิน 8 ชั่วโมง");
+      }
+      if (repeatCount >= 2) {
+        score += Math.min(20, repeatCount * 5);
+        reasons.push(`พบปัญหาลักษณะเดียวกัน ${repeatCount} ครั้ง`);
+      }
+      if (affectedPeople >= 50) {
+        score += 15;
+        reasons.push(`กระทบประชาชน ${affectedPeople.toLocaleString("th-TH")} คน`);
+      } else if (affectedPeople > 0) {
+        score += 5;
+        reasons.push(`กระทบประชาชน ${affectedPeople.toLocaleString("th-TH")} คน`);
+      }
+      if (item.status === "revision_requested") {
+        score += 10;
+        reasons.push("ถูกส่งกลับให้แก้ไขเพิ่มเติม");
+      }
+      const finalScore = Math.min(100, Math.round(score));
+      return {
+        ...item,
+        intelligentScore: finalScore,
+        intelligentLevel:
+          finalScore >= 75 ? "เร่งด่วนมาก" : finalScore >= 50 ? "ควรเร่ง" : "ปกติ",
+        intelligentReasons: reasons.length ? reasons : ["เรียงตามลำดับเวลาที่รับเรื่อง"],
+      };
+    })
+    .sort((a, b) => b.intelligentScore - a.intelligentScore)
+    .slice(0, 5);
+  const riskMapIncidents = analyzedIncidents.filter(
+    (item) =>
+      Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)),
+  );
+  const missingCoordinates = analyzedIncidents.length - riskMapIncidents.length;
   const formatMoney = (value) =>
     `${Number(value || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })} บาท`;
 
@@ -5101,6 +5186,99 @@ function SimpleAnalyticsDashboard({
           <div className="text-xs text-slate-400">
             จาก {feedbackRows.length} การประเมิน
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-indigo-200 bg-gradient-to-br from-white to-indigo-50 p-5 shadow-sm md:p-6">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-wider text-indigo-600">
+              Smart community analysis
+            </div>
+            <h3 className="mt-1 text-2xl font-black text-slate-950">
+              วิเคราะห์และจัดลำดับปัญหาอัตโนมัติ
+            </h3>
+            <p className="text-sm text-slate-500">
+              คะแนนมาจากความเร่งด่วน อายุงาน ปัญหาซ้ำ จำนวนผู้ได้รับผลกระทบ และสถานะงาน
+            </p>
+          </div>
+          <div className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-indigo-800 shadow-sm ring-1 ring-indigo-100">
+            พบปัญหาซ้ำ {recurrenceGroups.length} กลุ่ม
+          </div>
+        </div>
+        <div className="grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <div className="border-b bg-slate-50 px-4 py-3 font-black text-slate-800">
+              งานที่ระบบแนะนำให้ทำก่อน
+            </div>
+            <div className="divide-y">
+              {intelligentPriority.map((item, index) => (
+                <div key={item.id} className="grid gap-3 p-4 sm:grid-cols-[2.5rem_1fr_auto] sm:items-center">
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-xl font-black ${item.intelligentScore >= 75 ? "bg-red-100 text-red-700" : item.intelligentScore >= 50 ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate font-black text-slate-900">{item.title}</div>
+                    <div className="truncate text-sm text-slate-500">{item.location} · {item.category}</div>
+                    <div className="mt-1 text-xs text-slate-600">{item.intelligentReasons.join(" · ")}</div>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <div className={`text-2xl font-black ${item.intelligentScore >= 75 ? "text-red-700" : item.intelligentScore >= 50 ? "text-amber-700" : "text-blue-700"}`}>
+                      {item.intelligentScore}
+                    </div>
+                    <div className="text-xs font-bold text-slate-500">{item.intelligentLevel}</div>
+                  </div>
+                </div>
+              ))}
+              {!intelligentPriority.length && (
+                <div className="py-10 text-center text-slate-500">ไม่มีงานเปิดที่ต้องจัดลำดับ</div>
+              )}
+            </div>
+          </div>
+          <div className="rounded-2xl border bg-white p-4">
+            <div className="font-black text-slate-800">สัญญาณปัญหาซ้ำ</div>
+            <p className="mb-3 text-xs text-slate-500">จับกลุ่มจากหมวดเดียวกันและตำแหน่งใกล้กันประมาณ 100 เมตร หรือชื่อสถานที่เดียวกัน</p>
+            <div className="space-y-3">
+              {recurrenceGroups.slice(0, 5).map((group) => (
+                <div key={group.key} className="rounded-xl bg-red-50 p-3 ring-1 ring-red-100">
+                  <div className="flex justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate font-bold text-slate-900">{group.category}</div>
+                      <div className="truncate text-xs text-slate-600">{group.location}{group.villageMoo ? ` · หมู่ ${group.villageMoo}` : ""}</div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-xl font-black text-red-700">{group.count}</div>
+                      <div className="text-[11px] text-red-600">ครั้ง</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs font-bold text-amber-800">ยังเปิดอยู่ {group.open} เรื่อง</div>
+                </div>
+              ))}
+              {!recurrenceGroups.length && (
+                <div className="rounded-xl bg-emerald-50 py-8 text-center text-sm text-emerald-700">ยังไม่พบปัญหาซ้ำในข้อมูลที่เลือก</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 className="text-xl font-black text-slate-950">แผนที่จุดเสี่ยงของชุมชน</h3>
+            <p className="text-sm text-slate-500">แสดงความหนาแน่นจากพิกัด GPS ของเหตุในหมู่บ้านและช่วงวันที่ที่เลือก</p>
+          </div>
+          <div className="text-xs font-bold text-slate-500">มีพิกัด {riskMapIncidents.length} เรื่อง · ไม่มีพิกัด {missingCoordinates} เรื่อง</div>
+        </div>
+        {riskMapIncidents.length ? (
+          <SpatialAnalyticsMap incidents={riskMapIncidents} />
+        ) : (
+          <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed bg-slate-50 text-center text-slate-500">
+            ยังไม่มีพิกัด GPS สำหรับสร้างแผนที่จุดเสี่ยง
+          </div>
+        )}
+        <div className="mt-3 rounded-xl bg-blue-50 p-3 text-xs leading-5 text-blue-900">
+          ระบบใช้กฎและคะแนนที่ตรวจสอบได้เพื่อช่วยจัดลำดับงาน ข้อเสนอแนะนี้ไม่ใช่คำสั่งอนุมัติ เจ้าหน้าที่ยังเป็นผู้ตัดสินใจขั้นสุดท้าย
         </div>
       </section>
 
