@@ -576,6 +576,7 @@ export default function App() {
             <UserDashboard
               activeTab={activeTab}
               setActiveTab={setActiveTab}
+              isSidebarOpen={isSidebarOpen}
               currentUser={currentUser}
               news={news}
               incidents={incidents}
@@ -2204,6 +2205,7 @@ function CitizenFeedback({ incident, onSaved }) {
 function UserDashboard({
   activeTab,
   setActiveTab,
+  isSidebarOpen,
   currentUser,
   news,
   incidents,
@@ -2814,6 +2816,7 @@ function UserDashboard({
         </div>
       )}
 
+      {!isSidebarOpen && (
       <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-3 rounded-2xl border border-gray-200 bg-white/95 p-1.5 shadow-2xl backdrop-blur lg:hidden">
         <button
           type="button"
@@ -2842,6 +2845,7 @@ function UserDashboard({
           <Clock className="h-5 w-5" /> ติดตาม
         </button>
       </nav>
+      )}
 
       {/* News Modal */}
       {selectedNews && (
