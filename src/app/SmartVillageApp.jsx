@@ -48,7 +48,7 @@ import {
   MOCK_NOTIFS,
   MOCK_USERS,
 } from "../data/mockData";
-import { api } from "../services/api";
+import { api, API_BASE_URL } from "../services/api";
 import { setupFirebaseNotifications } from "../services/firebaseNotifications";
 
 import { APP_NAME, CATEGORIES, VILLAGE_NAME } from "../config/app";
@@ -78,8 +78,22 @@ const normalizeUser = (user) => ({
   villageName: user.villageName ?? user.village?.name,
   villageMoo: user.villageMoo ?? user.village?.moo,
 });
+const normalizeMediaUrl = (value) => {
+  if (!value || /^(data:|blob:)/i.test(value)) return value;
+  try {
+    const apiOrigin = new URL(API_BASE_URL, window.location.origin).origin;
+    const mediaUrl = new URL(value, `${apiOrigin}/`);
+    if (window.location.protocol === "https:" && mediaUrl.protocol === "http:") {
+      mediaUrl.protocol = "https:";
+    }
+    return mediaUrl.href;
+  } catch {
+    return value;
+  }
+};
 const normalizeNews = (item) => ({
   ...item,
+  image: normalizeMediaUrl(item.image),
   date: item.date ?? item.published_at ?? item.created_at,
   displaySection:
     item.displaySection ??
@@ -88,10 +102,11 @@ const normalizeNews = (item) => ({
 });
 const normalizeIncident = (item) => ({
   ...item,
+  image: normalizeMediaUrl(item.image),
   userId: item.userId ?? item.user_id,
   userName: item.userName ?? item.user?.name,
   houseNo: item.houseNo ?? item.user?.house_no,
-  resolvedImage: item.resolvedImage ?? item.resolved_image,
+  resolvedImage: normalizeMediaUrl(item.resolvedImage ?? item.resolved_image),
   firstResponseAt: item.firstResponseAt ?? item.first_response_at,
   resolvedAt: item.resolvedAt ?? item.resolved_at,
   assignedTo: item.assignedTo ?? item.assigned_to,
@@ -109,7 +124,10 @@ const normalizeIncident = (item) => ({
   submittedForReviewAt:
     item.submittedForReviewAt ?? item.submitted_for_review_at,
   verifiedAt: item.verifiedAt ?? item.verified_at,
-  updates: item.updates ?? [],
+  updates: (item.updates ?? []).map((update) => ({
+    ...update,
+    image: normalizeMediaUrl(update.image),
+  })),
   histories: item.histories ?? [],
   date: item.date ?? item.created_at,
   lat: item.lat == null ? null : Number(item.lat),
