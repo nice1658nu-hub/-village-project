@@ -4480,10 +4480,11 @@ function AdminReports({ incidents }) {
         <div className="mb-4 flex items-center gap-2 font-bold text-slate-800">
           <Filter className="h-5 w-5 text-blue-600" /> ตัวกรองรายงาน
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <DateRangePicker
             from={dateFrom}
             to={dateTo}
+            labelClassName="text-xs text-slate-500"
             onChange={(nextFrom, nextTo) => {
               setDateFrom(nextFrom);
               setDateTo(nextTo);
@@ -4494,7 +4495,7 @@ function AdminReports({ incidents }) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm text-slate-700"
+              className="mt-1 h-12 w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-700"
             >
               <option value="all">ทุกสถานะ</option>
               {[
@@ -4517,7 +4518,7 @@ function AdminReports({ incidents }) {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm text-slate-700"
+              className="mt-1 h-12 w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-700"
             >
               <option value="all">ทุกหมวดหมู่</option>
               {CATEGORIES.map((value) => (
@@ -4717,7 +4718,13 @@ function AdminReports({ incidents }) {
   );
 }
 
-function DateRangePicker({ from, to, onChange, label = "วันที่ / ช่วงวันที่" }) {
+function DateRangePicker({
+  from,
+  to,
+  onChange,
+  label = "วันที่ / ช่วงวันที่",
+  labelClassName = "text-sm text-inherit",
+}) {
   const [open, setOpen] = useState(false);
   const [selectingEnd, setSelectingEnd] = useState(false);
   const initialDate = from ? new Date(`${from}T12:00:00`) : new Date();
@@ -4745,7 +4752,7 @@ function DateRangePicker({ from, to, onChange, label = "วันที่ / ช
 
   return (
     <div className="relative w-full">
-      <label className="mb-1.5 block text-sm font-bold text-inherit">{label}</label>
+      <label className={`mb-1 block font-bold ${labelClassName}`}>{label}</label>
       <button
         type="button"
         onClick={() => {

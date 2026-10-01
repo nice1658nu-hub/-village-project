@@ -8,7 +8,7 @@ if (encodedConfig) {
   try {
     firebase.initializeApp(JSON.parse(atob(decodeURIComponent(encodedConfig))));
     firebase.messaging().onBackgroundMessage(payload => {
-      const title = payload.notification?.title || payload.data?.title || 'SmartVillage';
+      const title = payload.notification?.title || payload.data?.title || 'ระบบแจ้งเหตุ ติดตาม และวิเคราะห์ปัญหาชุมชนอัจฉริยะ';
       const data = { ...(payload.data || {}) };
       const params = new URLSearchParams();
       if (data.type) params.set('notification_type', data.type);
