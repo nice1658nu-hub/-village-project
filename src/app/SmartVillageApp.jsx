@@ -4480,25 +4480,15 @@ function AdminReports({ incidents }) {
         <div className="mb-4 flex items-center gap-2 font-bold text-slate-800">
           <Filter className="h-5 w-5 text-blue-600" /> ตัวกรองรายงาน
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <label className="text-xs font-bold text-slate-500">
-            ตั้งแต่วันที่
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm text-slate-700"
-            />
-          </label>
-          <label className="text-xs font-bold text-slate-500">
-            ถึงวันที่
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm text-slate-700"
-            />
-          </label>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <DateRangePicker
+            from={dateFrom}
+            to={dateTo}
+            onChange={(nextFrom, nextTo) => {
+              setDateFrom(nextFrom);
+              setDateTo(nextTo);
+            }}
+          />
           <label className="text-xs font-bold text-slate-500">
             สถานะ
             <select
@@ -4727,6 +4717,76 @@ function AdminReports({ incidents }) {
   );
 }
 
+function DateRangePicker({ from, to, onChange, label = "ช่วงวันที่" }) {
+  const [open, setOpen] = useState(false);
+  const initialDate = from ? new Date(`${from}T12:00:00`) : new Date();
+  const [viewMonth, setViewMonth] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
+  const toKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const fromDate = from ? new Date(`${from}T00:00:00`) : null;
+  const toDate = to ? new Date(`${to}T23:59:59`) : null;
+  const daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
+  const firstDay = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1).getDay();
+  const selectDay = (day) => {
+    const selected = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
+    const key = toKey(selected);
+    if (!from || to) {
+      onChange(key, "");
+      return;
+    }
+    if (selected < fromDate) onChange(key, from);
+    else onChange(from, key);
+  };
+  const displayDate = (value) => value
+    ? new Date(`${value}T12:00:00`).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
+    : "";
+
+  return (
+    <div className="relative w-full">
+      <label className="mb-1.5 block text-sm font-bold text-inherit">{label}</label>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-800 shadow-sm"
+      >
+        <span className={from ? "text-slate-900" : "text-slate-400"}>
+          {from ? `${displayDate(from)}${to ? ` – ${displayDate(to)}` : " – เลือกวันสิ้นสุด"}` : "เลือกช่วงวันที่"}
+        </span>
+        <Calendar className="h-5 w-5 shrink-0 text-slate-500" />
+      </button>
+      {open && (
+        <div className="absolute right-0 z-[90] mt-2 w-[min(23rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-4 text-slate-900 shadow-2xl">
+          <div className="mb-3 flex items-center justify-between">
+            <button type="button" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-xl">‹</button>
+            <div className="font-black">{viewMonth.toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</div>
+            <button type="button" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-xl">›</button>
+          </div>
+          <div className="grid grid-cols-7 text-center text-xs font-bold text-slate-400">
+            {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((day) => <div key={day} className="py-2">{day}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-y-1">
+            {Array.from({ length: firstDay }).map((_, index) => <span key={`blank-${index}`} />)}
+            {Array.from({ length: daysInMonth }, (_, index) => index + 1).map((day) => {
+              const date = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
+              const key = toKey(date);
+              const selected = key === from || key === to;
+              const inRange = fromDate && toDate && date >= fromDate && date <= toDate;
+              return (
+                <button key={day} type="button" onClick={() => selectDay(day)} className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${selected ? "bg-blue-600 text-white" : inRange ? "bg-blue-100 text-blue-800" : "hover:bg-slate-100"}`}>
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 flex items-center justify-between border-t pt-3">
+            <button type="button" onClick={() => onChange("", "")} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600">ล้างวันที่</button>
+            <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white">ตกลง</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // 5. ADMIN DASHBOARD
 // ==========================================
 function SimpleAnalyticsDashboard({
@@ -4917,7 +4977,7 @@ function SimpleAnalyticsDashboard({
   return (
     <div className="mx-auto max-w-7xl space-y-5 animate-fadeIn">
       <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-6 text-white shadow-xl md:p-8">
-        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="text-sm font-bold text-blue-200">
               ข้อมูลจริงจากเรื่องร้องทุกข์และคำของบประมาณ
@@ -4933,12 +4993,13 @@ function SimpleAnalyticsDashboard({
             </p>
           </div>
           {isTao && (
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid w-full gap-3 sm:grid-cols-[14rem_minmax(18rem,1fr)] sm:items-end lg:w-auto lg:min-w-[34rem]">
             <label className="text-sm font-bold text-blue-100">
+              หมู่บ้าน
               <select
                 value={villageFilter}
                 onChange={(event) => setVillageFilter(event.target.value)}
-                className="mt-1.5 w-full min-w-64 rounded-xl border border-white/20 bg-white px-4 py-3 text-slate-900 outline-none md:w-auto"
+                className="mt-1.5 min-h-14 w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-slate-900 outline-none"
               >
                 <option value="all">รวมทุกหมู่บ้าน</option>
                 {villages.map((village) => (
@@ -4948,17 +5009,16 @@ function SimpleAnalyticsDashboard({
                 ))}
               </select>
             </label>
-            <label className="text-sm font-bold text-blue-100">
-              ตั้งแต่วันที่
-              <input type="date" value={analysisDateFrom} onChange={(event) => setAnalysisDateFrom(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/20 bg-white px-3 py-3 text-slate-900" />
-            </label>
-            <label className="text-sm font-bold text-blue-100">
-              ถึงวันที่
-              <input type="date" min={analysisDateFrom || undefined} value={analysisDateTo} onChange={(event) => setAnalysisDateTo(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/20 bg-white px-3 py-3 text-slate-900" />
-            </label>
-            {(analysisDateFrom || analysisDateTo) && (
-              <button type="button" onClick={() => { setAnalysisDateFrom(""); setAnalysisDateTo(""); }} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white sm:col-span-3">ล้างช่วงวันที่</button>
-            )}
+            <div className="text-blue-100">
+              <DateRangePicker
+                from={analysisDateFrom}
+                to={analysisDateTo}
+                onChange={(nextFrom, nextTo) => {
+                  setAnalysisDateFrom(nextFrom);
+                  setAnalysisDateTo(nextTo);
+                }}
+              />
+            </div>
             </div>
           )}
         </div>
@@ -6683,18 +6743,15 @@ function TaoDashboard({
                 : "หมู่บ้านส่งเรื่องที่แก้เองไม่ได้มาให้ อบต.รับดำเนินการ อัปเดตผล และปิดเรื่อง"}
             </p>
           </div>
-          <div className="mb-5 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-            <label className="text-sm font-bold text-slate-700">
-              ตั้งแต่วันที่
-              <input type="date" value={taoDateFrom} onChange={(event) => setTaoDateFrom(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
-            </label>
-            <label className="text-sm font-bold text-slate-700">
-              ถึงวันที่
-              <input type="date" min={taoDateFrom || undefined} value={taoDateTo} onChange={(event) => setTaoDateTo(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
-            </label>
-            <button type="button" disabled={!taoDateFrom && !taoDateTo} onClick={() => { setTaoDateFrom(""); setTaoDateTo(""); }} className="min-h-11 rounded-xl bg-slate-200 px-4 font-bold text-slate-700 disabled:opacity-40">
-              ล้างวันที่
-            </button>
+          <div className="mb-5 max-w-md rounded-2xl bg-slate-50 p-4">
+            <DateRangePicker
+              from={taoDateFrom}
+              to={taoDateTo}
+              onChange={(nextFrom, nextTo) => {
+                setTaoDateFrom(nextFrom);
+                setTaoDateTo(nextTo);
+              }}
+            />
           </div>
           <div className="grid gap-3">
             {list.map((item) => (
@@ -6743,16 +6800,15 @@ function TaoDashboard({
             <p className="text-sm text-slate-500">
               ใช้ติดตามจำนวนเรื่องที่ส่งต่อมายัง อบต. และวงเงินอนุมัติ
             </p>
-            <div className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-              <label className="text-sm font-bold text-slate-700">
-                ตั้งแต่วันที่
-                <input type="date" value={taoDateFrom} onChange={(event) => setTaoDateFrom(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
-              </label>
-              <label className="text-sm font-bold text-slate-700">
-                ถึงวันที่
-                <input type="date" min={taoDateFrom || undefined} value={taoDateTo} onChange={(event) => setTaoDateTo(event.target.value)} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal" />
-              </label>
-              <button type="button" disabled={!taoDateFrom && !taoDateTo} onClick={() => { setTaoDateFrom(""); setTaoDateTo(""); }} className="min-h-11 rounded-xl bg-slate-200 px-4 font-bold text-slate-700 disabled:opacity-40">ล้างวันที่</button>
+            <div className="mt-4 max-w-md rounded-2xl bg-slate-50 p-4">
+              <DateRangePicker
+                from={taoDateFrom}
+                to={taoDateTo}
+                onChange={(nextFrom, nextTo) => {
+                  setTaoDateFrom(nextFrom);
+                  setTaoDateTo(nextTo);
+                }}
+              />
             </div>
           </div>
           <div className="overflow-x-auto">
