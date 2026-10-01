@@ -2581,8 +2581,7 @@ function UserDashboard({
           </div>
 
           {myIncidents.length > 0 && (
-            <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex min-w-max gap-2" role="tablist" aria-label="กรองประวัติการแจ้งเหตุ">
+            <div className="grid grid-cols-2 gap-2 sm:flex" role="tablist" aria-label="กรองประวัติการแจ้งเหตุ">
                 {historyFilters.map((filter) => {
                   const active = historyStatus === filter.id;
                   return (
@@ -2592,7 +2591,7 @@ function UserDashboard({
                       role="tab"
                       aria-selected={active}
                       onClick={() => setHistoryStatus(filter.id)}
-                      className={`flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
+                      className={`flex min-h-12 w-full items-center justify-between gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition sm:w-auto sm:rounded-full sm:px-4 ${
                         active
                           ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-100"
                           : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600"
@@ -2605,7 +2604,6 @@ function UserDashboard({
                     </button>
                   );
                 })}
-              </div>
             </div>
           )}
 
