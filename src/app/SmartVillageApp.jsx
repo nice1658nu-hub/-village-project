@@ -4746,7 +4746,7 @@ function DateRangePicker({ from, to, onChange, label = "ช่วงวันท
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-800 shadow-sm"
+        className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-left text-sm font-bold text-slate-800 shadow-sm"
       >
         <span className={from ? "text-slate-900" : "text-slate-400"}>
           {from ? `${displayDate(from)}${to ? ` – ${displayDate(to)}` : " – เลือกวันสิ้นสุด"}` : "เลือกช่วงวันที่"}
@@ -4993,13 +4993,13 @@ function SimpleAnalyticsDashboard({
             </p>
           </div>
           {isTao && (
-            <div className="grid w-full gap-3 sm:grid-cols-[14rem_minmax(18rem,1fr)] sm:items-end lg:w-auto lg:min-w-[34rem]">
+            <div className="grid w-full gap-3 sm:grid-cols-2 sm:items-end lg:w-[34rem]">
             <label className="text-sm font-bold text-blue-100">
               หมู่บ้าน
               <select
                 value={villageFilter}
                 onChange={(event) => setVillageFilter(event.target.value)}
-                className="mt-1.5 min-h-14 w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-slate-900 outline-none"
+                className="mt-1.5 h-12 w-full rounded-xl border border-white/20 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none"
               >
                 <option value="all">รวมทุกหมู่บ้าน</option>
                 {villages.map((village) => (
@@ -6344,7 +6344,6 @@ function TaoDashboard({
   const [selectedCase, setSelectedCase] = useState(null);
   const [taoDateFrom, setTaoDateFrom] = useState("");
   const [taoDateTo, setTaoDateTo] = useState("");
-  const [contentDate, setContentDate] = useState("");
   const [reviewForm, setReviewForm] = useState({
     approved_amount: "",
     fiscal_year: String(new Date().getFullYear() + 543),
@@ -6548,13 +6547,7 @@ function TaoDashboard({
   const generalForwarded = forwarded.filter((item) => !item.budgetRequest);
   const baseList = activeTab === "tao_budget" ? budgetQueue : generalForwarded;
   const list = baseList.filter(inTaoDateRange);
-  const publicNews = (news || []).filter((item) => {
-    if (item.village_id != null) return false;
-    if (!contentDate) return true;
-    const date = new Date(item.date);
-    if (Number.isNaN(date.getTime())) return false;
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` === contentDate;
-  });
+  const publicNews = (news || []).filter((item) => item.village_id == null);
   const closePublicNewsForm = () => {
     if (publicNewsImagePreview?.startsWith("blob:"))
       URL.revokeObjectURL(publicNewsImagePreview);
@@ -7038,15 +7031,6 @@ function TaoDashboard({
               </div>
             </form>
           )}
-          <div className="flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-            <label className="text-sm font-bold text-slate-700 sm:max-w-xs sm:flex-1">
-              เลือกวันที่เผยแพร่
-              <input type="date" value={contentDate} onChange={(event) => setContentDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal" />
-            </label>
-            {contentDate && (
-              <button type="button" onClick={() => setContentDate("")} className="min-h-11 rounded-xl bg-slate-100 px-4 font-bold text-slate-700">ล้างวันที่</button>
-            )}
-          </div>
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {publicNews.map((item) => (
               <article
@@ -7106,7 +7090,7 @@ function TaoDashboard({
               <div className="rounded-3xl border border-dashed bg-white p-12 text-center text-slate-500 md:col-span-2 xl:col-span-3">
                 <Image className="mx-auto mb-3 h-10 w-10 opacity-40" />
                 <div className="font-bold">
-                  {contentDate ? "ไม่มีเนื้อหาในวันที่เลือก" : "ยังไม่มีข่าวหรือภาพประชาสัมพันธ์จาก อบต."}
+                  ยังไม่มีข่าวหรือภาพประชาสัมพันธ์จาก อบต.
                 </div>
                 <div className="mt-1 text-sm">
                   กด “เพิ่มข่าวหรือกิจกรรม” เพื่อสร้างสไลด์แรก
