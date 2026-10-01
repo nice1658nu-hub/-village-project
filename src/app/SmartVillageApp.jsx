@@ -39,6 +39,8 @@ import {
   Download,
   Filter,
   Image,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   MOCK_INCIDENTS,
@@ -923,6 +925,37 @@ function LandingPage({ onNavigate, news }) {
 // ==========================================
 // 2. AUTH PAGE (Login / Signup)
 // ==========================================
+function PasswordInput({ label, className = "", ...props }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <label className="block text-sm font-bold text-slate-700">
+      {label}
+      <div className="relative">
+        <input
+          {...props}
+          type={isVisible ? "text" : "password"}
+          className={`${className} pr-14`}
+        />
+        <button
+          type="button"
+          onClick={() => setIsVisible((visible) => !visible)}
+          className="absolute inset-y-1.5 right-1.5 z-10 flex w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-blue-600 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          aria-label={isVisible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+          aria-pressed={isVisible}
+          title={isVisible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+        >
+          {isVisible ? (
+            <EyeOff className="h-5 w-5" />
+          ) : (
+            <Eye className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+    </label>
+  );
+}
+
 function AuthPage({ villages, onLogin, onRegister, onBack }) {
   const params = new URLSearchParams(window.location.search);
   const resetToken = params.get("reset_token") || "";
@@ -1158,17 +1191,14 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     placeholder="08xxxxxxxx หรือ username"
                   />
                 </label>
-                <label className="block text-sm font-bold text-slate-700">
-                  รหัสผ่าน
-                  <input
-                    type="password"
-                    required
-                    value={loginPass}
-                    onChange={(e) => setLoginPass(e.target.value)}
-                    className={inputClass}
-                    placeholder="••••••••"
-                  />
-                </label>
+                <PasswordInput
+                  label="รหัสผ่าน"
+                  required
+                  value={loginPass}
+                  onChange={(e) => setLoginPass(e.target.value)}
+                  className={inputClass}
+                  placeholder="••••••••"
+                />
                 <div className="text-right">
                   <button
                     type="button"
@@ -1258,20 +1288,17 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     placeholder="name@example.com"
                   />
                 </label>
-                <label className="block text-sm font-bold text-slate-700">
-                  ตั้งรหัสผ่าน
-                  <input
-                    type="password"
-                    required
-                    minLength="8"
-                    value={reg.password}
-                    onChange={(e) =>
-                      setReg({ ...reg, password: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="อย่างน้อย 8 ตัวอักษร"
-                  />
-                </label>
+                <PasswordInput
+                  label="ตั้งรหัสผ่าน"
+                  required
+                  minLength="8"
+                  value={reg.password}
+                  onChange={(e) =>
+                    setReg({ ...reg, password: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="อย่างน้อย 8 ตัวอักษร"
+                />
                 <button
                   disabled={loading}
                   className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1324,29 +1351,23 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 <div className="rounded-xl bg-slate-50 p-3 text-center text-sm text-slate-500">
                   {email}
                 </div>
-                <label className="block text-sm font-bold text-slate-700">
-                  รหัสผ่านใหม่
-                  <input
-                    autoFocus
-                    type="password"
-                    required
-                    minLength="8"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className={inputClass}
-                  />
-                </label>
-                <label className="block text-sm font-bold text-slate-700">
-                  ยืนยันรหัสผ่านใหม่
-                  <input
-                    type="password"
-                    required
-                    minLength="8"
-                    value={confirmation}
-                    onChange={(e) => setConfirmation(e.target.value)}
-                    className={inputClass}
-                  />
-                </label>
+                <PasswordInput
+                  label="รหัสผ่านใหม่"
+                  autoFocus
+                  required
+                  minLength="8"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className={inputClass}
+                />
+                <PasswordInput
+                  label="ยืนยันรหัสผ่านใหม่"
+                  required
+                  minLength="8"
+                  value={confirmation}
+                  onChange={(e) => setConfirmation(e.target.value)}
+                  className={inputClass}
+                />
                 <button
                   disabled={loading}
                   className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white disabled:opacity-50"
