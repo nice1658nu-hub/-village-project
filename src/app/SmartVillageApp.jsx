@@ -2719,45 +2719,6 @@ function UserDashboard({
                       <p className="hidden text-sm text-gray-600 line-clamp-2 md:block">
                         {inc.description}
                       </p>
-                      {inc.budgetRequest && (
-                        <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-                          <div className="text-xs font-bold text-indigo-600">
-                            เรื่องนี้ถูกเสนอเป็นโครงการ
-                          </div>
-                          <div className="mt-1 font-black text-indigo-950">
-                            {inc.budgetRequest.project_title || inc.title}
-                          </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                            <span className="rounded-full bg-white px-3 py-1 font-bold text-indigo-800">
-                              {projectStatusLabels[
-                                inc.budgetRequest.project_status
-                              ] ||
-                                (inc.budgetRequest.status === "submitted"
-                                  ? "รอ อบต.พิจารณา"
-                                  : "อยู่ระหว่างพิจารณา")}
-                            </span>
-                            {[
-                              "planned",
-                              "in_progress",
-                              "waiting_review",
-                              "completed",
-                            ].includes(inc.budgetRequest.project_status) && (
-                              <span className="font-bold text-slate-600">
-                                ความคืบหน้า{" "}
-                                {inc.budgetRequest.progress_percent || 0}%
-                              </span>
-                            )}
-                            {inc.budgetRequest.expected_end_date && (
-                              <span className="text-slate-500">
-                                กำหนดเสร็จ{" "}
-                                {new Date(
-                                  inc.budgetRequest.expected_end_date,
-                                ).toLocaleDateString("th-TH")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                     {inc.status === "resolved" && inc.resolvedImage && (
                       <button
@@ -2848,7 +2809,7 @@ function UserDashboard({
                         </div>
                       </details>
                     )}
-                    {inc.status === "resolved" && (
+                    {inc.status === "resolved" && !inc.feedback && (
                       <CitizenFeedback
                         incident={inc}
                         onSaved={(feedback) =>
