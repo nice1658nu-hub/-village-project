@@ -436,7 +436,7 @@ export default function App() {
 
   return (
     <div
-      className="app-shell min-h-dvh flex min-w-0 font-sans"
+      className="app-shell flex h-dvh min-w-0 overflow-hidden font-sans"
       data-role={currentUser?.role || "guest"}
     >
       {/* Mobile Sidebar Overlay */}
@@ -1605,7 +1605,7 @@ function Sidebar({
 
   return (
     <aside
-      className={`app-sidebar fixed inset-y-0 left-0 w-[min(18rem,86vw)] lg:w-72 text-white flex flex-col shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+      className={`app-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(18rem,86vw)] shrink-0 flex-col overflow-hidden text-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:relative lg:w-72 lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
       <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
         <div className="flex items-center">
@@ -1758,7 +1758,7 @@ function Topbar({
   };
 
   return (
-    <header className="app-topbar min-h-16 sm:min-h-20 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 flex items-center justify-between gap-2 px-3 sm:px-5 lg:px-7 z-30 relative">
+    <header className="app-topbar sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-xl sm:min-h-20 sm:px-5 lg:px-7">
       <div className="flex min-w-0 items-center">
         <button
           onClick={toggleSidebar}
