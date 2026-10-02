@@ -3282,51 +3282,108 @@ function VillageMapPicker({ incidents, selectedPoint, onSelectPoint }) {
   );
 }
 
+function FitIncidentBounds({ incidents }) {
+  const map = useMap();
+  const coordinateKey = incidents
+    .map((item) => `${item.id}:${item.lat},${item.lng}`)
+    .join("|");
+
+  useEffect(() => {
+    const points = incidents
+      .filter(
+        (item) =>
+          Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)),
+      )
+      .map((item) => [Number(item.lat), Number(item.lng)]);
+    if (!points.length) return;
+    if (points.length === 1) {
+      map.setView(points[0], 17);
+      return;
+    }
+    map.fitBounds(points, { padding: [36, 36], maxZoom: 17 });
+  }, [coordinateKey, incidents, map]);
+
+  return null;
+}
+
 function SpatialAnalyticsMap({ incidents }) {
+  const validIncidents = incidents.filter(
+    (item) =>
+      Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)),
+  );
+  const densityAt = (incident) =>
+    validIncidents.filter(
+      (item) =>
+        Math.abs(Number(item.lat) - Number(incident.lat)) <= 0.001 &&
+        Math.abs(Number(item.lng) - Number(incident.lng)) <= 0.001,
+    ).length;
+
   return (
-    <div className="relative h-80 rounded-3xl overflow-hidden border border-gray-200 bg-[radial-gradient(circle_at_top,_rgba(248,113,113,0.18),_transparent_24%),linear-gradient(135deg,_#fff7ed_0%,_#fee2e2_44%,_#eff6ff_100%)]">
-      <div className="absolute inset-0 opacity-50">
-        <div className="absolute inset-x-0 top-[24%] h-px bg-white/70" />
-        <div className="absolute inset-x-0 top-[54%] h-px bg-white/70" />
-        <div className="absolute inset-y-0 left-[32%] w-px bg-white/70" />
-        <div className="absolute inset-y-0 left-[68%] w-px bg-white/70" />
-      </div>
-      <div className="absolute left-4 top-4 rounded-2xl bg-white/85 px-4 py-3 shadow-sm border border-white/80">
-        <div className="text-sm font-bold text-gray-900">
-          Heat Map จำลองของ{VILLAGE_NAME}
-        </div>
-        <div className="text-xs text-gray-500 mt-1">
-          ใช้พิกัดจากจุดร้องเรียนเพื่อแสดงพื้นที่หนาแน่นของปัญหา
-        </div>
-      </div>
-      {incidents.map((inc) => {
-        const pos = latLngToPercent(inc.lat, inc.lng);
-        const heat = getHeatLevel(
-          incidents.filter((other) => other.location === inc.location).length,
-        );
-        return (
-          <div key={inc.id}>
-            <div
-              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl opacity-45 ${heat.color}`}
-              style={{
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                width: 72,
-                height: 72,
-              }}
+    <div className="relative isolate z-0 h-80 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:h-96">
+      <MapContainer
+        center={VILLAGE_MAP_CENTER}
+        zoom={14}
+        scrollWheelZoom
+        className="relative z-0 h-full w-full"
+      >
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="แผนที่ถนนจริง">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <div
-              className="absolute -translate-x-1/2 -translate-y-full"
-              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-            >
-              <MapPin
-                className="w-7 h-7 text-red-600 drop-shadow-md"
-                fill="currentColor"
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="ภาพถ่ายดาวเทียม">
+            <TileLayer
+              attribution="Tiles &copy; Esri"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.Overlay checked name="ชื่อถนนและสถานที่">
+            <TileLayer
+              attribution="Labels &copy; Esri"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            />
+          </LayersControl.Overlay>
+        </LayersControl>
+        <FitIncidentBounds incidents={validIncidents} />
+        {validIncidents.map((incident) => {
+          const density = densityAt(incident);
+          const isClosed = ["resolved", "cancelled"].includes(incident.status);
+          const color = isClosed ? "#059669" : density >= 3 ? "#dc2626" : density >= 2 ? "#f97316" : "#2563eb";
+          return (
+            <React.Fragment key={incident.id}>
+              <CircleMarker
+                center={[Number(incident.lat), Number(incident.lng)]}
+                radius={Math.min(28, 12 + density * 4)}
+                pathOptions={{ color, fillColor: color, fillOpacity: 0.16, weight: 1 }}
               />
-            </div>
-          </div>
-        );
-      })}
+              <CircleMarker
+                center={[Number(incident.lat), Number(incident.lng)]}
+                radius={7}
+                pathOptions={{ color: "#ffffff", weight: 2, fillColor: color, fillOpacity: 1 }}
+              >
+                <Popup>
+                  <div className="min-w-48 font-sans">
+                    <div className="font-bold text-slate-900">{incident.title}</div>
+                    <div className="mt-1 text-sm">{incident.location}</div>
+                    <div className="mt-1 text-xs text-slate-500">{incident.category} · {getStatusLabel(incident.status)}</div>
+                    <div className="mt-2 text-xs font-bold" style={{ color }}>
+                      บริเวณใกล้เคียงมี {density} เรื่อง
+                    </div>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            </React.Fragment>
+          );
+        })}
+      </MapContainer>
+      <div className="pointer-events-none absolute bottom-3 left-3 z-[500] rounded-xl bg-white/95 px-3 py-2 text-xs font-bold text-slate-700 shadow-lg">
+        <span className="text-red-600">●</span> เสี่ยงสูง&nbsp;&nbsp;
+        <span className="text-orange-500">●</span> พบซ้ำ&nbsp;&nbsp;
+        <span className="text-blue-600">●</span> งานเปิด&nbsp;&nbsp;
+        <span className="text-emerald-600">●</span> ปิดแล้ว
+      </div>
     </div>
   );
 }
@@ -5265,8 +5322,8 @@ function SimpleAnalyticsDashboard({
       <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-xl font-black text-slate-950">แผนที่จุดเสี่ยงของชุมชน</h3>
-            <p className="text-sm text-slate-500">แสดงความหนาแน่นจากพิกัด GPS ของเหตุในหมู่บ้านและช่วงวันที่ที่เลือก</p>
+            <h3 className="text-xl font-black text-slate-950">แผนที่พื้นที่จริงและจุดเสี่ยงของชุมชน</h3>
+            <p className="text-sm text-slate-500">แสดงตำแหน่งจริงจากพิกัด GPS บนแผนที่ถนนหรือภาพถ่ายดาวเทียม และซูมครอบคลุมเหตุที่เลือกอัตโนมัติ</p>
           </div>
           <div className="text-xs font-bold text-slate-500">มีพิกัด {riskMapIncidents.length} เรื่อง · ไม่มีพิกัด {missingCoordinates} เรื่อง</div>
         </div>
