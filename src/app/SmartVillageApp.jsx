@@ -669,13 +669,13 @@ function LandingPage({ onNavigate, news }) {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="relative mx-auto flex h-[72px] max-w-7xl items-center gap-2 px-3 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:px-8">
           <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 text-left sm:gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-sm sm:h-12 sm:w-12">
-              <Home className="h-6 w-6 sm:h-7 sm:w-7" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-sm sm:h-11 sm:w-11 sm:rounded-2xl">
+              <Home className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div className="min-w-0">
-              <div className="line-clamp-2 text-sm font-black leading-[1.15] text-slate-900 sm:text-base lg:text-lg">
+              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-lg">
                 {APP_NAME}
               </div>
               <div className="mt-0.5 hidden truncate text-xs font-bold text-slate-500 min-[420px]:block">
@@ -686,7 +686,7 @@ function LandingPage({ onNavigate, news }) {
           <button
             type="button"
             onClick={() => onNavigate("auth")}
-            className="shrink-0 rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:px-5 sm:text-sm"
+            className="flex h-10 w-[6.75rem] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:h-11 sm:w-[7.5rem] sm:text-sm"
           >
             เข้าสู่ระบบ
           </button>
@@ -698,9 +698,9 @@ function LandingPage({ onNavigate, news }) {
             }}
             aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={publicMenuOpen}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:h-11 sm:w-11"
           >
-            {publicMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+            {publicMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
           {publicMenuOpen && (
             <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-8">
@@ -737,7 +737,7 @@ function LandingPage({ onNavigate, news }) {
           )}
         </div>
       </header>
-      <div className="h-[72px] sm:h-20" aria-hidden="true" />
+      <div className="h-16 sm:h-[72px]" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
         <div className="relative mx-auto h-[360px] max-w-[1600px] overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[610px]">
