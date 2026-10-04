@@ -669,16 +669,16 @@ function LandingPage({ onNavigate, news }) {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="relative mx-auto flex h-14 max-w-7xl items-center gap-1.5 px-2.5 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
-          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[9.5rem] text-left sm:gap-3 sm:pr-[12rem]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-sm sm:h-10 sm:w-10">
-              <Home className="h-5 w-5" />
+        <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:px-8">
+          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-sm sm:h-12 sm:w-12">
+              <Home className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <div className="line-clamp-2 text-[12px] font-black leading-[1.15] text-slate-900 min-[390px]:text-[13px] sm:text-sm lg:text-base">
+              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-lg">
                 {APP_NAME}
               </div>
-              <div className="mt-0.5 hidden truncate text-[10px] font-bold text-slate-500 sm:block">
+              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block">
                 {VILLAGE_NAME}
               </div>
             </div>
@@ -686,7 +686,7 @@ function LandingPage({ onNavigate, news }) {
           <button
             type="button"
             onClick={() => onNavigate("auth")}
-            className="absolute right-14 flex h-9 w-[5.5rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-1.5 text-[11px] font-black text-white shadow-sm hover:bg-blue-700 sm:right-16 sm:h-10 sm:w-28 sm:text-xs"
+            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm"
           >
             เข้าสู่ระบบ
           </button>
@@ -698,9 +698,9 @@ function LandingPage({ onNavigate, news }) {
             }}
             aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={publicMenuOpen}
-            className="absolute right-2.5 flex h-9 w-9 items-center justify-center rounded-lg text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-10 sm:w-10"
+            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11"
           >
-            {publicMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {publicMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
           {publicMenuOpen && (
             <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-8">
@@ -709,15 +709,15 @@ function LandingPage({ onNavigate, news }) {
                   event.preventDefault();
                   goToPublicSection("#activities");
                 }}
-                className="mb-2 flex overflow-hidden rounded-xl border bg-slate-50"
+                className="relative mb-2 overflow-hidden rounded-xl border bg-slate-50"
               >
                 <input
                   value={publicSearch}
                   onChange={(event) => setPublicSearch(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm outline-none"
+                  className="w-full bg-transparent py-3 pl-3 pr-14 text-sm outline-none"
                   placeholder="ค้นหาข่าวหรือกิจกรรม"
                 />
-                <button type="submit" aria-label="ค้นหา" className="flex w-12 items-center justify-center text-blue-700 hover:bg-blue-50">
+                <button type="submit" aria-label="ค้นหา" className="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-lg text-blue-700 hover:bg-blue-50">
                   <Search className="h-5 w-5" />
                 </button>
               </form>
@@ -737,7 +737,7 @@ function LandingPage({ onNavigate, news }) {
           )}
         </div>
       </header>
-      <div className="h-14 sm:h-16" aria-hidden="true" />
+      <div className="h-16 sm:h-[72px]" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
         <div className="relative mx-auto h-[360px] max-w-[1600px] overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[610px]">
