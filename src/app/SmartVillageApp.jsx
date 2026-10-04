@@ -612,6 +612,9 @@ function LandingPage({ onNavigate, news }) {
   const [slideIndex, setSlideIndex] = useState(0);
   const [selectedSlide, setSelectedSlide] = useState(null);
   const [publicSearch, setPublicSearch] = useState("");
+  const [publicMenuOpen, setPublicMenuOpen] = useState(false);
+  const [publicHeaderVisible, setPublicHeaderVisible] = useState(true);
+  const lastPublicScrollY = useRef(0);
   useEffect(() => {
     if (publicSlides.length < 2) return undefined;
     const timer = window.setInterval(
@@ -623,6 +626,28 @@ function LandingPage({ onNavigate, news }) {
   useEffect(() => {
     if (slideIndex >= publicSlides.length) setSlideIndex(0);
   }, [publicSlides.length, slideIndex]);
+  useEffect(() => {
+    lastPublicScrollY.current = window.scrollY;
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const difference = currentY - lastPublicScrollY.current;
+      if (currentY <= 12 || difference < -7) setPublicHeaderVisible(true);
+      if (difference > 7 && currentY > 80 && !publicMenuOpen) {
+        setPublicHeaderVisible(false);
+      }
+      lastPublicScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [publicMenuOpen]);
+  const goToPublicSection = (sectionId) => {
+    setPublicMenuOpen(false);
+    setPublicHeaderVisible(true);
+    window.setTimeout(
+      () => document.querySelector(sectionId)?.scrollIntoView({ behavior: "smooth" }),
+      0,
+    );
+  };
   const currentSlide = publicSlides[slideIndex];
   const visibleActivityNews = activityNews.filter(
     (item) =>
@@ -643,78 +668,76 @@ function LandingPage({ onNavigate, news }) {
   })();
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
-      <header className="public-header bg-[#3195e8] text-white">
-        <div className="mx-auto grid max-w-7xl items-center gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[320px_1fr_auto] lg:px-8">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white/30 bg-white/15 shadow-lg">
-              <Home className="h-11 w-11" />
+      <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
+        <div className="relative mx-auto flex h-[72px] max-w-7xl items-center gap-2 px-3 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
+          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 text-left sm:gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-sm sm:h-12 sm:w-12">
+              <Home className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-bold text-blue-100">
-                {VILLAGE_NAME}
-              </div>
-              <div className="mt-1 max-w-sm text-lg font-black leading-tight sm:text-xl">
+              <div className="line-clamp-2 text-sm font-black leading-[1.15] text-slate-900 sm:text-base lg:text-lg">
                 {APP_NAME}
               </div>
+              <div className="mt-0.5 hidden truncate text-xs font-bold text-slate-500 min-[420px]:block">
+                {VILLAGE_NAME}
+              </div>
             </div>
-          </div>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              document
-                .querySelector("#activities")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:flex"
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("auth")}
+            className="shrink-0 rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:px-5 sm:text-sm"
           >
-            <input
-              value={publicSearch}
-              onChange={(e) => setPublicSearch(e.target.value)}
-              className="min-w-0 flex-1 px-5 py-4 text-sm text-slate-700 outline-none"
-              placeholder="ค้นหาข่าว กิจกรรม หรือประกาศของ อบต.มะต้อง"
-            />
-            <button className="flex w-16 items-center justify-center bg-cyan-400 text-white hover:bg-cyan-500">
-              <Search className="h-7 w-7" />
-            </button>
-          </form>
-          <div className="flex items-center gap-2 lg:justify-end">
-            <button
-              onClick={() => onNavigate("auth")}
-              className="rounded-lg border border-white/60 px-4 py-2 text-sm font-bold hover:bg-white/10"
-            >
-              เข้าสู่ระบบ
-            </button>
-            <button
-              onClick={() => onNavigate("auth")}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-blue-700 shadow"
-            >
-              สมัครสมาชิก
-            </button>
-          </div>
+            เข้าสู่ระบบ
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPublicMenuOpen((value) => !value);
+              setPublicHeaderVisible(true);
+            }}
+            aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
+            aria-expanded={publicMenuOpen}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100"
+          >
+            {publicMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+          </button>
+          {publicMenuOpen && (
+            <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-8">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  goToPublicSection("#activities");
+                }}
+                className="mb-2 flex overflow-hidden rounded-xl border bg-slate-50"
+              >
+                <input
+                  value={publicSearch}
+                  onChange={(event) => setPublicSearch(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm outline-none"
+                  placeholder="ค้นหาข่าวหรือกิจกรรม"
+                />
+                <button type="submit" aria-label="ค้นหา" className="flex w-12 items-center justify-center text-blue-700 hover:bg-blue-50">
+                  <Search className="h-5 w-5" />
+                </button>
+              </form>
+              {[
+                ["หน้าหลัก", "#home"],
+                ["ข่าวกิจกรรม", "#activities"],
+                ["ติดต่อเรา", "#contact"],
+              ].map(([label, section]) => (
+                <button key={section} type="button" onClick={() => goToPublicSection(section)} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700">
+                  {label}<ChevronRight className="h-5 w-5" />
+                </button>
+              ))}
+              <button type="button" onClick={() => onNavigate("auth")} className="mt-1 w-full rounded-xl border border-blue-200 px-4 py-3 text-left font-bold text-blue-700 hover:bg-blue-50">
+                สมัครสมาชิก
+              </button>
+            </div>
+          )}
         </div>
       </header>
-      <nav className="public-nav sticky top-0 z-50 border-b bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-3 py-2 sm:justify-center sm:gap-3">
-          <a
-            href="#home"
-            className="whitespace-nowrap rounded-lg px-5 py-3 text-base font-bold text-blue-700 hover:bg-blue-50"
-          >
-            หน้าหลัก
-          </a>
-          <a
-            href="#activities"
-            className="whitespace-nowrap rounded-lg px-5 py-3 text-base font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-          >
-            ข่าวกิจกรรม
-          </a>
-          <a
-            href="#contact"
-            className="whitespace-nowrap rounded-lg px-5 py-3 text-base font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-          >
-            ติดต่อเรา
-          </a>
-        </div>
-      </nav>
+      <div className="h-[72px] sm:h-20" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
         <div className="relative mx-auto h-[360px] max-w-[1600px] overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[610px]">
