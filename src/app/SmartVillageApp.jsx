@@ -670,7 +670,7 @@ function LandingPage({ onNavigate, news }) {
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
         <div className="relative mx-auto flex h-14 max-w-7xl items-center gap-1.5 px-2.5 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
-          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 text-left sm:gap-3">
+          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[9.5rem] text-left sm:gap-3 sm:pr-[12rem]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-sm sm:h-10 sm:w-10">
               <Home className="h-5 w-5" />
             </div>
@@ -686,7 +686,7 @@ function LandingPage({ onNavigate, news }) {
           <button
             type="button"
             onClick={() => onNavigate("auth")}
-            className="flex h-9 w-[5.5rem] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-1.5 text-[11px] font-black text-white shadow-sm hover:bg-blue-700 sm:h-10 sm:w-28 sm:text-xs"
+            className="absolute right-14 flex h-9 w-[5.5rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-1.5 text-[11px] font-black text-white shadow-sm hover:bg-blue-700 sm:right-16 sm:h-10 sm:w-28 sm:text-xs"
           >
             เข้าสู่ระบบ
           </button>
@@ -698,7 +698,7 @@ function LandingPage({ onNavigate, news }) {
             }}
             aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={publicMenuOpen}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-800 hover:bg-slate-100 sm:h-10 sm:w-10"
+            className="absolute right-2.5 flex h-9 w-9 items-center justify-center rounded-lg text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-10 sm:w-10"
           >
             {publicMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
