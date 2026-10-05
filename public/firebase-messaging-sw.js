@@ -19,8 +19,8 @@ if (encodedConfig) {
       data.targetUrl = `/${params.toString() ? `?${params.toString()}` : ''}`;
       self.registration.showNotification(title, {
         body: payload.notification?.body || payload.data?.description || 'มีการอัปเดตใหม่',
-        icon: '/logo1.png',
-        badge: '/logo1.png',
+        icon: '/app-logo-matong.png',
+        badge: '/app-logo-matong.png',
         data,
       });
     });

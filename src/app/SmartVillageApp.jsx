@@ -70,7 +70,7 @@ import {
 } from "../utils/village";
 
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === "true";
-const APP_LOGO_URL = "/Logo.png";
+const APP_LOGO_URL = "/app-logo-matong.png";
 
 function AppLogo({ className = "" }) {
   return (
