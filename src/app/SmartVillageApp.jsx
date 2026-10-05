@@ -718,7 +718,7 @@ function LandingPage({ onNavigate, news }) {
             {publicMenuOpen ? <X className="h-6 w-6 lg:h-8 lg:w-8" /> : <Menu className="h-6 w-6 lg:h-8 lg:w-8" />}
           </button>
           {publicMenuOpen && (
-            <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-8">
+            <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-12 lg:w-[30rem] lg:p-3 xl:right-20">
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -729,11 +729,11 @@ function LandingPage({ onNavigate, news }) {
                 <input
                   value={publicSearch}
                   onChange={(event) => setPublicSearch(event.target.value)}
-                  className="w-full bg-transparent py-3 pl-3 pr-14 text-sm outline-none"
+                  className="w-full bg-transparent py-3 pl-3 pr-14 text-sm outline-none lg:py-4 lg:pl-4 lg:text-lg"
                   placeholder="ค้นหาข่าวหรือกิจกรรม"
                 />
                 <button type="submit" aria-label="ค้นหา" className="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-lg text-blue-700 hover:bg-blue-50">
-                  <Search className="h-5 w-5" />
+                  <Search className="h-5 w-5 lg:h-7 lg:w-7" />
                 </button>
               </form>
               {[
@@ -741,11 +741,11 @@ function LandingPage({ onNavigate, news }) {
                 ["ข่าวกิจกรรม", "#activities"],
                 ["ติดต่อเรา", "#contact"],
               ].map(([label, section]) => (
-                <button key={section} type="button" onClick={() => goToPublicSection(section)} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700">
-                  {label}<ChevronRight className="h-5 w-5" />
+                <button key={section} type="button" onClick={() => goToPublicSection(section)} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 lg:px-5 lg:py-4 lg:text-lg">
+                  {label}<ChevronRight className="h-5 w-5 lg:h-6 lg:w-6" />
                 </button>
               ))}
-              <button type="button" onClick={() => onNavigate("auth")} className="mt-1 w-full rounded-xl border border-blue-200 px-4 py-3 text-left font-bold text-blue-700 hover:bg-blue-50">
+              <button type="button" onClick={() => onNavigate("auth")} className="mt-1 w-full rounded-xl border border-blue-200 px-4 py-3 text-left font-bold text-blue-700 hover:bg-blue-50 lg:px-5 lg:py-4 lg:text-lg">
                 สมัครสมาชิก
               </button>
             </div>
@@ -768,11 +768,11 @@ function LandingPage({ onNavigate, news }) {
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
               <div>
-                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-20 lg:w-20" />
-                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-7 lg:text-5xl">
+                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-24 lg:w-24" />
+                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-8 lg:text-6xl">
                   ข่าวประชาสัมพันธ์ อบต.มะต้อง
                 </h1>
-                <p className="mt-2 text-slate-300 lg:mt-4 lg:text-xl">
+                <p className="mt-2 text-slate-300 lg:mt-5 lg:text-2xl">
                   ยังไม่มีข่าวประชาสัมพันธ์ในขณะนี้
                 </p>
               </div>
@@ -865,12 +865,12 @@ function LandingPage({ onNavigate, news }) {
       {activityNews.length === 0 && (
         <section id="activities" className="border-y bg-white py-16">
           <div className="mx-auto max-w-[1600px] px-4 text-center sm:px-6 lg:px-12 xl:px-16">
-            <h2 className="text-3xl font-black lg:text-4xl">
+            <h2 className="text-3xl font-black lg:text-5xl">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
             <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-10 lg:py-24">
               <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-16 lg:w-16" />
-              <div className="mt-3 font-bold lg:mt-5 lg:text-xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
+              <div className="mt-3 font-bold lg:mt-5 lg:text-2xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
               <div className="mt-1 text-sm"></div>
             </div>
           </div>
@@ -982,30 +982,30 @@ function LandingPage({ onNavigate, news }) {
         </div>
       </section>
 
-      <footer id="contact" className="bg-gray-900 py-16 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <footer id="contact" className="bg-gray-900 py-16 text-white lg:py-20">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12 xl:px-16">
           <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <div className="mb-6 flex items-center gap-3 text-2xl font-bold">
-                <AppLogo className="h-11 w-11" />
+              <div className="mb-6 flex items-center gap-3 text-2xl font-bold lg:text-3xl">
+                <AppLogo className="h-11 w-11 lg:h-16 lg:w-16" />
                 {APP_NAME}
               </div>
-              <p className="max-w-xs text-gray-400">
+              <p className="max-w-xs text-gray-400 lg:max-w-lg lg:text-lg lg:leading-8">
                 ชุมชนน่าอยู่ ปลอดภัย สังคมแห่งการแบ่งปัน ร่วมสร้าง{VILLAGE_NAME}
                 ให้ดียิ่งขึ้นไปพร้อมกัน
               </p>
             </div>
             <div>
-              <h4 className="mb-6 text-lg font-bold">
+              <h4 className="mb-6 text-lg font-bold lg:text-2xl">
                 ติดต่อผู้ดูแลหมู่บ้าน / นิติบุคคล
               </h4>
               <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-400">
+                <li className="flex items-center gap-3 text-gray-400 lg:text-lg">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800">
                     <Phone className="h-5 w-5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 lg:text-base">
                       เบอร์โทรศัพท์ฉุกเฉิน
                     </p>
                     <p className="font-semibold text-white">
@@ -1013,12 +1013,12 @@ function LandingPage({ onNavigate, news }) {
                     </p>
                   </div>
                 </li>
-                <li className="flex items-center gap-3 text-gray-400">
+                <li className="flex items-center gap-3 text-gray-400 lg:text-lg">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800">
                     <Facebook className="h-5 w-5 text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Facebook Page</p>
+                    <p className="text-sm text-gray-500 lg:text-base">Facebook Page</p>
                     <p className="font-semibold text-white">
                       {VILLAGE_NAME} Official
                     </p>
@@ -1027,7 +1027,7 @@ function LandingPage({ onNavigate, news }) {
               </ul>
             </div>
           </div>
-          <div className="mt-12 border-t border-gray-800 pt-8 text-center text-sm text-gray-500">
+          <div className="mt-12 border-t border-gray-800 pt-8 text-center text-sm text-gray-500 lg:text-base">
             © {new Date().getFullYear()} {APP_NAME}
           </div>
         </div>
@@ -1049,7 +1049,7 @@ function PasswordInput({ label, className = "", ...props }) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className="block text-sm font-bold text-slate-700">
+    <label className="block text-sm font-bold text-slate-700 xl:text-lg">
       {label}
       <div className="relative">
         <input
@@ -1198,12 +1198,12 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
       <div className="mx-auto flex max-w-[1600px] items-center justify-between xl:px-4">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700"
+          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700 xl:text-lg"
         >
           <ChevronRight className="h-5 w-5 rotate-180" />
           กลับหน้าแรก
         </button>
-        <div className="hidden text-sm text-slate-500 sm:block">
+        <div className="hidden text-sm text-slate-500 sm:block xl:text-base">
           องค์การบริหารส่วนตำบลมะต้อง
         </div>
       </div>
@@ -1267,25 +1267,25 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <div className="mb-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
                 <button
                   onClick={() => switchMode("login")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-3.5 xl:text-lg ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   เข้าสู่ระบบ
                 </button>
                 <button
                   onClick={() => switchMode("register")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-3.5 xl:text-lg ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   สมัครสมาชิก
                 </button>
               </div>
             )}
             {message && (
-              <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-3 text-sm leading-6 text-green-800">
+              <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-3 text-sm leading-6 text-green-800 xl:text-base">
                 {message}
               </div>
             )}
             {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700">
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700 xl:text-base">
                 {error}
               </div>
             )}
@@ -1297,7 +1297,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 }}
                 className="space-y-4"
               >
-                <label className="block text-sm font-bold text-slate-700">
+                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                   เบอร์โทรศัพท์ / Username
                   <input
                     required
@@ -1319,19 +1319,19 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   <button
                     type="button"
                     onClick={() => switchMode("forgot")}
-                    className="text-sm font-bold text-blue-600 hover:underline"
+                    className="text-sm font-bold text-blue-600 hover:underline xl:text-base"
                   >
                     ลืมรหัสผ่าน?
                   </button>
                 </div>
-                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200">
+                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 xl:py-4 xl:text-xl">
                   เข้าสู่ระบบ
                 </button>
               </form>
             )}
             {mode === "register" && (
               <form onSubmit={submitRegister} className="space-y-4">
-                <label className="block text-sm font-bold text-slate-700">
+                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                   ชื่อ - นามสกุล
                   <input
                     required
@@ -1340,7 +1340,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     className={inputClass}
                   />
                 </label>
-                <label className="block text-sm font-bold text-slate-700">
+                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                   หมู่บ้าน
                   <select
                     required
@@ -1359,7 +1359,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   </select>
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm font-bold text-slate-700">
+                  <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                     เบอร์โทรศัพท์
                     <input
                       type="tel"
@@ -1381,7 +1381,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                       placeholder="08xxxxxxxx"
                     />
                   </label>
-                  <label className="block text-sm font-bold text-slate-700">
+                  <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                     บ้านเลขที่
                     <input
                       required
@@ -1393,7 +1393,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     />
                   </label>
                 </div>
-                <label className="block text-sm font-bold text-slate-700">
+                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                   อีเมล
                   <input
                     type="email"
@@ -1417,7 +1417,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 />
                 <button
                   disabled={loading}
-                  className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60 xl:py-4 xl:text-xl"
                 >
                   {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิกประชาชน"}
                 </button>
@@ -1427,11 +1427,11 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <form onSubmit={submitForgot} className="space-y-5">
                 <div className="text-center">
                   <h2 className="text-2xl font-black">ลืมรหัสผ่าน</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                  <p className="mt-2 text-sm leading-6 text-slate-500 xl:text-lg xl:leading-8">
                     กรอกอีเมลกู้คืน ระบบจะส่งลิงก์ให้โดยไม่ต้องรอแอดมิน
                   </p>
                 </div>
-                <label className="block text-sm font-bold text-slate-700">
+                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
                   อีเมล
                   <input
                     autoFocus
@@ -1456,7 +1456,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 <button
                   type="button"
                   onClick={() => switchMode("login")}
-                  className="w-full text-sm font-bold text-blue-600"
+                  className="w-full text-sm font-bold text-blue-600 xl:text-lg"
                 >
                   กลับหน้าเข้าสู่ระบบ
                 </button>
@@ -1464,7 +1464,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             )}
             {mode === "reset" && (
               <form onSubmit={submitReset} className="space-y-4">
-                <div className="rounded-xl bg-slate-50 p-3 text-center text-sm text-slate-500">
+                <div className="rounded-xl bg-slate-50 p-3 text-center text-sm text-slate-500 xl:text-lg">
                   {email}
                 </div>
                 <PasswordInput
@@ -1486,13 +1486,13 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 />
                 <button
                   disabled={loading}
-                  className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white disabled:opacity-50"
+                  className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white disabled:opacity-50 xl:py-4 xl:text-xl"
                 >
                   {loading ? "กำลังบันทึก..." : "บันทึกรหัสผ่านใหม่"}
                 </button>
               </form>
             )}
-            <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400">
+            <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400 xl:text-base xl:leading-7">
               หากพบปัญหาการใช้งาน กรุณาติดต่อผู้ดูแลหมู่บ้านของท่าน
             </div>
           </div>
