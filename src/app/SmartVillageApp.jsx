@@ -1049,7 +1049,7 @@ function PasswordInput({ label, className = "", ...props }) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className="block text-sm font-bold text-slate-700 xl:text-xl">
+    <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
       {label}
       <div className="relative">
         <input
@@ -1098,7 +1098,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
   const [loading, setLoading] = useState(false);
   const [recoveryCooldown, setRecoveryCooldown] = useState(0);
   const inputClass =
-    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 xl:mt-3 xl:px-6 xl:py-5 xl:text-xl";
+    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 lg:mt-2 lg:px-5 lg:py-4 lg:text-lg xl:px-6 xl:py-5 xl:text-xl";
   const switchMode = (next) => {
     setMode(next);
     setMessage("");
@@ -1255,37 +1255,37 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <h2 className="mt-1 text-3xl font-black text-slate-900 xl:mt-3 xl:text-6xl">
                 {pageTitle}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500 xl:mt-5 xl:text-xl xl:leading-9">
-                {mode === "register"
-                  ? "กรอกข้อมูลจริงเพื่อให้ผู้ดูแลหมู่บ้านตรวจสอบและอนุมัติบัญชี"
-                  : mode === "login"
-                    ? "ใช้เบอร์โทรศัพท์หรือบัญชีเจ้าหน้าที่เพื่อเข้าสู่ระบบ"
+              {mode !== "login" && (
+                <p className="mt-2 text-sm leading-6 text-slate-500 lg:mt-4 lg:text-lg lg:leading-8 xl:mt-5 xl:text-xl xl:leading-9">
+                  {mode === "register"
+                    ? "กรอกข้อมูลจริงเพื่อให้ผู้ดูแลหมู่บ้านตรวจสอบและอนุมัติบัญชี"
                     : "ดำเนินการตามขั้นตอนด้านล่าง"}
-              </p>
+                </p>
+              )}
             </div>
             {!["forgot", "reset"].includes(mode) && (
-              <div className="mb-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
+              <div className="mb-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1 lg:mt-8 lg:p-2">
                 <button
                   onClick={() => switchMode("login")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-4 xl:text-xl ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition lg:py-4 lg:text-xl xl:py-5 xl:text-2xl ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   เข้าสู่ระบบ
                 </button>
                 <button
                   onClick={() => switchMode("register")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-4 xl:text-xl ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition lg:py-4 lg:text-xl xl:py-5 xl:text-2xl ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   สมัครสมาชิก
                 </button>
               </div>
             )}
             {message && (
-              <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-3 text-sm leading-6 text-green-800 xl:text-base">
+              <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-3 text-sm leading-6 text-green-800 lg:text-base xl:text-lg">
                 {message}
               </div>
             )}
             {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700 xl:text-base">
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700 lg:text-base xl:text-lg">
                 {error}
               </div>
             )}
@@ -1297,7 +1297,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 }}
                 className="space-y-4"
               >
-                <label className="block text-sm font-bold text-slate-700 xl:text-xl">
+                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                   เบอร์โทรศัพท์ / Username
                   <input
                     required
@@ -1319,19 +1319,19 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   <button
                     type="button"
                     onClick={() => switchMode("forgot")}
-                    className="text-sm font-bold text-blue-600 hover:underline xl:text-lg"
+                    className="text-sm font-bold text-blue-600 hover:underline lg:text-base xl:text-lg"
                   >
                     ลืมรหัสผ่าน?
                   </button>
                 </div>
-                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 xl:py-5 xl:text-2xl">
+                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 lg:py-4 lg:text-xl xl:py-5 xl:text-2xl">
                   เข้าสู่ระบบ
                 </button>
               </form>
             )}
             {mode === "register" && (
               <form onSubmit={submitRegister} className="space-y-4">
-                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                   ชื่อ - นามสกุล
                   <input
                     required
@@ -1340,7 +1340,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     className={inputClass}
                   />
                 </label>
-                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                   หมู่บ้าน
                   <select
                     required
@@ -1359,7 +1359,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   </select>
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                  <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                     เบอร์โทรศัพท์
                     <input
                       type="tel"
@@ -1381,7 +1381,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                       placeholder="08xxxxxxxx"
                     />
                   </label>
-                  <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                  <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                     บ้านเลขที่
                     <input
                       required
@@ -1393,7 +1393,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     />
                   </label>
                 </div>
-                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                   อีเมล
                   <input
                     type="email"
@@ -1417,7 +1417,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 />
                 <button
                   disabled={loading}
-                  className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60 xl:py-4 xl:text-xl"
+                  className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60 lg:py-4 lg:text-xl xl:py-5 xl:text-2xl"
                 >
                   {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิกประชาชน"}
                 </button>
@@ -1427,11 +1427,11 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <form onSubmit={submitForgot} className="space-y-5">
                 <div className="text-center">
                   <h2 className="text-2xl font-black">ลืมรหัสผ่าน</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-500 xl:text-lg xl:leading-8">
+                  <p className="mt-2 text-sm leading-6 text-slate-500 lg:text-lg lg:leading-8 xl:text-xl">
                     กรอกอีเมลกู้คืน ระบบจะส่งลิงก์ให้โดยไม่ต้องรอแอดมิน
                   </p>
                 </div>
-                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
                   อีเมล
                   <input
                     autoFocus
@@ -1456,7 +1456,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 <button
                   type="button"
                   onClick={() => switchMode("login")}
-                  className="w-full text-sm font-bold text-blue-600 xl:text-lg"
+                  className="w-full text-sm font-bold text-blue-600 lg:text-lg xl:text-xl"
                 >
                   กลับหน้าเข้าสู่ระบบ
                 </button>
@@ -1464,7 +1464,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             )}
             {mode === "reset" && (
               <form onSubmit={submitReset} className="space-y-4">
-                <div className="rounded-xl bg-slate-50 p-3 text-center text-sm text-slate-500 xl:text-lg">
+                <div className="rounded-xl bg-slate-50 p-3 text-center text-sm text-slate-500 lg:text-lg xl:text-xl">
                   {email}
                 </div>
                 <PasswordInput
@@ -1492,7 +1492,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 </button>
               </form>
             )}
-            <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400 xl:text-lg xl:leading-8">
+            <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400 lg:text-base lg:leading-7 xl:text-lg xl:leading-8">
               หากพบปัญหาการใช้งาน กรุณาติดต่อผู้ดูแลหมู่บ้านของท่าน
             </div>
           </div>
