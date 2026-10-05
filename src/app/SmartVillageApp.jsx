@@ -686,14 +686,14 @@ function LandingPage({ onNavigate, news }) {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:px-8">
-          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem]">
-            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12" />
+        <div className="relative mx-auto flex h-16 max-w-[1600px] items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:h-24 lg:px-10">
+          <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem] lg:gap-4 lg:pr-[17rem]">
+            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12 lg:h-16 lg:w-16" />
             <div className="min-w-0">
-              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-lg">
+              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-2xl">
                 {APP_NAME}
               </div>
-              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block">
+              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block lg:mt-1 lg:text-sm">
                 {VILLAGE_NAME}
               </div>
             </div>
@@ -701,7 +701,7 @@ function LandingPage({ onNavigate, news }) {
           <button
             type="button"
             onClick={() => onNavigate("auth")}
-            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm"
+            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm lg:right-[6.5rem] lg:h-13 lg:w-40 lg:text-base"
           >
             เข้าสู่ระบบ
           </button>
@@ -713,9 +713,9 @@ function LandingPage({ onNavigate, news }) {
             }}
             aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={publicMenuOpen}
-            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11"
+            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11 lg:right-10 lg:h-13 lg:w-13"
           >
-            {publicMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {publicMenuOpen ? <X className="h-6 w-6 lg:h-8 lg:w-8" /> : <Menu className="h-6 w-6 lg:h-8 lg:w-8" />}
           </button>
           {publicMenuOpen && (
             <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-8">
@@ -752,7 +752,7 @@ function LandingPage({ onNavigate, news }) {
           )}
         </div>
       </header>
-      <div className="h-16 sm:h-[72px]" aria-hidden="true" />
+      <div className="h-16 sm:h-[72px] lg:h-24" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
         <div className="relative mx-auto h-[360px] max-w-[1600px] overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[610px]">
@@ -768,11 +768,11 @@ function LandingPage({ onNavigate, news }) {
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
               <div>
-                <Bell className="mx-auto h-12 w-12 text-blue-300" />
-                <h1 className="mt-4 text-2xl font-black sm:text-4xl">
+                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-20 lg:w-20" />
+                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-7 lg:text-5xl">
                   ข่าวประชาสัมพันธ์ อบต.มะต้อง
                 </h1>
-                <p className="mt-2 text-slate-300">
+                <p className="mt-2 text-slate-300 lg:mt-4 lg:text-xl">
                   ยังไม่มีข่าวประชาสัมพันธ์ในขณะนี้
                 </p>
               </div>
@@ -865,12 +865,12 @@ function LandingPage({ onNavigate, news }) {
       {activityNews.length === 0 && (
         <section id="activities" className="border-y bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-black">
+            <h2 className="text-3xl font-black lg:text-4xl">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
-            <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500">
-              <Image className="mx-auto h-12 w-12 text-slate-300" />
-              <div className="mt-3 font-bold">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
+            <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-10 lg:py-24">
+              <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-16 lg:w-16" />
+              <div className="mt-3 font-bold lg:mt-5 lg:text-xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
               <div className="mt-1 text-sm"></div>
             </div>
           </div>
