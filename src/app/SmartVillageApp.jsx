@@ -686,7 +686,7 @@ function LandingPage({ onNavigate, news }) {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="relative mx-auto flex h-16 max-w-[1600px] items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:h-24 lg:px-10">
+        <div className="relative mx-auto flex h-16 w-full items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:h-24 lg:px-12 xl:px-20">
           <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem] lg:gap-4 lg:pr-[17rem]">
             <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12 lg:h-16 lg:w-16" />
             <div className="min-w-0">
@@ -701,7 +701,7 @@ function LandingPage({ onNavigate, news }) {
           <button
             type="button"
             onClick={() => onNavigate("auth")}
-            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm lg:right-[6.5rem] lg:h-13 lg:w-40 lg:text-base"
+            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm lg:right-[7rem] lg:h-14 lg:w-44 lg:text-lg xl:right-[10rem]"
           >
             เข้าสู่ระบบ
           </button>
@@ -713,7 +713,7 @@ function LandingPage({ onNavigate, news }) {
             }}
             aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={publicMenuOpen}
-            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11 lg:right-10 lg:h-13 lg:w-13"
+            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11 lg:right-12 lg:h-14 lg:w-14 xl:right-20"
           >
             {publicMenuOpen ? <X className="h-6 w-6 lg:h-8 lg:w-8" /> : <Menu className="h-6 w-6 lg:h-8 lg:w-8" />}
           </button>
@@ -755,7 +755,7 @@ function LandingPage({ onNavigate, news }) {
       <div className="h-16 sm:h-[72px] lg:h-24" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
-        <div className="relative mx-auto h-[360px] max-w-[1600px] overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[610px]">
+        <div className="relative mx-auto h-[360px] w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[calc(100dvh-6rem)] lg:min-h-[620px] lg:max-h-[850px]">
           {currentSlide ? (
             <>
               <img
@@ -818,7 +818,7 @@ function LandingPage({ onNavigate, news }) {
 
       {activityNews.length > 0 && (
         <section id="activities" className="border-y bg-white py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12 xl:px-16">
             <h2 className="mb-10 text-center text-3xl font-black">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
@@ -864,7 +864,7 @@ function LandingPage({ onNavigate, news }) {
       )}
       {activityNews.length === 0 && (
         <section id="activities" className="border-y bg-white py-16">
-          <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1600px] px-4 text-center sm:px-6 lg:px-12 xl:px-16">
             <h2 className="text-3xl font-black lg:text-4xl">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
@@ -1098,7 +1098,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
   const [loading, setLoading] = useState(false);
   const [recoveryCooldown, setRecoveryCooldown] = useState(0);
   const inputClass =
-    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100";
+    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 xl:mt-2 xl:px-5 xl:py-4 xl:text-lg";
   const switchMode = (next) => {
     setMode(next);
     setMessage("");
@@ -1195,7 +1195,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
           : "เข้าสู่ระบบ";
   return (
     <div className="min-h-dvh bg-slate-100 p-3 sm:p-6 lg:p-8">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between xl:px-4">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700"
@@ -1208,27 +1208,27 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
         </div>
       </div>
       <section
-        className={`mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
+        className={`mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:max-w-[1600px] xl:w-[calc(100vw-6rem)] ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
       >
-        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-16">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
           <div className="relative">
-            <AppLogo className="h-16 w-16 shadow-lg" />
-            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200">
+            <AppLogo className="h-16 w-16 shadow-lg xl:h-24 xl:w-24" />
+            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200 xl:mt-10 xl:text-lg">
               {APP_NAME}
             </div>
-            <h1 className="mt-2 text-4xl font-black leading-tight">
+            <h1 className="mt-2 text-4xl font-black leading-tight xl:mt-4 xl:text-6xl">
               องค์การบริหารส่วน
               <br />
               ตำบลมะต้อง
             </h1>
-            <p className="mt-5 max-w-md leading-7 text-blue-100">
+            <p className="mt-5 max-w-md leading-7 text-blue-100 xl:mt-8 xl:max-w-xl xl:text-xl xl:leading-9">
               แจ้งเหตุร้องทุกข์ ติดตามการดำเนินงาน และรับข่าวสารจากหมู่บ้านและ
               อบต. ได้ในระบบเดียว
             </p>
           </div>
-          <div className="relative space-y-3 text-sm text-blue-100">
+          <div className="relative space-y-3 text-sm text-blue-100 xl:space-y-5 xl:text-lg">
             <div className="flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-cyan-300" />
               บัญชีประชาชนแยกตามหมู่บ้าน
@@ -1243,19 +1243,19 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center overflow-y-auto p-5 sm:p-9 lg:p-12">
+        <div className="flex items-center justify-center overflow-y-auto p-5 sm:p-9 lg:p-12 xl:p-16">
           <div
-            className={`w-full ${mode === "register" ? "max-w-2xl" : "max-w-md"}`}
+            className={`w-full ${mode === "register" ? "max-w-3xl" : "max-w-md xl:max-w-xl"}`}
           >
             <div className="mb-7">
               <AppLogo className="mb-4 h-12 w-12 lg:hidden" />
-              <p className="text-sm font-bold leading-6 text-blue-600">
+              <p className="text-sm font-bold leading-6 text-blue-600 xl:text-lg">
                 {APP_NAME}
               </p>
-              <h2 className="mt-1 text-3xl font-black text-slate-900">
+              <h2 className="mt-1 text-3xl font-black text-slate-900 xl:mt-2 xl:text-5xl">
                 {pageTitle}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-2 text-sm leading-6 text-slate-500 xl:mt-4 xl:text-lg xl:leading-8">
                 {mode === "register"
                   ? "กรอกข้อมูลจริงเพื่อให้ผู้ดูแลหมู่บ้านตรวจสอบและอนุมัติบัญชี"
                   : mode === "login"
