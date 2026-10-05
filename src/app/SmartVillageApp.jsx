@@ -688,12 +688,12 @@ function LandingPage({ onNavigate, news }) {
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
         <div className="relative mx-auto flex h-16 w-full items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:h-24 lg:px-12 xl:px-20">
           <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem] lg:gap-4 lg:pr-[17rem]">
-            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12 lg:h-16 lg:w-16" />
+            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12 lg:h-20 lg:w-20" />
             <div className="min-w-0">
-              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-2xl">
+              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-3xl">
                 {APP_NAME}
               </div>
-              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block lg:mt-1 lg:text-sm">
+              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block lg:mt-1 lg:text-lg">
                 {VILLAGE_NAME}
               </div>
             </div>
@@ -768,11 +768,11 @@ function LandingPage({ onNavigate, news }) {
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
               <div>
-                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-24 lg:w-24" />
-                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-8 lg:text-6xl">
+                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-28 lg:w-28" />
+                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-8 lg:text-7xl">
                   ข่าวประชาสัมพันธ์ อบต.มะต้อง
                 </h1>
-                <p className="mt-2 text-slate-300 lg:mt-5 lg:text-2xl">
+                <p className="mt-2 text-slate-300 lg:mt-6 lg:text-3xl">
                   ยังไม่มีข่าวประชาสัมพันธ์ในขณะนี้
                 </p>
               </div>
@@ -818,7 +818,7 @@ function LandingPage({ onNavigate, news }) {
 
       {activityNews.length > 0 && (
         <section id="activities" className="border-y bg-white py-16">
-          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12 xl:px-16">
+          <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
             <h2 className="mb-10 text-center text-3xl font-black">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
@@ -864,13 +864,13 @@ function LandingPage({ onNavigate, news }) {
       )}
       {activityNews.length === 0 && (
         <section id="activities" className="border-y bg-white py-16">
-          <div className="mx-auto max-w-[1600px] px-4 text-center sm:px-6 lg:px-12 xl:px-16">
-            <h2 className="text-3xl font-black lg:text-5xl">
+          <div className="mx-auto w-full px-4 text-center sm:px-6 lg:px-12 xl:px-20">
+            <h2 className="text-3xl font-black lg:text-6xl">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
-            <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-10 lg:py-24">
-              <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-16 lg:w-16" />
-              <div className="mt-3 font-bold lg:mt-5 lg:text-2xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
+            <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-10 lg:min-h-[420px] lg:py-28">
+              <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-24 lg:w-24" />
+              <div className="mt-3 font-bold lg:mt-6 lg:text-3xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
               <div className="mt-1 text-sm"></div>
             </div>
           </div>
@@ -878,11 +878,11 @@ function LandingPage({ onNavigate, news }) {
       )}
 
       <section className="bg-[#0868c9] py-14 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="mb-7 text-3xl font-black">
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
+          <h2 className="mb-7 text-3xl font-black lg:text-5xl">
             สื่อประชาสัมพันธ์ตำบลมะต้อง
           </h2>
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl bg-blue-950 shadow-2xl">
+          <div className="mx-auto max-w-[1500px] overflow-hidden rounded-2xl bg-blue-950 shadow-2xl">
             <div className="aspect-video">
               {promoItem && promoVideoUrl ? (
                 promoVideoUrl.includes("youtube.com/embed") ? (
@@ -917,15 +917,15 @@ function LandingPage({ onNavigate, news }) {
       </section>
 
       <section className="bg-slate-50 py-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
           <div className="mb-6">
             <div className="text-sm font-black text-blue-600">
               แผนที่พื้นที่ให้บริการ
             </div>
-            <h2 className="mt-1 text-3xl font-black">
+            <h2 className="mt-1 text-3xl font-black lg:text-5xl">
               ตำบลมะต้อง อำเภอพรหมพิราม
             </h2>
-            <p className="mt-2 text-slate-500">แสดงที่ตั้งและพื้นที่ให้บริการขององค์การบริหารส่วนตำบลมะต้อง</p>
+            <p className="mt-2 text-slate-500 lg:text-xl">แสดงที่ตั้งและพื้นที่ให้บริการขององค์การบริหารส่วนตำบลมะต้อง</p>
           </div>
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="h-[360px] sm:h-[460px]">
@@ -983,8 +983,8 @@ function LandingPage({ onNavigate, news }) {
       </section>
 
       <footer id="contact" className="bg-gray-900 py-16 text-white lg:py-20">
-        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12 xl:px-16">
-          <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
+          <div className="grid gap-12 md:grid-cols-2">
             <div>
               <div className="mb-6 flex items-center gap-3 text-2xl font-bold lg:text-3xl">
                 <AppLogo className="h-11 w-11 lg:h-16 lg:w-16" />
@@ -1049,7 +1049,7 @@ function PasswordInput({ label, className = "", ...props }) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+    <label className="block text-sm font-bold text-slate-700 xl:text-xl">
       {label}
       <div className="relative">
         <input
@@ -1098,7 +1098,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
   const [loading, setLoading] = useState(false);
   const [recoveryCooldown, setRecoveryCooldown] = useState(0);
   const inputClass =
-    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 xl:mt-2 xl:px-5 xl:py-4 xl:text-lg";
+    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 xl:mt-3 xl:px-6 xl:py-5 xl:text-xl";
   const switchMode = (next) => {
     setMode(next);
     setMessage("");
@@ -1194,41 +1194,41 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
           ? "ตั้งรหัสผ่านใหม่"
           : "เข้าสู่ระบบ";
   return (
-    <div className="min-h-dvh bg-slate-100 p-3 sm:p-6 lg:p-8">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between xl:px-4">
+    <div className="min-h-dvh bg-slate-100 p-3 sm:p-6 lg:p-3">
+      <div className="mx-auto flex w-full items-center justify-between lg:px-5">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700 xl:text-lg"
+          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700 xl:text-xl"
         >
           <ChevronRight className="h-5 w-5 rotate-180" />
           กลับหน้าแรก
         </button>
-        <div className="hidden text-sm text-slate-500 sm:block xl:text-base">
+        <div className="hidden text-sm text-slate-500 sm:block xl:text-lg">
           องค์การบริหารส่วนตำบลมะต้อง
         </div>
       </div>
       <section
-        className={`mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:max-w-[1600px] xl:w-[calc(100vw-6rem)] ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
+        className={`mx-auto mt-3 grid min-h-[calc(100dvh-5.5rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:w-[calc(100vw-1.5rem)] lg:max-w-none ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
       >
-        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-16">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-20">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
           <div className="relative">
-            <AppLogo className="h-16 w-16 shadow-lg xl:h-24 xl:w-24" />
-            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200 xl:mt-10 xl:text-lg">
+            <AppLogo className="h-16 w-16 shadow-lg xl:h-28 xl:w-28" />
+            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200 xl:mt-10 xl:text-2xl">
               {APP_NAME}
             </div>
-            <h1 className="mt-2 text-4xl font-black leading-tight xl:mt-4 xl:text-6xl">
+            <h1 className="mt-2 text-4xl font-black leading-tight xl:mt-5 xl:text-7xl">
               องค์การบริหารส่วน
               <br />
               ตำบลมะต้อง
             </h1>
-            <p className="mt-5 max-w-md leading-7 text-blue-100 xl:mt-8 xl:max-w-xl xl:text-xl xl:leading-9">
+            <p className="mt-5 max-w-md leading-7 text-blue-100 xl:mt-8 xl:max-w-2xl xl:text-2xl xl:leading-10">
               แจ้งเหตุร้องทุกข์ ติดตามการดำเนินงาน และรับข่าวสารจากหมู่บ้านและ
               อบต. ได้ในระบบเดียว
             </p>
           </div>
-          <div className="relative space-y-3 text-sm text-blue-100 xl:space-y-5 xl:text-lg">
+          <div className="relative space-y-3 text-sm text-blue-100 xl:space-y-6 xl:text-xl">
             <div className="flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-cyan-300" />
               บัญชีประชาชนแยกตามหมู่บ้าน
@@ -1243,19 +1243,19 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center overflow-y-auto p-5 sm:p-9 lg:p-12 xl:p-16">
+        <div className="flex items-center justify-center overflow-y-auto p-5 sm:p-9 lg:p-12 xl:p-20">
           <div
-            className={`w-full ${mode === "register" ? "max-w-3xl" : "max-w-md xl:max-w-xl"}`}
+            className={`w-full ${mode === "register" ? "max-w-4xl" : "max-w-md xl:max-w-2xl"}`}
           >
             <div className="mb-7">
               <AppLogo className="mb-4 h-12 w-12 lg:hidden" />
-              <p className="text-sm font-bold leading-6 text-blue-600 xl:text-lg">
+              <p className="text-sm font-bold leading-6 text-blue-600 xl:text-2xl">
                 {APP_NAME}
               </p>
-              <h2 className="mt-1 text-3xl font-black text-slate-900 xl:mt-2 xl:text-5xl">
+              <h2 className="mt-1 text-3xl font-black text-slate-900 xl:mt-3 xl:text-6xl">
                 {pageTitle}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500 xl:mt-4 xl:text-lg xl:leading-8">
+              <p className="mt-2 text-sm leading-6 text-slate-500 xl:mt-5 xl:text-xl xl:leading-9">
                 {mode === "register"
                   ? "กรอกข้อมูลจริงเพื่อให้ผู้ดูแลหมู่บ้านตรวจสอบและอนุมัติบัญชี"
                   : mode === "login"
@@ -1267,13 +1267,13 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <div className="mb-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
                 <button
                   onClick={() => switchMode("login")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-3.5 xl:text-lg ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-4 xl:text-xl ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   เข้าสู่ระบบ
                 </button>
                 <button
                   onClick={() => switchMode("register")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-3.5 xl:text-lg ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition xl:py-4 xl:text-xl ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   สมัครสมาชิก
                 </button>
@@ -1297,7 +1297,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 }}
                 className="space-y-4"
               >
-                <label className="block text-sm font-bold text-slate-700 xl:text-lg">
+                <label className="block text-sm font-bold text-slate-700 xl:text-xl">
                   เบอร์โทรศัพท์ / Username
                   <input
                     required
@@ -1319,12 +1319,12 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   <button
                     type="button"
                     onClick={() => switchMode("forgot")}
-                    className="text-sm font-bold text-blue-600 hover:underline xl:text-base"
+                    className="text-sm font-bold text-blue-600 hover:underline xl:text-lg"
                   >
                     ลืมรหัสผ่าน?
                   </button>
                 </div>
-                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 xl:py-4 xl:text-xl">
+                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 xl:py-5 xl:text-2xl">
                   เข้าสู่ระบบ
                 </button>
               </form>
@@ -1492,7 +1492,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 </button>
               </form>
             )}
-            <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400 xl:text-base xl:leading-7">
+            <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400 xl:text-lg xl:leading-8">
               หากพบปัญหาการใช้งาน กรุณาติดต่อผู้ดูแลหมู่บ้านของท่าน
             </div>
           </div>
