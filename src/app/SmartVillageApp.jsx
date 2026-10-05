@@ -75,13 +75,13 @@ const APP_LOGO_URL = "/Logo.png";
 function AppLogo({ className = "" }) {
   return (
     <span
-      className={`inline-flex shrink-0 overflow-hidden rounded-full bg-white ${className}`}
+      className={`inline-flex shrink-0 overflow-hidden rounded-full ${className}`}
       aria-hidden="true"
     >
       <img
         src={APP_LOGO_URL}
         alt=""
-        className="h-full w-full object-cover object-bottom"
+        className="h-full w-full object-contain"
       />
     </span>
   );
@@ -688,7 +688,7 @@ function LandingPage({ onNavigate, news }) {
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
         <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:px-8">
           <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem]">
-            <AppLogo className="h-11 w-11 shadow-sm ring-1 ring-slate-200 sm:h-12 sm:w-12" />
+            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12" />
             <div className="min-w-0">
               <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-lg">
                 {APP_NAME}
@@ -987,7 +987,7 @@ function LandingPage({ onNavigate, news }) {
           <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <div className="mb-6 flex items-center gap-3 text-2xl font-bold">
-                <AppLogo className="h-11 w-11 ring-2 ring-white/15" />
+                <AppLogo className="h-11 w-11" />
                 {APP_NAME}
               </div>
               <p className="max-w-xs text-gray-400">
@@ -1214,7 +1214,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
           <div className="relative">
-            <AppLogo className="h-16 w-16 shadow-lg ring-2 ring-white/30" />
+            <AppLogo className="h-16 w-16 shadow-lg" />
             <div className="mt-7 text-sm font-bold leading-6 text-cyan-200">
               {APP_NAME}
             </div>
@@ -1248,7 +1248,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             className={`w-full ${mode === "register" ? "max-w-2xl" : "max-w-md"}`}
           >
             <div className="mb-7">
-              <AppLogo className="mb-4 h-12 w-12 ring-1 ring-slate-200 lg:hidden" />
+              <AppLogo className="mb-4 h-12 w-12 lg:hidden" />
               <p className="text-sm font-bold leading-6 text-blue-600">
                 {APP_NAME}
               </p>
@@ -1562,7 +1562,7 @@ function AuthPageLegacy({ onLogin, onRegister, onBack }) {
 
         <div className="p-5 sm:p-8">
           <div className="mb-6 flex justify-center">
-            <AppLogo className="h-16 w-16 shadow-md ring-1 ring-slate-200" />
+            <AppLogo className="h-16 w-16 shadow-md" />
           </div>
 
           {isLogin ? (
@@ -1744,7 +1744,7 @@ function Sidebar({
     >
       <div className="flex min-h-20 shrink-0 items-center justify-between border-b border-white/10 px-5 py-3">
         <div className="flex min-w-0 items-center">
-          <AppLogo className="mr-2.5 h-10 w-10 ring-1 ring-white/20" />
+          <AppLogo className="mr-2.5 h-10 w-10" />
           <div className="min-w-0">
             <div className="line-clamp-2 text-sm font-bold leading-5">
               {APP_NAME}
@@ -1920,13 +1920,13 @@ function Topbar({
           <Menu className="w-6 h-6" />
         </button>
         <div className="flex min-w-0 items-center lg:hidden">
-          <AppLogo className="mr-1.5 hidden h-7 w-7 ring-1 ring-slate-200 min-[380px]:inline-flex sm:mr-2 sm:h-8 sm:w-8" />
+          <AppLogo className="mr-1.5 hidden h-7 w-7 min-[380px]:inline-flex sm:mr-2 sm:h-8 sm:w-8" />
           <span className="truncate text-sm font-bold text-gray-800 min-[380px]:text-base sm:text-lg">
             {APP_NAME}
           </span>
         </div>
         <div className="hidden min-w-0 items-center gap-3 lg:flex">
-          <AppLogo className="h-11 w-11 ring-1 ring-slate-200" />
+          <AppLogo className="h-11 w-11" />
           <div className="min-w-0">
             <h2 className="truncate text-xl font-bold tracking-tight text-gray-800">
               {APP_NAME}
