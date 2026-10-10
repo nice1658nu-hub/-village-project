@@ -686,14 +686,14 @@ function LandingPage({ onNavigate, news }) {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="relative mx-auto flex h-16 w-full items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:h-24 lg:px-12 xl:px-20">
+        <div className="relative mx-auto flex h-16 w-full items-center gap-2 px-3 sm:h-[72px] sm:gap-3 sm:px-6 lg:h-20 lg:px-10 xl:px-16">
           <button type="button" onClick={() => goToPublicSection("#home")} className="flex min-w-0 flex-1 items-center gap-2.5 pr-[10.5rem] text-left sm:gap-3 sm:pr-[13rem] lg:gap-4 lg:pr-[17rem]">
-            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12 lg:h-20 lg:w-20" />
+            <AppLogo className="h-11 w-11 shadow-sm sm:h-12 sm:w-12 lg:h-14 lg:w-14" />
             <div className="min-w-0">
-              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-3xl">
+              <div className="line-clamp-2 text-[13px] font-black leading-[1.15] text-slate-900 min-[390px]:text-sm sm:text-base lg:text-2xl">
                 {APP_NAME}
               </div>
-              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block lg:mt-1 lg:text-lg">
+              <div className="mt-0.5 hidden truncate text-[11px] font-bold text-slate-500 sm:block lg:mt-1 lg:text-sm">
                 {VILLAGE_NAME}
               </div>
             </div>
@@ -701,7 +701,7 @@ function LandingPage({ onNavigate, news }) {
           <button
             type="button"
             onClick={() => onNavigate("auth")}
-            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm lg:right-[7rem] lg:h-14 lg:w-44 lg:text-lg xl:right-[10rem]"
+            className="absolute right-[3.75rem] flex h-10 w-[6.25rem] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-2 text-xs font-black text-white shadow-sm hover:bg-blue-700 sm:right-[4.5rem] sm:h-11 sm:w-32 sm:text-sm lg:right-[6.5rem] lg:h-12 lg:w-36 lg:text-base xl:right-[9rem]"
           >
             เข้าสู่ระบบ
           </button>
@@ -713,9 +713,9 @@ function LandingPage({ onNavigate, news }) {
             }}
             aria-label={publicMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={publicMenuOpen}
-            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11 lg:right-12 lg:h-14 lg:w-14 xl:right-20"
+            className="absolute right-2.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 sm:right-3 sm:h-11 sm:w-11 lg:right-10 lg:h-12 lg:w-12 xl:right-16"
           >
-            {publicMenuOpen ? <X className="h-6 w-6 lg:h-8 lg:w-8" /> : <Menu className="h-6 w-6 lg:h-8 lg:w-8" />}
+            {publicMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
           {publicMenuOpen && (
             <div className="absolute right-3 top-[calc(100%+0.5rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:right-6 lg:right-12 lg:w-[30rem] lg:p-3 xl:right-20">
@@ -752,10 +752,10 @@ function LandingPage({ onNavigate, news }) {
           )}
         </div>
       </header>
-      <div className="h-16 sm:h-[72px] lg:h-24" aria-hidden="true" />
+      <div className="h-16 sm:h-[72px] lg:h-20" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
-        <div className="relative mx-auto h-[360px] w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[calc(100dvh-6rem)] lg:min-h-[620px] lg:max-h-[850px]">
+        <div className="relative mx-auto h-[360px] w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[calc(100dvh-5rem)] lg:min-h-[540px] lg:max-h-[720px]">
           {currentSlide ? (
             <>
               <img
@@ -768,11 +768,11 @@ function LandingPage({ onNavigate, news }) {
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
               <div>
-                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-28 lg:w-28" />
-                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-8 lg:text-7xl">
+                <Bell className="mx-auto h-12 w-12 text-blue-300 lg:h-18 lg:w-18" />
+                <h1 className="mt-4 text-2xl font-black sm:text-4xl lg:mt-6 lg:text-5xl">
                   ข่าวประชาสัมพันธ์ อบต.มะต้อง
                 </h1>
-                <p className="mt-2 text-slate-300 lg:mt-6 lg:text-3xl">
+                <p className="mt-2 text-slate-300 lg:mt-4 lg:text-xl">
                   ยังไม่มีข่าวประชาสัมพันธ์ในขณะนี้
                 </p>
               </div>
@@ -865,12 +865,12 @@ function LandingPage({ onNavigate, news }) {
       {activityNews.length === 0 && (
         <section id="activities" className="border-y bg-white py-16">
           <div className="mx-auto w-full px-4 text-center sm:px-6 lg:px-12 xl:px-20">
-            <h2 className="text-3xl font-black lg:text-6xl">
+            <h2 className="text-3xl font-black lg:text-4xl">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
-            <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-10 lg:min-h-[420px] lg:py-28">
-              <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-24 lg:w-24" />
-              <div className="mt-3 font-bold lg:mt-6 lg:text-3xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
+            <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-8 lg:min-h-[300px] lg:py-20">
+              <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-16 lg:w-16" />
+              <div className="mt-3 font-bold lg:mt-5 lg:text-xl">ยังไม่มีภาพกิจกรรมที่เผยแพร่</div>
               <div className="mt-1 text-sm"></div>
             </div>
           </div>
@@ -1049,7 +1049,7 @@ function PasswordInput({ label, className = "", ...props }) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+    <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
       {label}
       <div className="relative">
         <input
@@ -1098,7 +1098,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
   const [loading, setLoading] = useState(false);
   const [recoveryCooldown, setRecoveryCooldown] = useState(0);
   const inputClass =
-    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 lg:mt-2 lg:px-5 lg:py-4 lg:text-lg xl:px-6 xl:py-5 xl:text-xl";
+    "mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 lg:mt-2 lg:px-4 lg:py-3.5 lg:text-base xl:px-5 xl:py-4 xl:text-lg";
   const switchMode = (next) => {
     setMode(next);
     setMessage("");
@@ -1194,41 +1194,41 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
           ? "ตั้งรหัสผ่านใหม่"
           : "เข้าสู่ระบบ";
   return (
-    <div className="min-h-dvh bg-slate-100 p-3 sm:p-6 lg:p-3">
-      <div className="mx-auto flex w-full items-center justify-between lg:px-5">
+    <div className="min-h-dvh bg-slate-100 p-3 sm:p-6 lg:p-6">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between lg:px-2">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700 xl:text-xl"
+          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-blue-700 lg:text-base"
         >
           <ChevronRight className="h-5 w-5 rotate-180" />
           กลับหน้าแรก
         </button>
-        <div className="hidden text-sm text-slate-500 sm:block xl:text-lg">
+        <div className="hidden text-sm text-slate-500 sm:block lg:text-base">
           องค์การบริหารส่วนตำบลมะต้อง
         </div>
       </div>
       <section
-        className={`mx-auto mt-3 grid min-h-[calc(100dvh-5.5rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:w-[calc(100vw-1.5rem)] lg:max-w-none ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
+        className={`mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:w-[calc(100vw-3rem)] lg:max-w-[1440px] ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
       >
-        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-20">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
           <div className="relative">
-            <AppLogo className="h-16 w-16 shadow-lg xl:h-28 xl:w-28" />
-            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200 xl:mt-10 xl:text-2xl">
+            <AppLogo className="h-16 w-16 shadow-lg xl:h-20 xl:w-20" />
+            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200 xl:mt-8 xl:text-lg">
               {APP_NAME}
             </div>
-            <h1 className="mt-2 text-4xl font-black leading-tight xl:mt-5 xl:text-7xl">
+            <h1 className="mt-2 text-4xl font-black leading-tight xl:mt-3 xl:text-5xl">
               องค์การบริหารส่วน
               <br />
               ตำบลมะต้อง
             </h1>
-            <p className="mt-5 max-w-md leading-7 text-blue-100 xl:mt-8 xl:max-w-2xl xl:text-2xl xl:leading-10">
+            <p className="mt-5 max-w-md leading-7 text-blue-100 xl:mt-6 xl:max-w-xl xl:text-lg xl:leading-8">
               แจ้งเหตุร้องทุกข์ ติดตามการดำเนินงาน และรับข่าวสารจากหมู่บ้านและ
               อบต. ได้ในระบบเดียว
             </p>
           </div>
-          <div className="relative space-y-3 text-sm text-blue-100 xl:space-y-6 xl:text-xl">
+          <div className="relative space-y-3 text-sm text-blue-100 xl:space-y-4 xl:text-base">
             <div className="flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-cyan-300" />
               บัญชีประชาชนแยกตามหมู่บ้าน
@@ -1243,16 +1243,16 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center overflow-y-auto p-5 sm:p-9 lg:p-12 xl:p-20">
+        <div className="flex items-center justify-center overflow-y-auto p-5 sm:p-9 lg:p-10 xl:p-14">
           <div
-            className={`w-full ${mode === "register" ? "max-w-4xl" : "max-w-md xl:max-w-2xl"}`}
+            className={`w-full ${mode === "register" ? "max-w-3xl" : "max-w-md xl:max-w-xl"}`}
           >
             <div className="mb-7">
               <AppLogo className="mb-4 h-12 w-12 lg:hidden" />
-              <p className="text-sm font-bold leading-6 text-blue-600 xl:text-2xl">
+              <p className="text-sm font-bold leading-6 text-blue-600 lg:text-base xl:text-lg">
                 {APP_NAME}
               </p>
-              <h2 className="mt-1 text-3xl font-black text-slate-900 xl:mt-3 xl:text-6xl">
+              <h2 className="mt-1 text-3xl font-black text-slate-900 lg:text-4xl xl:mt-2 xl:text-5xl">
                 {pageTitle}
               </h2>
               {mode !== "login" && (
@@ -1264,16 +1264,16 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               )}
             </div>
             {!["forgot", "reset"].includes(mode) && (
-              <div className="mb-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1 lg:mt-8 lg:p-2">
+              <div className="mb-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1 lg:mt-6 lg:p-1.5">
                 <button
                   onClick={() => switchMode("login")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition lg:py-4 lg:text-xl xl:py-5 xl:text-2xl ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition lg:py-3 lg:text-lg ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   เข้าสู่ระบบ
                 </button>
                 <button
                   onClick={() => switchMode("register")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition lg:py-4 lg:text-xl xl:py-5 xl:text-2xl ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-bold transition lg:py-3 lg:text-lg ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   สมัครสมาชิก
                 </button>
@@ -1297,7 +1297,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 }}
                 className="space-y-4"
               >
-                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+                <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
                   เบอร์โทรศัพท์ / Username
                   <input
                     required
@@ -1319,19 +1319,19 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   <button
                     type="button"
                     onClick={() => switchMode("forgot")}
-                    className="text-sm font-bold text-blue-600 hover:underline lg:text-base xl:text-lg"
+                    className="text-sm font-bold text-blue-600 hover:underline lg:text-base"
                   >
                     ลืมรหัสผ่าน?
                   </button>
                 </div>
-                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 lg:py-4 lg:text-xl xl:py-5 xl:text-2xl">
+                <button className="w-full rounded-xl bg-blue-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-blue-200 lg:py-3.5 lg:text-lg xl:py-4 xl:text-xl">
                   เข้าสู่ระบบ
                 </button>
               </form>
             )}
             {mode === "register" && (
               <form onSubmit={submitRegister} className="space-y-4">
-                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+                <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
                   ชื่อ - นามสกุล
                   <input
                     required
@@ -1340,7 +1340,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     className={inputClass}
                   />
                 </label>
-                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+                <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
                   หมู่บ้าน
                   <select
                     required
@@ -1359,7 +1359,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                   </select>
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+                  <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
                     เบอร์โทรศัพท์
                     <input
                       type="tel"
@@ -1381,7 +1381,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                       placeholder="08xxxxxxxx"
                     />
                   </label>
-                  <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+                  <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
                     บ้านเลขที่
                     <input
                       required
@@ -1393,7 +1393,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     />
                   </label>
                 </div>
-                <label className="block text-sm font-bold text-slate-700 lg:text-lg xl:text-xl">
+                <label className="block text-sm font-bold text-slate-700 lg:text-base xl:text-lg">
                   อีเมล
                   <input
                     type="email"
@@ -1417,7 +1417,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 />
                 <button
                   disabled={loading}
-                  className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60 lg:py-4 lg:text-xl xl:py-5 xl:text-2xl"
+                  className="w-full rounded-xl bg-green-600 py-3.5 text-lg font-bold text-white shadow-lg shadow-green-200 disabled:cursor-not-allowed disabled:opacity-60 lg:py-3.5 lg:text-lg xl:py-4 xl:text-xl"
                 >
                   {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิกประชาชน"}
                 </button>
