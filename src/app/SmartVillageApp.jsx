@@ -898,7 +898,7 @@ function LandingPage({ onNavigate, news }) {
                     src={promoVideoUrl}
                     poster={promoItem?.image || undefined}
                     controls
-                    className="h-full w-full bg-black object-contain"
+                    className="h-full w-full bg-black object-cover"
                   />
                 )
               ) : (
