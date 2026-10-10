@@ -882,7 +882,7 @@ function LandingPage({ onNavigate, news }) {
           <h2 className="mb-7 text-3xl font-black lg:text-5xl">
             สื่อประชาสัมพันธ์ตำบลมะต้อง
           </h2>
-          <div className="mx-auto max-w-[1500px] overflow-hidden rounded-2xl bg-blue-950 shadow-2xl">
+          <div className="mx-auto w-full overflow-hidden rounded-2xl bg-blue-950 shadow-2xl lg:-mx-12 lg:w-[calc(100%+6rem)] lg:rounded-none xl:-mx-20 xl:w-[calc(100%+10rem)]">
             <div className="aspect-video">
               {promoItem && promoVideoUrl ? (
                 promoVideoUrl.includes("youtube.com/embed") ? (
