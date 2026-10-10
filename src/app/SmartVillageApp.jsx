@@ -1223,10 +1223,6 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               <br />
               ตำบลมะต้อง
             </h1>
-            <p className="mt-5 max-w-md leading-7 text-blue-100 xl:text-base">
-              แจ้งเหตุร้องทุกข์ ติดตามการดำเนินงาน และรับข่าวสารจากหมู่บ้านและ
-              อบต. ได้ในระบบเดียว
-            </p>
           </div>
           <div className="relative space-y-3 text-sm text-blue-100 xl:text-base">
             <div className="flex items-center gap-3">
