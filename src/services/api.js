@@ -1,4 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const isVercelDeployment =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app');
+const API_BASE_URL = isVercelDeployment ? '/api' : configuredApiBaseUrl;
 const TOKEN_KEY = 'smart_village_token';
 
 export class ApiError extends Error {
@@ -13,15 +16,24 @@ export class ApiError extends Error {
 async function request(path, options = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
   const isFormData = options.body instanceof FormData;
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      Accept: 'application/json',
-      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    ...options,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        Accept: 'application/json',
+        ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+      ...options,
+    });
+  } catch (error) {
+    throw new ApiError(
+      'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณารีเฟรชหน้าเว็บแล้วลองใหม่',
+      0,
+      { cause: error?.message || 'Network request failed' },
+    );
+  }
 
   const data = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) throw new ApiError(data?.message || `Laravel API error ${response.status}`, response.status, data);

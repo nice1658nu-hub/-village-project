@@ -21,6 +21,7 @@ Write-Host "[1/3] Preparing backend files..." -ForegroundColor Cyan
     "backend/app/Http/Controllers/Village/StaffWorkflowController.php" `
     "backend/app/Services/FirebasePushService.php" `
     "backend/app/Providers/AppServiceProvider.php" `
+    "backend/config/cors.php" `
     "backend/config/services.php" `
     "backend/storage/app/firebase/service-account.json" `
     "backend/routes/api.php"
