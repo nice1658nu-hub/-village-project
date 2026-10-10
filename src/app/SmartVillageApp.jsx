@@ -877,13 +877,9 @@ function LandingPage({ onNavigate, news }) {
         </section>
       )}
 
-      <section className="bg-[#0868c9] py-14 text-white">
-        <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
-          <h2 className="mb-7 text-3xl font-black lg:text-5xl">
-            สื่อประชาสัมพันธ์ตำบลมะต้อง
-          </h2>
-          <div className="mx-auto w-full overflow-hidden rounded-2xl bg-blue-950 shadow-2xl lg:-mx-12 lg:w-[calc(100%+6rem)] lg:rounded-none xl:-mx-20 xl:w-[calc(100%+10rem)]">
-            <div className="aspect-video">
+      <section className="w-full bg-blue-950 text-white">
+          <div className="w-full overflow-hidden bg-blue-950">
+            <div className="aspect-video w-full">
               {promoItem && promoVideoUrl ? (
                 promoVideoUrl.includes("youtube.com/embed") ? (
                   <iframe
@@ -913,7 +909,6 @@ function LandingPage({ onNavigate, news }) {
               )}
             </div>
           </div>
-        </div>
       </section>
 
       <section className="bg-slate-50 py-14">
