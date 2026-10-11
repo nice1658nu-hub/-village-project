@@ -773,7 +773,7 @@ function LandingPage({ onNavigate, news }) {
               key={currentSlide.id}
               src={currentSlide.image}
               alt={currentSlide.title}
-              className="h-full w-full bg-blue-950 object-contain animate-fadeIn"
+              className="mx-auto block h-full w-auto max-w-full bg-blue-950 object-contain animate-fadeIn"
             />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
