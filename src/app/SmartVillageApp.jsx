@@ -992,7 +992,7 @@ function LandingPage({ onNavigate, news }) {
             </div>
             <div>
               <h4 className="mb-6 text-lg font-bold lg:text-2xl">
-                ติดต่อผู้ดูแลหมู่บ้าน / นิติบุคคล
+                ข้อมูลติดต่อ
               </h4>
               <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-gray-400 lg:text-lg">
