@@ -1001,10 +1001,10 @@ function LandingPage({ onNavigate, news }) {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 lg:text-base">
-                      เบอร์โทรศัพท์ฉุกเฉิน
+                      เบอร์โทรศัพท์
                     </p>
                     <p className="font-semibold text-white">
-                      089-999-9999 (ผู้ใหญ่บ้าน)
+                      055-009-758
                     </p>
                   </div>
                 </li>
@@ -1015,7 +1015,7 @@ function LandingPage({ onNavigate, news }) {
                   <div>
                     <p className="text-sm text-gray-500 lg:text-base">Facebook Page</p>
                     <p className="font-semibold text-white">
-                      {VILLAGE_NAME} Official
+                      อบต. มะต้อง
                     </p>
                   </div>
                 </li>
