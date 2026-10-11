@@ -627,7 +627,6 @@ function LandingPage({ onNavigate, news }) {
     .filter((item) => item.village_id == null && item.displaySection === "news")
     .slice(0, 6);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [slideOrientations, setSlideOrientations] = useState({});
   const [activityIndex, setActivityIndex] = useState(0);
   const [selectedSlide, setSelectedSlide] = useState(null);
   const [publicSearch, setPublicSearch] = useState("");
@@ -774,21 +773,7 @@ function LandingPage({ onNavigate, news }) {
               key={currentSlide.id}
               src={currentSlide.image}
               alt={currentSlide.title}
-              onLoad={(event) => {
-                const isLandscape =
-                  event.currentTarget.naturalWidth >
-                  event.currentTarget.naturalHeight;
-                setSlideOrientations((current) =>
-                  current[currentSlide.id] === isLandscape
-                    ? current
-                    : { ...current, [currentSlide.id]: isLandscape },
-                );
-              }}
-              className={`h-full w-full bg-blue-950 animate-fadeIn ${
-                slideOrientations[currentSlide.id]
-                  ? "object-cover"
-                  : "object-contain"
-              }`}
+              className="h-full w-full bg-blue-950 object-contain animate-fadeIn"
             />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
