@@ -627,11 +627,13 @@ function LandingPage({ onNavigate, news }) {
     .filter((item) => item.village_id == null && item.displaySection === "news")
     .slice(0, 6);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [activityIndex, setActivityIndex] = useState(0);
   const [selectedSlide, setSelectedSlide] = useState(null);
   const [publicSearch, setPublicSearch] = useState("");
   const [publicMenuOpen, setPublicMenuOpen] = useState(false);
   const [publicHeaderVisible, setPublicHeaderVisible] = useState(true);
   const lastPublicScrollY = useRef(0);
+  const activityCarouselRef = useRef(null);
   useEffect(() => {
     if (publicSlides.length < 2) return undefined;
     const timer = window.setInterval(
@@ -673,6 +675,16 @@ function LandingPage({ onNavigate, news }) {
         .toLowerCase()
         .includes(publicSearch.trim().toLowerCase()),
   );
+  useEffect(() => {
+    if (activityIndex >= visibleActivityNews.length) setActivityIndex(0);
+  }, [activityIndex, visibleActivityNews.length]);
+  const goToActivity = (index) => {
+    setActivityIndex(index);
+    const carousel = activityCarouselRef.current;
+    if (carousel) {
+      carousel.scrollTo({ left: carousel.clientWidth * index, behavior: "smooth" });
+    }
+  };
   const promoItem = centralNews.find(
     (item) => item.displaySection === "video" && item.video_url,
   );
@@ -757,21 +769,12 @@ function LandingPage({ onNavigate, news }) {
       <section id="home" className="public-hero bg-blue-950">
         <div className="relative mx-auto h-[360px] w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[calc(100dvh-5rem)] lg:min-h-[540px] lg:max-h-[720px]">
           {currentSlide ? (
-            <>
-              <img
-                aria-hidden="true"
-                src={currentSlide.image}
-                alt=""
-                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-2xl"
-              />
-              <div className="absolute inset-0 bg-slate-950/20" aria-hidden="true" />
-              <img
-                key={currentSlide.id}
-                src={currentSlide.image}
-                alt={currentSlide.title}
-                className="relative z-[1] h-full w-full object-contain animate-fadeIn"
-              />
-            </>
+            <img
+              key={currentSlide.id}
+              src={currentSlide.image}
+              alt={currentSlide.title}
+              className="h-full w-full bg-blue-950 object-contain animate-fadeIn"
+            />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-white">
               <div>
@@ -795,7 +798,7 @@ function LandingPage({ onNavigate, news }) {
                       (index - 1 + publicSlides.length) % publicSlides.length,
                   )
                 }
-                className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur hover:bg-black/65"
+                className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur hover:bg-black/75"
               >
                 <ChevronRight className="rotate-180" />
               </button>
@@ -804,11 +807,11 @@ function LandingPage({ onNavigate, news }) {
                 onClick={() =>
                   setSlideIndex((index) => (index + 1) % publicSlides.length)
                 }
-                className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur hover:bg-black/65"
+                className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur hover:bg-black/75"
               >
                 <ChevronRight />
               </button>
-              <div className="absolute bottom-4 right-5 flex gap-2 sm:bottom-7 sm:right-8">
+              <div className="absolute bottom-4 right-5 z-10 flex gap-2 sm:bottom-7 sm:right-8">
                 {publicSlides.map((item, index) => (
                   <button
                     key={item.id}
@@ -829,12 +832,26 @@ function LandingPage({ onNavigate, news }) {
             <h2 className="mb-10 text-center text-3xl font-black">
               ภาพกิจกรรมและข่าวประชาสัมพันธ์
             </h2>
-            <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+            <div
+              ref={activityCarouselRef}
+              onScroll={(event) => {
+                if (window.innerWidth >= 768) return;
+                const carousel = event.currentTarget;
+                if (!carousel.clientWidth) return;
+                setActivityIndex(
+                  Math.min(
+                    visibleActivityNews.length - 1,
+                    Math.max(0, Math.round(carousel.scrollLeft / carousel.clientWidth)),
+                  ),
+                );
+              }}
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:gap-7 md:overflow-visible lg:grid-cols-3"
+            >
               {visibleActivityNews.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setSelectedSlide(item)}
-                  className="group text-left"
+                  className="group w-full shrink-0 snap-center text-left md:w-auto md:min-w-0"
                 >
                   <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-slate-200 shadow-sm">
                     {item.image ? (
@@ -866,6 +883,23 @@ function LandingPage({ onNavigate, news }) {
                 </div>
               )}
             </div>
+            {visibleActivityNews.length > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-2 md:hidden">
+                {visibleActivityNews.map((item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-label={`ดูกิจกรรม ${index + 1}`}
+                    onClick={() => goToActivity(index)}
+                    className={`h-2.5 rounded-full transition-all ${
+                      activityIndex === index
+                        ? "w-8 bg-blue-600"
+                        : "w-2.5 bg-slate-300"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -7326,72 +7360,124 @@ function TaoDashboard({
               </div>
             </form>
           )}
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {publicNews.map((item) => (
-              <article
-                key={item.id}
-                className="overflow-hidden rounded-3xl border bg-white shadow-sm"
-              >
-                <div className="aspect-[16/9] bg-slate-100">
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                      ยังไม่มีรูปภาพ
+          <div className="space-y-6">
+            {[
+              {
+                key: "hero",
+                number: "1",
+                title: "ภาพกิจกรรมสำคัญ",
+                detail: "รูปขนาดใหญ่ที่แสดงในสไลด์ด้านบนของหน้าแรก",
+              },
+              {
+                key: "news",
+                number: "2",
+                title: "ข่าวและกิจกรรม",
+                detail: "การ์ดข่าวพร้อมหัวข้อและรายละเอียด",
+              },
+              {
+                key: "video",
+                number: "3",
+                title: "วิดีโอแนะนำตำบล",
+                detail: "วิดีโอประชาสัมพันธ์ที่แสดงบนหน้าแรก",
+              },
+            ].map((group) => {
+              const groupItems = publicNews.filter(
+                (item) => item.displaySection === group.key,
+              );
+              return (
+                <section
+                  key={group.key}
+                  className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 md:p-5"
+                >
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-black text-blue-600">
+                        ส่วนที่ {group.number}
+                      </div>
+                      <h4 className="text-xl font-black text-slate-900">
+                        {group.title}
+                      </h4>
+                      <p className="text-sm text-slate-500">{group.detail}</p>
                     </div>
+                    <div className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-slate-600 shadow-sm">
+                      {groupItems.length} รายการ
+                    </div>
+                  </div>
+                  {groupItems.length ? (
+                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                      {groupItems.map((item) => (
+                        <article
+                          key={item.id}
+                          className="overflow-hidden rounded-3xl border bg-white shadow-sm"
+                        >
+                          <div className="aspect-[16/9] bg-slate-100">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                                ยังไม่มีรูปภาพ
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-5">
+                            <div className="text-xs font-bold text-blue-600">
+                              ส่วนที่ {group.number} · {group.title}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-400">
+                              เผยแพร่ {formatThaiDateTime(item.date)} น.
+                            </div>
+                            <h5 className="mt-1 line-clamp-2 text-lg font-black">
+                              {item.title}
+                            </h5>
+                            <p className="mt-2 line-clamp-2 text-sm text-slate-500">
+                              {item.content}
+                            </p>
+                            <div className="mt-4 flex gap-2">
+                              <button
+                                onClick={() => startPublicNewsForm(item)}
+                                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-blue-50 py-2.5 text-sm font-bold text-blue-700"
+                              >
+                                <Edit className="h-4 w-4" />
+                                แก้ไข
+                              </button>
+                              <button
+                                onClick={() => removePublicNews(item)}
+                                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-red-50 py-2.5 text-sm font-bold text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                ลบ
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        startPublicNewsForm({
+                          display_section: group.key,
+                          title: "",
+                          content: "",
+                          image: "",
+                          video_url: "",
+                        })
+                      }
+                      className="flex min-h-32 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white text-slate-500 hover:border-blue-400 hover:text-blue-700"
+                    >
+                      <Image className="mb-2 h-8 w-8 opacity-50" />
+                      <span className="font-bold">ยังไม่มีรายการในส่วนนี้</span>
+                      <span className="mt-1 text-xs">กดเพื่อเพิ่ม {group.title}</span>
+                    </button>
                   )}
-                </div>
-                <div className="p-5">
-                  <div className="text-xs font-bold text-blue-600">
-                    {item.displaySection === "hero"
-                      ? "ส่วนที่ 1 · ภาพกิจกรรมสำคัญ"
-                      : item.displaySection === "video"
-                        ? "ส่วนที่ 3 · วิดีโอแนะนำตำบล"
-                        : "ส่วนที่ 2 · ข่าวและกิจกรรม"}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-400">
-                    เผยแพร่ {formatThaiDateTime(item.date)} น.
-                  </div>
-                  <h4 className="mt-1 line-clamp-2 text-lg font-black">
-                    {item.title}
-                  </h4>
-                  <p className="mt-2 line-clamp-2 text-sm text-slate-500">
-                    {item.content}
-                  </p>
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      onClick={() => startPublicNewsForm(item)}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-blue-50 py-2.5 text-sm font-bold text-blue-700"
-                    >
-                      <Edit className="h-4 w-4" />
-                      แก้ไข
-                    </button>
-                    <button
-                      onClick={() => removePublicNews(item)}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-red-50 py-2.5 text-sm font-bold text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      ลบ
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-            {!publicNews.length && !editingPublicNews && (
-              <div className="rounded-3xl border border-dashed bg-white p-12 text-center text-slate-500 md:col-span-2 xl:col-span-3">
-                <Image className="mx-auto mb-3 h-10 w-10 opacity-40" />
-                <div className="font-bold">
-                  ยังไม่มีข่าวหรือภาพประชาสัมพันธ์จาก อบต.
-                </div>
-                <div className="mt-1 text-sm">
-                  กด “เพิ่มข่าวหรือกิจกรรม” เพื่อสร้างสไลด์แรก
-                </div>
-              </div>
-            )}
+                </section>
+              );
+            })}
           </div>
         </section>
       )}
