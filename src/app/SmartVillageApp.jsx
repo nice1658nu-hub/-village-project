@@ -759,10 +759,17 @@ function LandingPage({ onNavigate, news }) {
           {currentSlide ? (
             <>
               <img
+                aria-hidden="true"
+                src={currentSlide.image}
+                alt=""
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-2xl"
+              />
+              <div className="absolute inset-0 bg-slate-950/20" aria-hidden="true" />
+              <img
                 key={currentSlide.id}
                 src={currentSlide.image}
                 alt={currentSlide.title}
-                className="h-full w-full object-cover animate-fadeIn"
+                className="relative z-[1] h-full w-full object-contain animate-fadeIn"
               />
             </>
           ) : (
