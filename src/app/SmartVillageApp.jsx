@@ -830,7 +830,7 @@ function LandingPage({ onNavigate, news }) {
         <section id="activities" className="border-y bg-white py-16">
           <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
             <h2 className="mb-10 text-center text-3xl font-black">
-              ภาพกิจกรรมและข่าวประชาสัมพันธ์
+              ข่าวสารและกิจกรรม
             </h2>
             <div
               ref={activityCarouselRef}
@@ -866,15 +866,9 @@ function LandingPage({ onNavigate, news }) {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 text-sm font-bold text-slate-500">
-                    ข่าวประชาสัมพันธ์
-                  </div>
-                  <h3 className="mt-1 line-clamp-2 text-lg font-black leading-snug group-hover:text-blue-700">
+                  <h3 className="mt-4 min-h-[3.25rem] line-clamp-2 text-lg font-black leading-snug group-hover:text-blue-700">
                     {item.title}
                   </h3>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                    {item.content}
-                  </p>
                 </button>
               ))}
               {!visibleActivityNews.length && (
@@ -907,7 +901,7 @@ function LandingPage({ onNavigate, news }) {
         <section id="activities" className="border-y bg-white py-16">
           <div className="mx-auto w-full px-4 text-center sm:px-6 lg:px-12 xl:px-20">
             <h2 className="text-3xl font-black lg:text-4xl">
-              ภาพกิจกรรมและข่าวประชาสัมพันธ์
+              ข่าวสารและกิจกรรม
             </h2>
             <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500 lg:mt-8 lg:min-h-[300px] lg:py-20">
               <Image className="mx-auto h-12 w-12 text-slate-300 lg:h-16 lg:w-16" />
@@ -11448,7 +11442,7 @@ function NewsModal({ news, onClose }) {
         <img
           src={news.image}
           alt="news"
-          className="w-full h-64 md:h-80 object-cover rounded-t-3xl"
+          className="max-h-[65vh] w-full rounded-t-3xl bg-slate-100 object-contain"
         />
 
         <div className="p-8">
