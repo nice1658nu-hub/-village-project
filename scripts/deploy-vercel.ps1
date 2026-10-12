@@ -20,6 +20,14 @@ function Invoke-Git {
 
 Set-Location -LiteralPath $projectRoot
 
+# Give every deployment a real file change so Vercel never receives an empty commit.
+$deployStamp = Join-Path $projectRoot "public\deploy-version.txt"
+$deployStampDirectory = Split-Path -Parent $deployStamp
+if (-not (Test-Path -LiteralPath $deployStampDirectory)) {
+    New-Item -ItemType Directory -Path $deployStampDirectory -Force | Out-Null
+}
+Set-Content -LiteralPath $deployStamp -Value (Get-Date -Format "yyyy-MM-dd HH:mm:ss K") -Encoding utf8
+
 Write-Host ""
 Write-Host "[1/4] Checking the website build..." -ForegroundColor Cyan
 if (-not (Test-Path -LiteralPath $vite)) {
