@@ -836,11 +836,17 @@ function LandingPage({ onNavigate, news }) {
       </section>
 
       {activityNews.length > 0 && (
-        <section id="activities" className="border-y bg-white py-16">
+        <section id="activities" className="border-y bg-white py-14 lg:py-16">
           <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
-            <h2 className="mb-10 text-center text-3xl font-black">
-              ข่าวสารและกิจกรรม
-            </h2>
+            <div className="mb-10 flex items-center gap-4 text-cyan-500 lg:mb-12">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-white shadow-sm lg:h-16 lg:w-16">
+                <FileText className="h-7 w-7 lg:h-8 lg:w-8" />
+              </span>
+              <h2 className="shrink-0 text-2xl font-bold lg:text-4xl">
+                ข่าวกิจกรรม
+              </h2>
+              <span className="h-1 flex-1 rounded-full bg-cyan-500" aria-hidden="true" />
+            </div>
             <div
               ref={activityCarouselRef}
               onScroll={(event) => {
@@ -854,20 +860,21 @@ function LandingPage({ onNavigate, news }) {
                   ),
                 );
               }}
-              className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:gap-7 md:overflow-visible lg:grid-cols-3"
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:gap-6 md:overflow-visible lg:grid-cols-4"
             >
               {visibleActivityNews.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setSelectedSlide(item)}
-                  className="group w-full shrink-0 snap-center text-left md:w-auto md:min-w-0"
+                  className="group w-full shrink-0 snap-center overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:w-auto md:min-w-0"
                 >
-                  <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-slate-200 shadow-sm">
+                  <div className="aspect-[16/10] overflow-hidden bg-slate-200">
                     {item.image ? (
                       <img
                         src={item.image}
                         alt={item.title}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
@@ -875,13 +882,21 @@ function LandingPage({ onNavigate, news }) {
                       </div>
                     )}
                   </div>
-                  <h3 className="mt-4 min-h-[3.25rem] line-clamp-2 text-lg font-black leading-snug group-hover:text-blue-700">
-                    {item.title}
-                  </h3>
+                  <div className="flex min-h-[12rem] flex-col p-4 lg:min-h-[13rem] lg:p-5">
+                    <h3 className="line-clamp-2 text-lg font-black leading-snug text-slate-950 group-hover:text-cyan-600 lg:text-xl">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-500 lg:text-base">
+                      {item.content || "คลิกเพื่ออ่านรายละเอียดข่าวและกิจกรรม"}
+                    </p>
+                    <div className="mt-auto border-t border-slate-100 pt-3 text-sm text-slate-500">
+                      {formatThaiDateTime(item.date)} น.
+                    </div>
+                  </div>
                 </button>
               ))}
               {!visibleActivityNews.length && (
-                <div className="py-12 text-center text-slate-500 md:col-span-2 lg:col-span-3">
+                <div className="py-12 text-center text-slate-500 md:col-span-2 lg:col-span-4">
                   ไม่พบข่าวที่ค้นหา
                 </div>
               )}
