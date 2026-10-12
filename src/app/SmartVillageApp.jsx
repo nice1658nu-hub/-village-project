@@ -766,9 +766,9 @@ function LandingPage({ onNavigate, news }) {
       </header>
       <div className="h-16 sm:h-[72px] lg:h-20" aria-hidden="true" />
 
-      <section id="home" className="public-hero bg-blue-950">
+      <section id="home" className="public-hero bg-white">
         <div
-          className="relative mx-auto w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950"
+          className="relative mx-auto w-full overflow-hidden bg-white"
           style={{ aspectRatio: "2 / 1", height: "auto", minHeight: 0 }}
         >
           {currentSlide ? (
@@ -776,7 +776,7 @@ function LandingPage({ onNavigate, news }) {
               key={currentSlide.id}
               src={currentSlide.image}
               alt={currentSlide.title}
-              className="absolute inset-0 block h-full w-full bg-blue-950 object-contain object-center animate-fadeIn"
+              className="absolute inset-0 block h-full w-full bg-white object-contain object-center animate-fadeIn"
               style={{
                 width: "100%",
                 height: "100%",
