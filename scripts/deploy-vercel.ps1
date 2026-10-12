@@ -52,7 +52,13 @@ if ($hasChanges) {
         "commit", "-m", $message
     )
 } else {
-    Write-Host "No new file changes. The latest saved commit will be pushed." -ForegroundColor Yellow
+    $message = "Redeploy web " + (Get-Date -Format "yyyy-MM-dd HH:mm")
+    Write-Host "No new file changes. Creating a redeploy commit for Vercel..." -ForegroundColor Yellow
+    Invoke-Git -Arguments @(
+        "-c", "user.name=nice1658nu-hub",
+        "-c", "user.email=nice1658nu-hub@users.noreply.github.com",
+        "commit", "--allow-empty", "-m", $message
+    )
 }
 
 Write-Host ""
