@@ -79,11 +79,6 @@ function AppLogo({ className = "" }) {
       className={`inline-flex shrink-0 overflow-hidden rounded-full ${className}`}
       aria-hidden="true"
     >
-      <img
-        src={APP_LOGO_URL}
-        alt=""
-        className="h-full w-full object-contain"
-      />
     </span>
   );
 }
