@@ -1557,7 +1557,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                 <div className="text-center">
                   <h2 className="text-2xl font-black">ลืมรหัสผ่าน</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-500 lg:text-base lg:leading-7">
-                    กรอกอีเมลกู้คืน ระบบจะส่งลิงก์ให้โดยไม่ต้องรอแอดมิน
+                    กรอกอีเมลกู้คืน รีเซ็ตรหัสผ่านด้วยอีเมลที่ใช้งาน
                   </p>
                 </div>
                 <label className="block text-sm font-bold text-slate-700 lg:text-base">
@@ -1580,7 +1580,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
                     ? "กำลังส่ง..."
                     : recoveryCooldown > 0
                       ? `ขอใหม่ได้ใน ${recoveryCooldown} วินาที`
-                      : "ส่งลิงก์ตั้งรหัสผ่านใหม่"}
+                      : "ขอรีเซ็ตรหัสผ่าน"}
                 </button>
                 <button
                   type="button"
