@@ -41,6 +41,7 @@ import {
   Image,
   Eye,
   EyeOff,
+  Video,
 } from "lucide-react";
 import {
   MOCK_INCIDENTS,
@@ -634,6 +635,7 @@ function LandingPage({ onNavigate, news }) {
   const [publicHeaderVisible, setPublicHeaderVisible] = useState(true);
   const lastPublicScrollY = useRef(0);
   const activityCarouselRef = useRef(null);
+  const videoCarouselRef = useRef(null);
   useEffect(() => {
     if (publicSlides.length < 2) return undefined;
     const timer = window.setInterval(
@@ -685,16 +687,29 @@ function LandingPage({ onNavigate, news }) {
       carousel.scrollTo({ left: carousel.clientWidth * index, behavior: "smooth" });
     }
   };
-  const promoItem = centralNews.find(
-    (item) => item.displaySection === "video" && item.video_url,
-  );
-  const promoVideoUrl = (() => {
-    const value = promoItem?.video_url || "";
-    const youtube = value.match(
-      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/,
-    );
-    return youtube ? `https://www.youtube.com/embed/${youtube[1]}` : value;
-  })();
+  const promoItems = centralNews
+    .filter((item) => item.displaySection === "video" && item.video_url)
+    .slice(0, 8)
+    .map((item) => {
+      const value = item.video_url || "";
+      const youtube = value.match(
+        /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/,
+      );
+      return {
+        ...item,
+        playableUrl: youtube
+          ? `https://www.youtube.com/embed/${youtube[1]}`
+          : value,
+      };
+    });
+  const scrollVideoCarousel = (direction) => {
+    const carousel = videoCarouselRef.current;
+    if (!carousel) return;
+    carousel.scrollBy({
+      left: direction * Math.max(carousel.clientWidth * 0.85, 280),
+      behavior: "smooth",
+    });
+  };
   return (
     <div className="min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 scroll-smooth">
       <header className={`public-header fixed inset-x-0 top-0 z-[1100] border-b border-slate-200 bg-white/95 shadow-md backdrop-blur-xl transition-transform duration-300 ${publicHeaderVisible || publicMenuOpen ? "translate-y-0" : "-translate-y-full"}`}>
@@ -886,9 +901,12 @@ function LandingPage({ onNavigate, news }) {
                     <h3 className="line-clamp-2 text-lg font-black leading-snug text-slate-950 group-hover:text-cyan-600 lg:text-xl">
                       {item.title}
                     </h3>
-                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-500 lg:text-base">
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-500 lg:text-base">
                       {item.content || "คลิกเพื่ออ่านรายละเอียดข่าวและกิจกรรม"}
                     </p>
+                    <span className="mt-2 text-sm font-bold text-cyan-600 transition group-hover:text-cyan-700">
+                      อ่านเพิ่มเติม
+                    </span>
                     <div className="mt-auto border-t border-slate-100 pt-3 text-sm text-slate-500">
                       {formatThaiDateTime(item.date)} น.
                     </div>
@@ -936,38 +954,84 @@ function LandingPage({ onNavigate, news }) {
         </section>
       )}
 
-      <section className="w-full bg-blue-950 text-white">
-          <div className="w-full overflow-hidden bg-blue-950">
-            <div className="aspect-video w-full">
-              {promoItem && promoVideoUrl ? (
-                promoVideoUrl.includes("youtube.com/embed") ? (
-                  <iframe
-                    src={promoVideoUrl}
-                    title={promoItem?.title || "วิดีโอแนะนำตำบลมะต้อง"}
-                    className="h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video
-                    src={promoVideoUrl}
-                    poster={promoItem?.image || undefined}
-                    controls
-                    className="h-full w-full bg-black object-cover"
-                  />
-                )
-              ) : (
-                <div className="flex h-full items-center justify-center p-8 text-center text-blue-200">
-                  <div>
-                    <Upload className="mx-auto h-12 w-12 opacity-70" />
-                    <div className="mt-4 text-xl font-black text-white">
-                      ยังไม่มีวิดีโอ
+      <section className="border-y border-red-100 bg-red-50/60 py-12 lg:py-16">
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-12 xl:px-20">
+          <div className="mb-8 flex items-center gap-4 text-red-600 lg:mb-10">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-sm lg:h-16 lg:w-16">
+              <Video className="h-7 w-7 fill-current lg:h-8 lg:w-8" />
+            </span>
+            <h2 className="shrink-0 text-2xl font-bold text-slate-800 lg:text-4xl">
+              วิดีโอประชาสัมพันธ์
+            </h2>
+            <span className="h-1 flex-1 rounded-full bg-red-600" aria-hidden="true" />
+          </div>
+
+          {promoItems.length ? (
+            <div className="relative">
+              <div
+                ref={videoCarouselRef}
+                className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-6"
+              >
+                {promoItems.map((item) => (
+                  <article
+                    key={item.id}
+                    className="w-[86%] shrink-0 snap-start sm:w-[48%] lg:w-[calc((100%_-_3rem)/3)]"
+                  >
+                    <div className="aspect-video overflow-hidden rounded-2xl bg-black shadow-md">
+                      {item.playableUrl.includes("youtube.com/embed") ? (
+                        <iframe
+                          src={item.playableUrl}
+                          title={item.title || "วิดีโอประชาสัมพันธ์"}
+                          className="h-full w-full"
+                          style={{ width: "100%", height: "100%" }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          src={item.playableUrl}
+                          poster={item.image || undefined}
+                          controls
+                          className="h-full w-full bg-black object-contain"
+                          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        />
+                      )}
                     </div>
-                  </div>
-                </div>
+                    <h3 className="mt-3 line-clamp-2 text-center text-lg font-bold text-slate-800 lg:text-xl">
+                      {item.title || "วิดีโอประชาสัมพันธ์"}
+                    </h3>
+                  </article>
+                ))}
+              </div>
+
+              {promoItems.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => scrollVideoCarousel(-1)}
+                    aria-label="เลื่อนวิดีโอไปทางซ้าย"
+                    className="absolute left-1 top-[40%] z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg backdrop-blur hover:bg-slate-950 lg:-left-6 lg:h-14 lg:w-14"
+                  >
+                    <ChevronRight className="h-7 w-7 rotate-180" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollVideoCarousel(1)}
+                    aria-label="เลื่อนวิดีโอไปทางขวา"
+                    className="absolute right-1 top-[40%] z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg backdrop-blur hover:bg-slate-950 lg:-right-6 lg:h-14 lg:w-14"
+                  >
+                    <ChevronRight className="h-7 w-7" />
+                  </button>
+                </>
               )}
             </div>
-          </div>
+          ) : (
+            <div className="rounded-3xl border-2 border-dashed border-red-200 bg-white py-16 text-center text-slate-500">
+              <Video className="mx-auto h-12 w-12 text-red-300" />
+              <div className="mt-4 text-xl font-black text-slate-700">ยังไม่มีวิดีโอ</div>
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="bg-slate-50 py-14">
@@ -1090,6 +1154,33 @@ function LandingPage({ onNavigate, news }) {
         <NewsModal
           news={selectedSlide}
           onClose={() => setSelectedSlide(null)}
+          onPrevious={
+            visibleActivityNews.length > 1
+              ? () => {
+                  const index = visibleActivityNews.findIndex(
+                    (item) => item.id === selectedSlide.id,
+                  );
+                  setSelectedSlide(
+                    visibleActivityNews[
+                      (index - 1 + visibleActivityNews.length) %
+                        visibleActivityNews.length
+                    ],
+                  );
+                }
+              : undefined
+          }
+          onNext={
+            visibleActivityNews.length > 1
+              ? () => {
+                  const index = visibleActivityNews.findIndex(
+                    (item) => item.id === selectedSlide.id,
+                  );
+                  setSelectedSlide(
+                    visibleActivityNews[(index + 1) % visibleActivityNews.length],
+                  );
+                }
+              : undefined
+          }
         />
       )}
     </div>
@@ -2549,7 +2640,7 @@ function UserDashboard({
                 </div>
                 <div className="p-6 sm:w-2/3 flex flex-col justify-center">
                   <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold mb-3 w-max border border-blue-100">
-                    ประกาศเมื่อ: {n.date}
+                    ประกาศเมื่อ: {formatThaiDateTime(n.date)} น.
                   </span>
                   <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-700 transition">
                     {n.title}
@@ -11452,7 +11543,7 @@ function AdminIncidentModal({
   );
 }
 
-function NewsModal({ news, onClose }) {
+function NewsModal({ news, onClose, onPrevious, onNext }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn relative">
@@ -11469,9 +11560,30 @@ function NewsModal({ news, onClose }) {
           className="max-h-[65vh] w-full rounded-t-3xl bg-slate-100 object-contain"
         />
 
+        {onPrevious && (
+          <button
+            type="button"
+            onClick={onPrevious}
+            aria-label="ข่าวก่อนหน้า"
+            className="absolute left-3 top-1/3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-950/70 text-white shadow-lg backdrop-blur transition hover:bg-slate-950 sm:left-5 sm:h-14 sm:w-14"
+          >
+            <ChevronRight className="h-7 w-7 rotate-180" />
+          </button>
+        )}
+        {onNext && (
+          <button
+            type="button"
+            onClick={onNext}
+            aria-label="ข่าวถัดไป"
+            className="absolute right-3 top-1/3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-950/70 text-white shadow-lg backdrop-blur transition hover:bg-slate-950 sm:right-5 sm:h-14 sm:w-14"
+          >
+            <ChevronRight className="h-7 w-7" />
+          </button>
+        )}
+
         <div className="p-8">
           <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold mb-4 border border-blue-100">
-            ประกาศเมื่อ: {news.date}
+            ประกาศเมื่อ: {formatThaiDateTime(news.date)} น.
           </span>
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
             {news.title}
