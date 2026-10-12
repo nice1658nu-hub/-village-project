@@ -1353,34 +1353,22 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
         </div>
       </div>
       <section
-        className={`mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:min-h-[680px] lg:w-[calc(100vw-4rem)] lg:max-w-[1280px] ${mode === "register" ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-2"}`}
+        className="mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:min-h-[680px] lg:w-[calc(100vw-4rem)] lg:max-w-[1280px] lg:grid-cols-2"
       >
-        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:items-center lg:justify-center xl:p-12">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
-          <div className="relative">
-            <AppLogo className="h-16 w-16 shadow-lg" />
-            <div className="mt-7 text-sm font-bold leading-6 text-cyan-200 xl:mt-7 xl:text-base">
-              {APP_NAME}
-            </div>
-            <h1 className="mt-2 text-4xl font-black leading-tight">
-              องค์การบริหารส่วน
-              <br />
-              ตำบลมะต้อง
-            </h1>
-          </div>
-          <div className="relative space-y-3 text-sm text-blue-100 xl:text-base">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-cyan-300" />
-              บัญชีประชาชนแยกตามหมู่บ้าน
-            </div>
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-cyan-300" />
-              ติดตามสถานะและหลักฐานการแก้ไข
-            </div>
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-cyan-300" />
-              ข้อมูลส่วนตัวได้รับการดูแลตามสิทธิ์ผู้ใช้
+          <div className="relative flex w-full max-w-md items-center gap-6">
+            <AppLogo className="h-24 w-24 shrink-0 shadow-lg xl:h-28 xl:w-28" />
+            <div className="min-w-0">
+              <div className="text-base font-bold leading-relaxed text-cyan-200 xl:text-lg">
+                {APP_NAME}
+              </div>
+              <h1 className="mt-2 text-3xl font-black leading-tight xl:text-4xl">
+                องค์การบริหารส่วน
+                <br />
+                ตำบลมะต้อง
+              </h1>
             </div>
           </div>
         </div>
@@ -1634,7 +1622,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               </form>
             )}
             <div className="mt-7 border-t pt-5 text-center text-xs leading-5 text-slate-400 lg:text-sm lg:leading-6">
-              หากพบปัญหาการใช้งาน กรุณาติดต่อผู้ดูแลหมู่บ้านของท่าน
+              หากพบปัญหาการใช้งาน กรุณาติดต่อ อบต.มะต้อง
             </div>
           </div>
         </div>
