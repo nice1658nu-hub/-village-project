@@ -627,6 +627,7 @@ function LandingPage({ onNavigate, news }) {
     .filter((item) => item.village_id == null && item.displaySection === "news")
     .slice(0, 6);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [slideAspectRatios, setSlideAspectRatios] = useState({});
   const [activityIndex, setActivityIndex] = useState(0);
   const [selectedSlide, setSelectedSlide] = useState(null);
   const [publicSearch, setPublicSearch] = useState("");
@@ -767,12 +768,31 @@ function LandingPage({ onNavigate, news }) {
       <div className="h-16 sm:h-[72px] lg:h-20" aria-hidden="true" />
 
       <section id="home" className="public-hero bg-blue-950">
-        <div className="relative mx-auto h-[360px] w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 sm:h-[500px] lg:h-[calc(100dvh-5rem)] lg:min-h-[540px] lg:max-h-[720px]">
+        <div
+          className="relative mx-auto w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 transition-[height] duration-300"
+          style={{
+            height: "auto",
+            aspectRatio: currentSlide
+              ? slideAspectRatios[currentSlide.id] || "16 / 9"
+              : "16 / 9",
+            maxHeight: "calc(100dvh - 4rem)",
+          }}
+        >
           {currentSlide ? (
             <img
               key={currentSlide.id}
               src={currentSlide.image}
               alt={currentSlide.title}
+              onLoad={(event) => {
+                const { naturalWidth, naturalHeight } = event.currentTarget;
+                if (!naturalWidth || !naturalHeight) return;
+                const ratio = naturalWidth / naturalHeight;
+                setSlideAspectRatios((current) =>
+                  current[currentSlide.id] === ratio
+                    ? current
+                    : { ...current, [currentSlide.id]: ratio },
+                );
+              }}
               className="absolute inset-0 h-full w-full bg-blue-950 animate-fadeIn"
               style={{ objectFit: "contain", objectPosition: "center center" }}
             />
