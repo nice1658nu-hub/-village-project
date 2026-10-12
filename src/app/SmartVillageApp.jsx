@@ -1355,7 +1355,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
       <section
         className="mx-auto mt-3 grid min-h-[calc(100dvh-7rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200 lg:min-h-[680px] lg:w-[calc(100vw-4rem)] lg:max-w-[1280px] lg:grid-cols-2"
       >
-        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:items-center lg:justify-center xl:p-12">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-10 text-white lg:flex lg:items-start lg:justify-start xl:p-12">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
           <div className="relative flex w-full max-w-md items-center gap-6">
