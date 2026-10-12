@@ -627,7 +627,6 @@ function LandingPage({ onNavigate, news }) {
     .filter((item) => item.village_id == null && item.displaySection === "news")
     .slice(0, 6);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [slideDimensions, setSlideDimensions] = useState({});
   const [activityIndex, setActivityIndex] = useState(0);
   const [selectedSlide, setSelectedSlide] = useState(null);
   const [publicSearch, setPublicSearch] = useState("");
@@ -669,15 +668,6 @@ function LandingPage({ onNavigate, news }) {
     );
   };
   const currentSlide = publicSlides[slideIndex];
-  const currentSlideDimensions = currentSlide
-    ? slideDimensions[currentSlide.id]
-    : null;
-  const currentSlideIsLandscape = currentSlideDimensions
-    ? currentSlideDimensions.width >= currentSlideDimensions.height
-    : true;
-  const currentSlideRatio = currentSlideDimensions
-    ? `${currentSlideDimensions.width} / ${currentSlideDimensions.height}`
-    : "16 / 9";
   const visibleActivityNews = activityNews.filter(
     (item) =>
       !publicSearch.trim() ||
@@ -778,36 +768,14 @@ function LandingPage({ onNavigate, news }) {
 
       <section id="home" className="public-hero bg-blue-950">
         <div
-          className={`relative mx-auto w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 ${
-            currentSlideIsLandscape
-              ? "max-h-[calc(100svh-4rem)] sm:max-h-[calc(100svh-4.5rem)] lg:max-h-[calc(100dvh-5rem)]"
-              : "h-[72svh] min-h-[30rem] lg:h-[calc(100dvh-5rem)] lg:min-h-[36rem]"
-          }`}
-          style={
-            currentSlideIsLandscape
-              ? { aspectRatio: currentSlideRatio, height: "auto", minHeight: 0 }
-              : undefined
-          }
+          className="relative mx-auto w-full overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950"
+          style={{ aspectRatio: "2 / 1", height: "auto", minHeight: 0 }}
         >
           {currentSlide ? (
             <img
               key={currentSlide.id}
               src={currentSlide.image}
               alt={currentSlide.title}
-              onLoad={(event) => {
-                const { naturalWidth, naturalHeight } = event.currentTarget;
-                if (!naturalWidth || !naturalHeight) return;
-                setSlideDimensions((current) => {
-                  const saved = current[currentSlide.id];
-                  if (saved?.width === naturalWidth && saved?.height === naturalHeight) {
-                    return current;
-                  }
-                  return {
-                    ...current,
-                    [currentSlide.id]: { width: naturalWidth, height: naturalHeight },
-                  };
-                });
-              }}
               className="absolute inset-0 block h-full w-full bg-blue-950 object-contain object-center animate-fadeIn"
             />
           ) : (
