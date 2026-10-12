@@ -783,7 +783,11 @@ function LandingPage({ onNavigate, news }) {
               ? "max-h-[calc(100svh-4rem)] sm:max-h-[calc(100svh-4.5rem)] lg:max-h-[calc(100dvh-5rem)]"
               : "h-[72svh] min-h-[30rem] lg:h-[calc(100dvh-5rem)] lg:min-h-[36rem]"
           }`}
-          style={currentSlideIsLandscape ? { aspectRatio: currentSlideRatio } : undefined}
+          style={
+            currentSlideIsLandscape
+              ? { aspectRatio: currentSlideRatio, height: "auto", minHeight: 0 }
+              : undefined
+          }
         >
           {currentSlide ? (
             <img

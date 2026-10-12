@@ -304,10 +304,6 @@ textarea {
     font-size: 0.925rem;
   }
 
-  .public-hero > div {
-    height: clamp(17rem, 72vw, 23rem);
-  }
-
   /* Account settings is shared by every role. Keep the whole form inside
      the visual viewport, including short phones and the on-screen keyboard. */
   header [class~="z-[120]"] {
