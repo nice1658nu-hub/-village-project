@@ -122,6 +122,13 @@ class AuthController extends Controller
     public function forgotPassword(Request $request): JsonResponse
     {
         $data = $request->validate(['email' => ['required', 'email:rfc']]);
+
+        if (in_array(config('mail.default'), ['log', 'array'], true)) {
+            return response()->json([
+                'message' => 'ระบบอีเมลของเว็บไซต์ยังไม่ได้ตั้งค่า SMTP กรุณาติดต่อผู้ดูแลระบบ',
+            ], 503);
+        }
+
         Password::sendResetLink(['email' => Str::lower($data['email'])]);
 
         // Always return the same response so outsiders cannot discover registered emails.

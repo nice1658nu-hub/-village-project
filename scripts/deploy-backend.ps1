@@ -15,6 +15,7 @@ Write-Host ""
 Write-Host "[1/3] Preparing backend files..." -ForegroundColor Cyan
 & tar -czf $archive -C $projectRoot `
     "backend/app/Http/Controllers/Cases/IncidentController.php" `
+    "backend/app/Http/Controllers/Shared/AuthController.php" `
     "backend/app/Http/Controllers/Shared/BootstrapController.php" `
     "backend/app/Http/Controllers/Shared/MediaController.php" `
     "backend/app/Http/Controllers/Shared/NewsController.php" `
