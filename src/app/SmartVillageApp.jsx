@@ -2778,12 +2778,12 @@ function UserDashboard({
                 const isOwn = incident.userId === currentUser.id || incident.isOwn;
                 const affectedCount = 1 + Number(incident.supporterCount || 0);
                 return (
-                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex">
+                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex sm:h-[300px] lg:h-[320px]">
                     <button
                       type="button"
                       disabled={!incident.image}
                       onClick={() => incident.image && setSelectedIncidentImage({ src: incident.image, title: incident.title })}
-                      className="relative block aspect-[16/8.5] w-full shrink-0 overflow-hidden bg-slate-100 text-left sm:aspect-auto sm:w-56"
+                      className="relative block h-48 w-full shrink-0 overflow-hidden bg-slate-100 text-left sm:h-full sm:w-56 lg:w-64"
                     >
                       {incident.image ? (
                         <img src={incident.image} alt={incident.title} className="h-full w-full object-cover" />
@@ -2794,7 +2794,7 @@ function UserDashboard({
                       )}
                       <span className="absolute left-3 top-3"><StatusBadge status={incident.status} /></span>
                     </button>
-                    <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-xs font-black text-blue-600">{incident.category}</div>
@@ -2802,7 +2802,7 @@ function UserDashboard({
                         </div>
                         {isOwn && <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">ของคุณ</span>}
                       </div>
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{incident.description}</p>
+                      <p className="mt-2 line-clamp-2 shrink-0 text-sm leading-6 text-slate-500">{incident.description}</p>
                       <div className="mt-3 grid gap-1.5 text-sm text-slate-500 sm:grid-cols-2">
                         <span className="flex min-w-0 items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">{incident.location}</span></span>
                         <span className="flex items-center gap-1.5 sm:justify-end"><Clock className="h-4 w-4 shrink-0" />{formatThaiDateTime(incident.date)} น.</span>
