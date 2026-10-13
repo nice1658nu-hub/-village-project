@@ -2409,8 +2409,8 @@ function UserDashboard({
   const [showImageSource, setShowImageSource] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [historyStatus, setHistoryStatus] = useState("all");
-  const [historyDate, setHistoryDate] = useState("");
   const [villageIncidentStatus, setVillageIncidentStatus] = useState("active");
+  const [villageIncidentSearch, setVillageIncidentSearch] = useState("");
   const [supportingIncidentId, setSupportingIncidentId] = useState(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const reportSubmitLock = useRef(false);
@@ -2599,38 +2599,27 @@ function UserDashboard({
     }, [])
     .map(({ _signature, ...incident }) => incident)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-  const toLocalDateKey = (value) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-  const dateFilteredIncidents = historyDate
-    ? myIncidents.filter((incident) => toLocalDateKey(incident.date) === historyDate)
-    : myIncidents;
   const historyFilters = [
-    { id: "all", label: "ทั้งหมด", count: dateFilteredIncidents.length },
+    { id: "all", label: "ทั้งหมด", count: myIncidents.length },
     {
       id: "pending",
       label: "รอรับเรื่อง",
-      count: dateFilteredIncidents.filter((incident) => incident.status === "pending").length,
+      count: myIncidents.filter((incident) => incident.status === "pending").length,
     },
     {
       id: "in_progress",
       label: "กำลังดำเนินการ",
-      count: dateFilteredIncidents.filter((incident) => incident.status === "in_progress").length,
+      count: myIncidents.filter((incident) => incident.status === "in_progress").length,
     },
     {
       id: "resolved",
       label: "แก้ไขเสร็จ",
-      count: dateFilteredIncidents.filter((incident) => incident.status === "resolved").length,
+      count: myIncidents.filter((incident) => incident.status === "resolved").length,
     },
   ];
   const filteredMyIncidents = historyStatus === "all"
-    ? dateFilteredIncidents
-    : dateFilteredIncidents.filter((incident) => incident.status === historyStatus);
+    ? myIncidents
+    : myIncidents.filter((incident) => incident.status === historyStatus);
   const activeIncidentCount = myIncidents.filter(
     (incident) => !["resolved", "rejected", "cancelled"].includes(incident.status),
   ).length;
@@ -2654,6 +2643,12 @@ function UserDashboard({
           ? incident.status === "resolved"
           : incident.status !== "resolved",
     )
+    .filter((incident) => {
+      const query = villageIncidentSearch.trim().toLocaleLowerCase("th-TH");
+      if (!query) return true;
+      return [incident.title, incident.category, incident.location]
+        .some((value) => String(value || "").toLocaleLowerCase("th-TH").includes(query));
+    })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
@@ -2714,91 +2709,113 @@ function UserDashboard({
 
       {/* VIEW: VILLAGE INCIDENTS */}
       {activeTab === "village_incidents" && (
-        <div className="space-y-5 animate-fadeIn">
-          <section className="rounded-3xl bg-gradient-to-br from-blue-700 to-slate-950 p-5 text-white shadow-lg sm:p-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-sm font-bold text-blue-200">{citizenVillageLabel}</div>
-                <h2 className="mt-1 text-2xl font-black sm:text-3xl">เหตุในหมู่บ้าน</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
-                  ตรวจสอบเหตุที่มีผู้แจ้งแล้วก่อนสร้างเรื่องใหม่ หากเป็นปัญหาเดียวกันให้กดว่าพบปัญหานี้ด้วย
-                </p>
+        <div className="space-y-4 animate-fadeIn sm:space-y-5">
+          <section className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-5 text-white sm:p-7">
+              <div className="flex items-start gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 sm:h-12 sm:w-12">
+                  <AlertTriangle className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-blue-100 sm:text-sm">{citizenVillageLabel}</p>
+                  <h2 className="mt-0.5 text-2xl font-black sm:text-3xl">เหตุในหมู่บ้าน</h2>
+                  <p className="mt-2 text-sm leading-6 text-blue-100">
+                    ดูก่อนแจ้ง หากเป็นเหตุเดียวกันกด “พบปัญหานี้ด้วย” ได้เลย
+                  </p>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab("report")}
-                className="shrink-0 rounded-xl bg-white px-5 py-3 font-bold text-blue-700 shadow-sm hover:bg-blue-50"
-              >
-                แจ้งเหตุใหม่
-              </button>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-slate-100 bg-white px-2 py-3 text-center">
+              <div>
+                <div className="text-xl font-black text-blue-700">
+                  {incidents.filter((item) => String(item.villageId || "") === String(currentUser.villageId || "") && !["resolved", "cancelled"].includes(item.status)).length}
+                </div>
+                <div className="text-xs font-bold text-slate-500">กำลังดำเนินการ</div>
+              </div>
+              <div>
+                <div className="text-xl font-black text-emerald-600">
+                  {incidents.filter((item) => String(item.villageId || "") === String(currentUser.villageId || "") && item.status === "resolved").length}
+                </div>
+                <div className="text-xs font-bold text-slate-500">แก้ไขแล้ว</div>
+              </div>
             </div>
           </section>
 
-          <div className="grid grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
-            {[
-              ["active", "กำลังดำเนินการ"],
-              ["resolved", "เสร็จสิ้น"],
-              ["all", "ทั้งหมด"],
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setVillageIncidentStatus(id)}
-                className={`rounded-xl px-2 py-2.5 text-sm font-bold transition sm:text-base ${villageIncidentStatus === id ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <section className="sticky top-2 z-10 space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:static sm:p-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={villageIncidentSearch}
+                onChange={(event) => setVillageIncidentSearch(event.target.value)}
+                placeholder="ค้นหาชื่อเหตุ หมวดหมู่ หรือบริเวณ"
+                className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-base outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">
+              {[["active", "กำลังแก้"], ["resolved", "แก้แล้ว"], ["all", "ทั้งหมด"]].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setVillageIncidentStatus(id)}
+                  className={`min-h-10 rounded-lg px-2 text-sm font-bold transition ${villageIncidentStatus === id ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </section>
 
           {villageIncidents.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center shadow-sm">
-              <AlertTriangle className="mx-auto h-10 w-10 text-slate-300" />
-              <h3 className="mt-3 text-lg font-black text-slate-700">ยังไม่มีเหตุในรายการนี้</h3>
-              <p className="mt-1 text-sm text-slate-500">หากพบปัญหาใหม่ สามารถแจ้งเหตุพร้อมรูปและพิกัดได้</p>
+              <Search className="mx-auto h-10 w-10 text-slate-300" />
+              <h3 className="mt-3 text-lg font-black text-slate-700">ไม่พบเหตุที่ค้นหา</h3>
+              <p className="mt-1 text-sm text-slate-500">ลองเปลี่ยนคำค้นหาหรือตัวกรองสถานะ</p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-3 sm:space-y-4">
               {villageIncidents.map((incident) => {
                 const isOwn = incident.userId === currentUser.id || incident.isOwn;
                 const affectedCount = 1 + Number(incident.supporterCount || 0);
                 return (
-                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div className="relative aspect-[16/9] bg-slate-100">
+                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex">
+                    <button
+                      type="button"
+                      disabled={!incident.image}
+                      onClick={() => incident.image && setSelectedIncidentImage({ src: incident.image, title: incident.title })}
+                      className="relative block aspect-[16/8.5] w-full shrink-0 overflow-hidden bg-slate-100 text-left sm:aspect-auto sm:w-56"
+                    >
                       {incident.image ? (
                         <img src={incident.image} alt={incident.title} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-400">
+                        <span className="flex h-full min-h-36 flex-col items-center justify-center gap-2 text-sm text-slate-400">
                           <Camera className="h-9 w-9" /> ไม่มีรูปประกอบ
-                        </div>
-                      )}
-                      <div className="absolute left-3 top-3"><StatusBadge status={incident.status} /></div>
-                    </div>
-                    <div className="p-4">
-                      <div className="text-xs font-bold text-blue-600">{incident.category}</div>
-                      <h3 className="mt-1 line-clamp-2 text-lg font-black leading-snug text-slate-900">{incident.title}</h3>
-                      <div className="mt-2 flex items-start gap-2 text-sm text-slate-500">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span className="line-clamp-1">บริเวณ {incident.location}</span>
-                      </div>
-                      <div className="mt-2 text-xs text-slate-400">แจ้งเมื่อ {formatThaiDateTime(incident.date)} น.</div>
-                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                        <span className="text-sm font-bold text-slate-600">
-                          <Users className="mr-1 inline h-4 w-4" /> พบปัญหานี้ {affectedCount} คน
                         </span>
+                      )}
+                      <span className="absolute left-3 top-3"><StatusBadge status={incident.status} /></span>
+                    </button>
+                    <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-blue-600">{incident.category}</div>
+                          <h3 className="mt-1 line-clamp-2 text-lg font-black leading-snug text-slate-900 sm:text-xl">{incident.title}</h3>
+                        </div>
+                        {isOwn && <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">ของคุณ</span>}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{incident.description}</p>
+                      <div className="mt-3 grid gap-1.5 text-sm text-slate-500 sm:grid-cols-2">
+                        <span className="flex min-w-0 items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">{incident.location}</span></span>
+                        <span className="flex items-center gap-1.5 sm:justify-end"><Clock className="h-4 w-4 shrink-0" />{formatThaiDateTime(incident.date)} น.</span>
+                      </div>
+                      <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:mt-auto sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-sm font-bold text-slate-600"><Users className="mr-1 inline h-4 w-4" />พบปัญหานี้ {affectedCount} คน</span>
                         <button
                           type="button"
                           disabled={isOwn || incident.supportedByMe || supportingIncidentId === incident.id}
                           onClick={() => supportVillageIncident(incident)}
-                          className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-default disabled:bg-slate-100 disabled:text-slate-500"
+                          className="min-h-11 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-default disabled:bg-slate-100 disabled:text-slate-500 sm:w-auto"
                         >
-                          {isOwn
-                            ? "เรื่องที่คุณแจ้ง"
-                            : incident.supportedByMe
-                              ? "ติดตามแล้ว"
-                              : supportingIncidentId === incident.id
-                                ? "กำลังบันทึก..."
-                                : "ฉันพบปัญหานี้ด้วย"}
+                          {isOwn ? "เรื่องที่คุณแจ้ง" : incident.supportedByMe ? "ติดตามเหตุนี้แล้ว" : supportingIncidentId === incident.id ? "กำลังบันทึก..." : "ฉันพบปัญหานี้ด้วย"}
                         </button>
                       </div>
                     </div>
@@ -2807,9 +2824,11 @@ function UserDashboard({
               })}
             </div>
           )}
-          <p className="px-2 text-center text-xs leading-5 text-slate-400">
-            ระบบไม่แสดงชื่อ เบอร์โทร หรือบ้านเลขที่ของผู้แจ้งต่อประชาชนคนอื่น
-          </p>
+
+          <button type="button" onClick={() => setActiveTab("report")} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-blue-600 bg-white px-5 py-3 font-black text-blue-700 shadow-sm hover:bg-blue-50">
+            <Plus className="h-5 w-5" /> ไม่พบเหตุที่ต้องการ แจ้งเหตุใหม่
+          </button>
+          <p className="px-3 text-center text-xs leading-5 text-slate-400">ไม่แสดงชื่อ เบอร์โทรศัพท์ หรือบ้านเลขที่ของผู้แจ้ง</p>
         </div>
       )}
 
@@ -2984,29 +3003,6 @@ function UserDashboard({
           </div>
 
           {myIncidents.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex sm:items-end sm:justify-between sm:gap-4">
-              <label className="block flex-1 text-sm font-bold text-slate-700">
-                เลือกวันที่แจ้งเหตุ
-                <input
-                  type="date"
-                  value={historyDate}
-                  onChange={(event) => setHistoryDate(event.target.value)}
-                  className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-              {historyDate && (
-                <button
-                  type="button"
-                  onClick={() => setHistoryDate("")}
-                  className="mt-2 min-h-11 w-full rounded-xl bg-slate-100 px-4 py-2 font-bold text-slate-600 sm:mt-0 sm:w-auto"
-                >
-                  ล้างวันที่
-                </button>
-              )}
-            </div>
-          )}
-
-          {myIncidents.length > 0 && (
             <div className="grid grid-cols-2 gap-2 sm:flex" role="tablist" aria-label="กรองประวัติการแจ้งเหตุ">
                 {historyFilters.map((filter) => {
                   const active = historyStatus === filter.id;
@@ -3054,15 +3050,10 @@ function UserDashboard({
           ) : filteredMyIncidents.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center shadow-sm">
               <FileText className="mx-auto h-10 w-10 text-slate-300" />
-              <p className="mt-3 font-bold text-slate-700">
-                {historyDate ? "ไม่มีรายการในวันที่และสถานะที่เลือก" : "ไม่มีรายการในสถานะนี้"}
-              </p>
+              <p className="mt-3 font-bold text-slate-700">ไม่มีรายการในสถานะนี้</p>
               <button
                 type="button"
-                onClick={() => {
-                  setHistoryStatus("all");
-                  setHistoryDate("");
-                }}
+                onClick={() => setHistoryStatus("all")}
                 className="mt-3 font-bold text-blue-600"
               >
                 ล้างตัวกรองและดูทั้งหมด
