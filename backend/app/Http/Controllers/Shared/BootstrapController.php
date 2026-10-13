@@ -28,6 +28,25 @@ class BootstrapController extends Controller
     public function authenticated(Request $request)
     {
         $user = $request->user();
+        $incidents = Incident::with(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'budgetRequest.requester', 'budgetRequest.reviewer', 'feedback'])
+            ->withCount('supporters')
+            ->when($user->isVillageAdmin(), fn ($q) => $q->where('village_id', $user->village_id))
+            ->when(! $user->isTao() && ! $user->isVillageAdmin(), fn ($q) => $q
+                ->where('village_id', $user->village_id)
+                ->with('supporters:id'))
+            ->latest()
+            ->get();
+
+        if ($user->role === 'user') {
+            $incidents->each(function (Incident $incident) use ($user) {
+                $incident->setAttribute('supported_by_me', $incident->supporters->contains('id', $user->id));
+                $incident->setAttribute('is_own', (int) $incident->user_id === (int) $user->id);
+                // Citizens may see the public incident, but never another reporter's identity.
+                $incident->unsetRelation('user');
+                $incident->unsetRelation('supporters');
+            });
+        }
+
         return response()->json([
             'users' => $user->isTao()
                 ? User::with('village')->whereIn('role', ['user', 'village_admin'])->latest()->get()
@@ -36,10 +55,7 @@ class BootstrapController extends Controller
             'news' => News::with('village')
                 ->when($user->isVillageAdmin() || $user->role === 'user', fn ($q) => $q->where('village_id', $user->village_id))
                 ->latest('published_at')->get(),
-            'incidents' => Incident::with(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'budgetRequest.requester', 'budgetRequest.reviewer', 'feedback'])
-                ->when($user->isVillageAdmin(), fn ($q) => $q->where('village_id', $user->village_id))
-                ->when(! $user->isTao() && ! $user->isVillageAdmin(), fn ($q) => $q->where('user_id', $user->id))
-                ->latest()->get(),
+            'incidents' => $incidents,
             'notifications' => VillageNotification::where(fn ($q) => $q->where('user_id', $user->id)->orWhereNull('user_id'))
                 ->when($user->role === 'user', fn ($q) => $q->where('type', '!=', 'budget'))
                 ->latest()->get(),

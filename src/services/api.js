@@ -74,6 +74,10 @@ export const api = {
     method: 'POST',
     body: payload instanceof FormData ? payload : JSON.stringify(payload),
   }),
+  supportIncident: (id) => request(`/incidents/${id}/support`, {
+    method: 'PUT',
+    body: JSON.stringify({}),
+  }),
   updateIncidentStatus: (id, payload) => {
     if (payload instanceof FormData) {
       payload.append('_method', 'PATCH');

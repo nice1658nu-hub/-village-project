@@ -70,6 +70,24 @@ class IncidentController extends Controller
         return response()->json($incident);
     }
 
+    public function support(Request $request, Incident $incident)
+    {
+        $user = $request->user();
+        abort_unless($user->role === 'user', 403, 'Only citizens can follow village incidents.');
+        abort_unless((int) $user->village_id === (int) $incident->village_id, 403, 'This incident is outside your village.');
+        abort_if($incident->status === 'cancelled', 409, 'Cancelled incidents cannot be followed.');
+
+        if ((int) $incident->user_id !== (int) $user->id) {
+            $incident->supporters()->syncWithoutDetaching([$user->id]);
+        }
+
+        return response()->json([
+            'incident_id' => $incident->id,
+            'supporter_count' => $incident->supporters()->count(),
+            'supported_by_me' => (int) $incident->user_id !== (int) $user->id,
+        ]);
+    }
+
     public function updateStatus(Request $request, Incident $incident)
     {
         $user = $request->user();

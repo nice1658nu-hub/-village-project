@@ -21,4 +21,5 @@ class Incident extends Model
     public function budgetRequest() { return $this->hasOne(BudgetRequest::class); }
     public function feedback() { return $this->hasOne(IncidentFeedback::class); }
     public function forwarder() { return $this->belongsTo(User::class, 'forwarded_by'); }
+    public function supporters() { return $this->belongsToMany(User::class, 'incident_supporters')->withTimestamps(); }
 }

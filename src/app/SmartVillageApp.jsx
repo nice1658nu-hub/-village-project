@@ -148,6 +148,9 @@ const normalizeIncident = (item) => ({
   forwardedToTaoAt: item.forwardedToTaoAt ?? item.forwarded_to_tao_at,
   budgetRequest: item.budgetRequest ?? item.budget_request,
   feedback: item.feedback ?? null,
+  supporterCount: Number(item.supporterCount ?? item.supporters_count ?? 0),
+  supportedByMe: Boolean(item.supportedByMe ?? item.supported_by_me),
+  isOwn: Boolean(item.isOwn ?? item.is_own),
   submittedForReviewAt:
     item.submittedForReviewAt ?? item.submitted_for_review_at,
   verifiedAt: item.verifiedAt ?? item.verified_at,
@@ -2407,6 +2410,8 @@ function UserDashboard({
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [historyStatus, setHistoryStatus] = useState("all");
   const [historyDate, setHistoryDate] = useState("");
+  const [villageIncidentStatus, setVillageIncidentStatus] = useState("active");
+  const [supportingIncidentId, setSupportingIncidentId] = useState(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const reportSubmitLock = useRef(false);
 
@@ -2514,6 +2519,45 @@ function UserDashboard({
     }
   };
 
+  const supportVillageIncident = async (incident) => {
+    if (incident.supportedByMe || incident.userId === currentUser.id) return;
+    setSupportingIncidentId(incident.id);
+    try {
+      const result = await api.supportIncident(incident.id);
+      setIncidents((items) =>
+        items.map((item) =>
+          String(item.id) === String(incident.id)
+            ? {
+                ...item,
+                supporterCount: Number(
+                  result?.supporter_count ?? item.supporterCount + 1,
+                ),
+                supportedByMe: true,
+              }
+            : item,
+        ),
+      );
+    } catch (error) {
+      if (!USE_MOCK_DATA) {
+        alert(error?.message || "ติดตามเหตุนี้ไม่สำเร็จ กรุณาลองใหม่");
+        return;
+      }
+      setIncidents((items) =>
+        items.map((item) =>
+          String(item.id) === String(incident.id)
+            ? {
+                ...item,
+                supporterCount: Number(item.supporterCount || 0) + 1,
+                supportedByMe: true,
+              }
+            : item,
+        ),
+      );
+    } finally {
+      setSupportingIncidentId(null);
+    }
+  };
+
   const rawMyIncidents = incidents.filter((i) => i.userId === currentUser.id);
   const incidentStatusRank = {
     cancelled: 0,
@@ -2597,6 +2641,20 @@ function UserDashboard({
   const citizenVillageLabel = currentUser.villageMoo
     ? `หมู่ ${currentUser.villageMoo} ${currentUser.villageName || ""}`
     : "หมู่บ้านของคุณ";
+  const villageIncidents = incidents
+    .filter(
+      (incident) =>
+        String(incident.villageId || "") === String(currentUser.villageId || "") &&
+        incident.status !== "cancelled",
+    )
+    .filter((incident) =>
+      villageIncidentStatus === "all"
+        ? true
+        : villageIncidentStatus === "resolved"
+          ? incident.status === "resolved"
+          : incident.status !== "resolved",
+    )
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <div className="citizen-dashboard mx-auto max-w-4xl space-y-4 pb-24 sm:space-y-6 lg:pb-0">
@@ -2651,6 +2709,107 @@ function UserDashboard({
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* VIEW: VILLAGE INCIDENTS */}
+      {activeTab === "village_incidents" && (
+        <div className="space-y-5 animate-fadeIn">
+          <section className="rounded-3xl bg-gradient-to-br from-blue-700 to-slate-950 p-5 text-white shadow-lg sm:p-7">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="text-sm font-bold text-blue-200">{citizenVillageLabel}</div>
+                <h2 className="mt-1 text-2xl font-black sm:text-3xl">เหตุในหมู่บ้าน</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
+                  ตรวจสอบเหตุที่มีผู้แจ้งแล้วก่อนสร้างเรื่องใหม่ หากเป็นปัญหาเดียวกันให้กดว่าพบปัญหานี้ด้วย
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("report")}
+                className="shrink-0 rounded-xl bg-white px-5 py-3 font-bold text-blue-700 shadow-sm hover:bg-blue-50"
+              >
+                แจ้งเหตุใหม่
+              </button>
+            </div>
+          </section>
+
+          <div className="grid grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+            {[
+              ["active", "กำลังดำเนินการ"],
+              ["resolved", "เสร็จสิ้น"],
+              ["all", "ทั้งหมด"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setVillageIncidentStatus(id)}
+                className={`rounded-xl px-2 py-2.5 text-sm font-bold transition sm:text-base ${villageIncidentStatus === id ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {villageIncidents.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center shadow-sm">
+              <AlertTriangle className="mx-auto h-10 w-10 text-slate-300" />
+              <h3 className="mt-3 text-lg font-black text-slate-700">ยังไม่มีเหตุในรายการนี้</h3>
+              <p className="mt-1 text-sm text-slate-500">หากพบปัญหาใหม่ สามารถแจ้งเหตุพร้อมรูปและพิกัดได้</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {villageIncidents.map((incident) => {
+                const isOwn = incident.userId === currentUser.id || incident.isOwn;
+                const affectedCount = 1 + Number(incident.supporterCount || 0);
+                return (
+                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="relative aspect-[16/9] bg-slate-100">
+                      {incident.image ? (
+                        <img src={incident.image} alt={incident.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-400">
+                          <Camera className="h-9 w-9" /> ไม่มีรูปประกอบ
+                        </div>
+                      )}
+                      <div className="absolute left-3 top-3"><StatusBadge status={incident.status} /></div>
+                    </div>
+                    <div className="p-4">
+                      <div className="text-xs font-bold text-blue-600">{incident.category}</div>
+                      <h3 className="mt-1 line-clamp-2 text-lg font-black leading-snug text-slate-900">{incident.title}</h3>
+                      <div className="mt-2 flex items-start gap-2 text-sm text-slate-500">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span className="line-clamp-1">บริเวณ {incident.location}</span>
+                      </div>
+                      <div className="mt-2 text-xs text-slate-400">แจ้งเมื่อ {formatThaiDateTime(incident.date)} น.</div>
+                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                        <span className="text-sm font-bold text-slate-600">
+                          <Users className="mr-1 inline h-4 w-4" /> พบปัญหานี้ {affectedCount} คน
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isOwn || incident.supportedByMe || supportingIncidentId === incident.id}
+                          onClick={() => supportVillageIncident(incident)}
+                          className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-default disabled:bg-slate-100 disabled:text-slate-500"
+                        >
+                          {isOwn
+                            ? "เรื่องที่คุณแจ้ง"
+                            : incident.supportedByMe
+                              ? "ติดตามแล้ว"
+                              : supportingIncidentId === incident.id
+                                ? "กำลังบันทึก..."
+                                : "ฉันพบปัญหานี้ด้วย"}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+          <p className="px-2 text-center text-xs leading-5 text-slate-400">
+            ระบบไม่แสดงชื่อ เบอร์โทร หรือบ้านเลขที่ของผู้แจ้งต่อประชาชนคนอื่น
+          </p>
         </div>
       )}
 
@@ -3108,13 +3267,20 @@ function UserDashboard({
       )}
 
       {!isSidebarOpen && (
-      <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-3 rounded-2xl border border-gray-200 bg-white/95 p-1.5 shadow-2xl backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-4 rounded-2xl border border-gray-200 bg-white/95 p-1.5 shadow-2xl backdrop-blur lg:hidden">
         <button
           type="button"
           onClick={() => setActiveTab("news")}
           className={`min-h-14 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition ${activeTab === "news" ? "bg-blue-50 text-blue-700" : "text-gray-500"}`}
         >
           <Bell className="h-5 w-5" /> ข่าวสาร
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("village_incidents")}
+          className={`min-h-14 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold transition ${activeTab === "village_incidents" ? "bg-blue-50 text-blue-700" : "text-gray-500"}`}
+        >
+          <AlertTriangle className="h-5 w-5" /> เหตุในหมู่บ้าน
         </button>
         <button
           type="button"

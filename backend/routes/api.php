@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ประชาชน: สร้างและติดตามเรื่องร้องทุกข์
     Route::post('/incidents', [IncidentController::class, 'store']);
+    Route::put('/incidents/{incident}/support', [IncidentController::class, 'support']);
     Route::put('/incidents/{incident}', [IncidentController::class, 'update']);
     Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy']);
     Route::put('/incidents/{incident}/feedback', [IncidentFeedbackController::class, 'store']);
