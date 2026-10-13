@@ -6800,6 +6800,16 @@ function TaoDashboard({
   const [publicNewsImageFile, setPublicNewsImageFile] = useState(null);
   const [publicNewsImagePreview, setPublicNewsImagePreview] = useState(null);
   const [savingPublicNews, setSavingPublicNews] = useState(false);
+  const publicNewsFormRef = useRef(null);
+  useEffect(() => {
+    if (!editingPublicNews) return;
+    requestAnimationFrame(() => {
+      publicNewsFormRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [editingPublicNews]);
   const currency = (value) =>
     new Intl.NumberFormat("th-TH", {
       style: "currency",
@@ -7316,8 +7326,9 @@ function TaoDashboard({
           </div>
           {editingPublicNews && (
             <form
+              ref={publicNewsFormRef}
               onSubmit={savePublicNews}
-              className="rounded-3xl border bg-white p-5 shadow-sm md:p-7"
+              className="scroll-mt-5 rounded-3xl border bg-white p-5 shadow-sm md:p-7"
             >
               <div className="mb-5 flex items-center justify-between">
                 <h4 className="text-xl font-black">
