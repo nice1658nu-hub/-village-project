@@ -270,9 +270,9 @@ const defaultTabForRole = (role) =>
   isTaoRole(role) ? "tao_overview" : isVillageAdminRole(role) ? "stats" : "news";
 const allowedTabsForRole = (role) => {
   if (isTaoRole(role))
-    return ["tao_overview", "tao_analysis", "tao_forwarded", "tao_budget", "tao_villages", "tao_reports", "tao_content"];
+    return ["tao_overview", "tao_forwarded", "tao_villages", "tao_reports", "tao_content"];
   if (isVillageAdminRole(role))
-    return ["stats", "analytics", "incidents", "budgets", "news", "users", "reports"];
+    return ["stats", "incidents", "news", "users", "reports"];
   return ["news", "village_incidents", "report", "history"];
 };
 const restoredTabForRole = (role) => {
@@ -6987,6 +6987,10 @@ function TaoDashboard({
   setNews,
 }) {
   const [selectedCase, setSelectedCase] = useState(null);
+  const [caseNote, setCaseNote] = useState("");
+  const [caseDepartment, setCaseDepartment] = useState("");
+  const [caseDueAt, setCaseDueAt] = useState("");
+  const [caseResolvedImage, setCaseResolvedImage] = useState(null);
   const [taoDateFrom, setTaoDateFrom] = useState("");
   const [taoDateTo, setTaoDateTo] = useState("");
   const [reviewForm, setReviewForm] = useState({
@@ -7044,6 +7048,11 @@ function TaoDashboard({
   const activeForwarded = forwarded.filter(
     (item) => !["resolved", "cancelled"].includes(item.status),
   );
+  const newForwarded = forwarded.filter((item) => item.status === "pending");
+  const overdueForwarded = activeForwarded.filter(
+    (item) => item.dueAt && new Date(item.dueAt) < new Date(),
+  );
+  const resolvedForwarded = forwarded.filter((item) => item.status === "resolved");
   const approvedTotal = forwarded.reduce(
     (sum, item) => sum + Number(item.budgetRequest?.approved_amount || 0),
     0,
@@ -7073,15 +7082,18 @@ function TaoDashboard({
       open: sent.filter(
         (item) => !["resolved", "cancelled"].includes(item.status),
       ).length,
-      budget: sent.reduce(
-        (sum, item) => sum + Number(item.budgetRequest?.approved_amount || 0),
-        0,
-      ),
+      resolved: sent.filter((item) => item.status === "resolved").length,
+      overdue: sent.filter(
+        (item) => item.dueAt && new Date(item.dueAt) < new Date() && !["resolved", "cancelled"].includes(item.status),
+      ).length,
     };
   });
   const openCase = (item) => {
     setSelectedCase(item);
     setCaseNote("");
+    setCaseDepartment(item.department || "");
+    setCaseDueAt(item.dueAt ? new Date(item.dueAt).toISOString().slice(0, 16) : "");
+    setCaseResolvedImage(null);
     setReviewForm({
       approved_amount:
         item.budgetRequest?.status === "approved" ||
@@ -7108,17 +7120,36 @@ function TaoDashboard({
     });
     setProjectEvidenceFile(null);
   };
-  const updateGeneralCase = async (status) => {
-    if (!selectedCase || selectedCase.budgetRequest) return;
+  const updateGeneralCase = async (status, action = null) => {
+    if (!selectedCase) return;
+    if (status === "in_progress" && !caseDepartment)
+      return alert("กรุณาเลือกหน่วยรับผิดชอบก่อนรับเรื่อง");
+    if (status === "in_progress" && !caseDueAt)
+      return alert("กรุณากำหนดวันดำเนินการให้เสร็จ");
+    if (status === "resolved" && !caseResolvedImage && !selectedCase.resolvedImage)
+      return alert("กรุณาแนบรูปหลักฐานหลังดำเนินการก่อนปิดเรื่อง");
     if (!caseNote.trim()) {
       return alert("กรุณาระบุผลการดำเนินงานหรือหมายเหตุก่อน");
     }
     setSaving(true);
     try {
-      const response = await api.updateIncidentStatus(selectedCase.id, {
+      let payload = {
         status,
         note: caseNote.trim(),
-      });
+        department: caseDepartment || null,
+        due_at: caseDueAt || null,
+        action,
+      };
+      if (caseResolvedImage) {
+        payload = new FormData();
+        payload.append("status", status);
+        payload.append("note", caseNote.trim());
+        if (action) payload.append("action", action);
+        if (caseDepartment) payload.append("department", caseDepartment);
+        if (caseDueAt) payload.append("due_at", caseDueAt);
+        payload.append("resolvedImage", caseResolvedImage);
+      }
+      const response = await api.updateIncidentStatus(selectedCase.id, payload);
       const updated = normalizeIncident({ ...selectedCase, ...response });
       setIncidents((items) =>
         items.map((item) => (item.id === updated.id ? updated : item)),
@@ -7200,7 +7231,7 @@ function TaoDashboard({
     }
   };
   const generalForwarded = forwarded.filter((item) => !item.budgetRequest);
-  const baseList = activeTab === "tao_budget" ? budgetQueue : generalForwarded;
+  const baseList = forwarded;
   const list = baseList.filter(inTaoDateRange);
   const publicNews = (news || []).filter((item) => item.village_id == null);
   const closePublicNewsForm = () => {
@@ -7300,9 +7331,9 @@ function TaoDashboard({
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               {
-                label: "เรื่องส่งต่อทั้งหมด",
-                value: forwarded.length,
-                note: "จาก 12 หมู่บ้าน",
+                label: "เรื่องใหม่รอรับ",
+                value: newForwarded.length,
+                note: "จากหมู่บ้าน",
                 tone: "bg-blue-50 text-blue-900",
               },
               {
@@ -7312,15 +7343,15 @@ function TaoDashboard({
                 tone: "bg-amber-50 text-amber-900",
               },
               {
-                label: "คำของบรอพิจารณา",
-                value: budgetQueue.length,
-                note: "ต้องตัดสินใจ",
+                label: "เกินกำหนด",
+                value: overdueForwarded.length,
+                note: "ต้องเร่งติดตาม",
                 tone: "bg-red-50 text-red-900",
               },
               {
-                label: "วงเงินอนุมัติ",
-                value: currency(approvedTotal),
-                note: `ใช้จริง ${currency(actualTotal)}`,
+                label: "แก้ไขเสร็จแล้ว",
+                value: resolvedForwarded.length,
+                note: "รอหรือผ่านการยืนยันผล",
                 tone: "bg-emerald-50 text-emerald-900",
               },
             ].map((card) => (
@@ -7349,27 +7380,12 @@ function TaoDashboard({
                 ตรวจเหตุผล หลักฐาน หมู่บ้านต้นทาง และติดตามสถานะการแก้ไข
               </p>
             </button>
-            <button
-              onClick={() => setActiveTab("tao_budget")}
-              className="rounded-3xl border bg-white p-6 text-left shadow-sm hover:border-emerald-300"
-            >
-              <div className="text-sm font-bold text-emerald-600">
-                งานงบประมาณ
-              </div>
-              <div className="mt-2 text-2xl font-black">
-                พิจารณาคำของบ {budgetQueue.length} รายการ
-              </div>
-              <p className="mt-2 text-slate-500">
-                ระบุวงเงิน ปีงบประมาณ แหล่งเงิน และเลขเอกสารอ้างอิง
-              </p>
+            <button onClick={() => setActiveTab("tao_villages")} className="rounded-3xl border bg-white p-6 text-left shadow-sm hover:border-emerald-300">
+              <div className="text-sm font-bold text-emerald-600">ภาพรวมพื้นที่</div>
+              <div className="mt-2 text-2xl font-black">เปรียบเทียบทั้ง 12 หมู่บ้าน</div>
+              <p className="mt-2 text-slate-500">ดูเรื่องค้าง งานเกินกำหนด และผลการดำเนินงานของแต่ละหมู่บ้าน</p>
             </button>
           </section>
-          <SimpleAnalyticsDashboard
-            incidents={incidents}
-            villages={villages}
-            scope="tao"
-            scopeLabel="ทั้ง 12 หมู่บ้าน"
-          />
         </>
       )}
       {activeTab === "tao_analysis" && (
@@ -7387,14 +7403,10 @@ function TaoDashboard({
         <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
           <div className="mb-4">
             <h3 className="text-2xl font-black">
-              {activeTab === "tao_budget"
-                ? "ข้อเสนอโครงการรอพิจารณา"
-                : "เรื่องที่ อบต.รับดำเนินการ"}
+              จัดการเรื่องร้องทุกข์
             </h3>
             <p className="text-sm text-slate-500">
-              {activeTab === "tao_budget"
-                ? "แสดงข้อเสนอโครงการที่หมู่บ้านส่งมาให้ อบต.พิจารณาแผนและงบประมาณ"
-                : "หมู่บ้านส่งเรื่องที่แก้เองไม่ได้มาให้ อบต.รับดำเนินการ อัปเดตผล และปิดเรื่อง"}
+              รับเรื่องที่หมู่บ้านตรวจสอบแล้ว กำหนดหน่วยรับผิดชอบ อัปเดตผล และปิดเรื่อง
             </p>
           </div>
           <div className="mb-5 max-w-md rounded-2xl bg-slate-50 p-4">
@@ -7424,18 +7436,12 @@ function TaoDashboard({
                     {item.location} · {getStatusLabel(item.status)}
                   </div>
                   <div className="mt-1 text-xs font-medium text-slate-400">
-                    {activeTab === "tao_budget" ? "ยื่นคำขอ" : "ส่งต่อ"} {formatThaiDateTime(item.budgetRequest?.created_at || item.forwardedToTaoAt || item.date)} น.
+                    ส่งต่อ {formatThaiDateTime(item.forwardedToTaoAt || item.date)} น.
                   </div>
                 </div>
                 <div className="md:text-right">
-                  <div className="font-black text-emerald-700">
-                    {item.budgetRequest
-                      ? currency(item.budgetRequest.estimated_amount)
-                      : "ไม่ของบ"}
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    {item.budgetRequest?.status || "ส่งต่อทั่วไป"}
-                  </div>
+                  <div className="font-black text-blue-700">{item.department || "รอ อบต.รับเรื่อง"}</div>
+                  <div className="text-xs text-slate-500">{getStatusLabel(item.status)}</div>
                 </div>
               </button>
             ))}
@@ -7452,7 +7458,7 @@ function TaoDashboard({
           <div className="p-6">
             <h3 className="text-2xl font-black">ภาพรวม 12 หมู่บ้าน</h3>
             <p className="text-sm text-slate-500">
-              ใช้ติดตามจำนวนเรื่องที่ส่งต่อมายัง อบต. และวงเงินอนุมัติ
+              เปรียบเทียบเรื่องที่ส่งมายัง อบต. งานค้าง งานเกินกำหนด และผลสำเร็จ
             </p>
             <div className="mt-4 max-w-md rounded-2xl bg-slate-50 p-4">
               <DateRangePicker
@@ -7473,7 +7479,8 @@ function TaoDashboard({
                   <th className="p-4 text-center">เรื่องทั้งหมด</th>
                   <th className="p-4 text-center">ส่งต่อ อบต.</th>
                   <th className="p-4 text-center">ยังเปิด</th>
-                  <th className="p-4 text-right">วงเงินอนุมัติ</th>
+                  <th className="p-4 text-center">เกินกำหนด</th>
+                  <th className="p-4 text-center">แก้แล้ว</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -7487,9 +7494,8 @@ function TaoDashboard({
                     <td className="p-4 text-center font-bold text-amber-700">
                       {row.open}
                     </td>
-                    <td className="p-4 text-right font-bold">
-                      {currency(row.budget)}
-                    </td>
+                    <td className="p-4 text-center font-bold text-red-700">{row.overdue}</td>
+                    <td className="p-4 text-center font-bold text-emerald-700">{row.resolved}</td>
                   </tr>
                 ))}
               </tbody>
@@ -7843,7 +7849,7 @@ function TaoDashboard({
                 {selectedCase.location}
               </div>
             </div>
-            {selectedCase.budgetRequest ? (
+            {false && selectedCase.budgetRequest ? (
               <div className="mt-5 space-y-3">
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                   <div className="text-sm font-bold text-emerald-800">
@@ -8164,6 +8170,23 @@ function TaoDashboard({
                 </div>
                 {!["resolved", "cancelled"].includes(selectedCase.status) && (
                   <div className="rounded-2xl border p-4">
+                    <div className="mb-4 grid gap-3 sm:grid-cols-2">
+                      <label className="text-sm font-bold">
+                        หน่วยรับผิดชอบ
+                        <select value={caseDepartment} onChange={(event) => setCaseDepartment(event.target.value)} className="mt-1 w-full rounded-xl border bg-white p-3 font-normal">
+                          <option value="">เลือกหน่วยรับผิดชอบ</option>
+                          <option value="สำนักปลัด">สำนักปลัด</option>
+                          <option value="กองช่าง">กองช่าง</option>
+                          <option value="งานสาธารณสุข">งานสาธารณสุข</option>
+                          <option value="งานป้องกันและบรรเทาสาธารณภัย">งานป้องกันและบรรเทาสาธารณภัย</option>
+                          <option value="หน่วยงานภายนอก">หน่วยงานภายนอก</option>
+                        </select>
+                      </label>
+                      <label className="text-sm font-bold">
+                        กำหนดดำเนินการให้เสร็จ
+                        <input type="datetime-local" value={caseDueAt} onChange={(event) => setCaseDueAt(event.target.value)} className="mt-1 w-full rounded-xl border bg-white p-3 font-normal" />
+                      </label>
+                    </div>
                     <label className="text-sm font-bold">
                       ผลการดำเนินงาน / หมายเหตุถึงหมู่บ้านและผู้แจ้ง
                       <textarea
@@ -8171,6 +8194,15 @@ function TaoDashboard({
                         onChange={(event) => setCaseNote(event.target.value)}
                         className="mt-2 h-24 w-full resize-none rounded-xl border p-3 font-normal outline-none focus:border-blue-500"
                         placeholder="เช่น อบต.รับประสานกองช่างแล้ว หรือดำเนินการซ่อมเสร็จแล้ว"
+                      />
+                    </label>
+                    <label className="mt-3 block text-sm font-bold">
+                      รูปหลักฐานหลังดำเนินการ (จำเป็นก่อนปิดเรื่อง)
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => setCaseResolvedImage(event.target.files?.[0] || null)}
+                        className="mt-2 w-full rounded-xl border bg-white p-3 font-normal"
                       />
                     </label>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -8197,6 +8229,20 @@ function TaoDashboard({
                       >
                         ยุติเรื่อง (กรณีดำเนินการไม่ได้)
                       </button>
+                      <button
+                        disabled={saving || !caseNote.trim()}
+                        onClick={() => updateGeneralCase("pending", "request_info")}
+                        className="rounded-xl border border-amber-300 px-4 py-3 font-bold text-amber-800 disabled:opacity-40"
+                      >
+                        ขอข้อมูลจากผู้แจ้งเพิ่มเติม
+                      </button>
+                      <button
+                        disabled={saving || !caseNote.trim()}
+                        onClick={() => updateGeneralCase("cancelled", "merge_duplicate")}
+                        className="rounded-xl border border-slate-300 px-4 py-3 font-bold text-slate-700 disabled:opacity-40"
+                      >
+                        รวมกับเรื่องเดิม/เหตุซ้ำ
+                      </button>
                     </div>
                   </div>
                 )}
@@ -8220,22 +8266,21 @@ function VillageOverviewDashboard({
   currentUser,
   setActiveTab,
 }) {
-  const pending = incidents.filter((item) => item.status === "pending");
-  const active = incidents.filter((item) =>
-    ["assigned", "in_progress", "revision_requested"].includes(item.status),
+  const pending = incidents.filter(
+    (item) => item.status === "pending" && !item.requiresTao,
   );
-  const waitingReview = incidents.filter(
-    (item) => item.status === "waiting_review",
+  const forwarded = incidents.filter(
+    (item) => item.requiresTao && !["resolved", "cancelled"].includes(item.status),
+  );
+  const overdue = forwarded.filter(
+    (item) => item.dueAt && new Date(item.dueAt) < new Date(),
   );
   const resolved = incidents.filter((item) => item.status === "resolved");
   const pendingResidents = users.filter(
     (item) => item.role === "user" && item.accountStatus === "pending",
   ).length;
-  const waitingBudgets = incidents.filter(
-    (item) => item.budgetRequest?.status === "submitted",
-  ).length;
   const urgent = [...incidents]
-    .filter((item) => !["resolved", "cancelled"].includes(item.status))
+    .filter((item) => item.status === "pending" && !item.requiresTao)
     .sort(
       (a, b) =>
         Number(b.priority || 1) - Number(a.priority || 1) ||
@@ -8249,15 +8294,13 @@ function VillageOverviewDashboard({
           หมู่ {currentUser?.villageMoo || "-"} {currentUser?.villageName || ""}
         </div>
         <h2 className="mt-1 text-3xl font-black">ภาพรวมงานหมู่บ้าน</h2>
-        <p className="mt-2 text-slate-300">
-          แสดงเฉพาะงานที่ต้องจัดการจริง ไม่รวมการคาดการณ์หรือตัวเลขจำลอง
-        </p>
+        <p className="mt-2 text-slate-300">ตรวจเรื่องจากประชาชน เพิ่มข้อมูลพื้นที่ และส่งให้ อบต.ดำเนินการ</p>
       </section>
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          ["เรื่องใหม่", pending.length, "text-blue-700 bg-blue-50"],
-          ["กำลังดำเนินการ", active.length, "text-amber-700 bg-amber-50"],
-          ["รอตรวจรับ", waitingReview.length, "text-purple-700 bg-purple-50"],
+          ["รอตรวจสอบ", pending.length, "text-blue-700 bg-blue-50"],
+          ["ส่งให้ อบต.แล้ว", forwarded.length, "text-amber-700 bg-amber-50"],
+          ["เกินกำหนด", overdue.length, "text-red-700 bg-red-50"],
           ["เสร็จแล้ว", resolved.length, "text-emerald-700 bg-emerald-50"],
         ].map(([label, value, tone]) => (
           <div
@@ -8269,28 +8312,17 @@ function VillageOverviewDashboard({
           </div>
         ))}
       </section>
-      <section className="grid gap-3 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-2">
         <button
           onClick={() => setActiveTab("incidents")}
           className="rounded-2xl border bg-white p-5 text-left shadow-sm hover:border-blue-400"
         >
           <div className="text-sm font-bold text-blue-600">งานร้องทุกข์</div>
           <div className="mt-1 text-xl font-black">
-            เปิดรายการและอัปเดตสถานะ
+            ตรวจข้อมูลและส่งเรื่องให้ อบต.
           </div>
           <div className="mt-2 text-sm text-slate-500">
-            มี {pending.length + active.length + waitingReview.length}{" "}
-            เรื่องที่ยังไม่ปิด
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab("budgets")}
-          className="rounded-2xl border bg-white p-5 text-left shadow-sm hover:border-emerald-400"
-        >
-          <div className="text-sm font-bold text-emerald-600">งานงบประมาณ</div>
-          <div className="mt-1 text-xl font-black">สร้างและติดตามคำของบ</div>
-          <div className="mt-2 text-sm text-slate-500">
-            {waitingBudgets} คำขอกำลังรอ อบต.
+            มี {pending.length} เรื่องรอตรวจสอบ
           </div>
         </button>
         <button
@@ -9602,19 +9634,12 @@ function AdminDashboard({
 
       {/* VIEW: STATS */}
       {activeTab === "stats" && (
-        <div className="space-y-6">
-          <VillageOverviewDashboard
-            incidents={incidents}
-            users={users}
-            currentUser={currentUser}
-            setActiveTab={setActiveTab}
-          />
-          <SimpleAnalyticsDashboard
-            incidents={incidents}
-            scope="village"
-            scopeLabel={`หมู่ ${currentUser?.villageMoo || "-"} ${currentUser?.villageName || ""}`}
-          />
-        </div>
+        <VillageOverviewDashboard
+          incidents={incidents}
+          users={users}
+          currentUser={currentUser}
+          setActiveTab={setActiveTab}
+        />
       )}
       {false && (
         <div className="space-y-6 animate-fadeIn">
@@ -11359,6 +11384,8 @@ function AdminIncidentModal({
   const [inspectionNote, setInspectionNote] = useState("");
   const [inspectionImage, setInspectionImage] = useState(null);
   const [inspectionSaving, setInspectionSaving] = useState(false);
+  const [forwardingToTao, setForwardingToTao] = useState(false);
+  const [forwardNote, setForwardNote] = useState("");
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
@@ -11408,6 +11435,22 @@ function AdminIncidentModal({
     }
     onUpdate(inc.id, newStatus, resImageFile, resImage);
     setEditingStatus(false);
+  };
+
+  const forwardVerifiedIncident = async () => {
+    if (!forwardNote.trim())
+      return alert("กรุณาระบุผลตรวจสอบเบื้องต้นก่อนส่งให้ อบต.");
+    setForwardingToTao(true);
+    try {
+      const updated = await api.forwardIncidentToTao(inc.id, forwardNote.trim());
+      onIncidentReplace(updated);
+      setForwardNote("");
+      alert("ยืนยันและส่งเรื่องให้ อบต.แล้ว");
+    } catch (error) {
+      alert(error?.message || "ส่งเรื่องให้ อบต.ไม่สำเร็จ");
+    } finally {
+      setForwardingToTao(false);
+    }
   };
 
   return (
@@ -11480,6 +11523,35 @@ function AdminIncidentModal({
               {inc.description}
             </div>
           </div>
+
+          {villageMode && !inc.requiresTao && !["resolved", "cancelled"].includes(inc.status) && (
+            <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-5">
+              <h3 className="font-black text-blue-950">ผลตรวจสอบของหมู่บ้าน</h3>
+              <p className="mt-1 text-sm text-blue-800">
+                ตรวจข้อมูลและจุดเกิดเหตุให้ถูกต้อง แล้วส่งให้ อบต.เป็นผู้รับผิดชอบดำเนินการ
+              </p>
+              <textarea
+                value={forwardNote}
+                onChange={(event) => setForwardNote(event.target.value)}
+                className="mt-3 h-24 w-full rounded-xl border border-blue-200 bg-white p-3"
+                placeholder="เช่น ตรวจสอบแล้วพบเหตุจริง บริเวณหน้าศาลาหมู่บ้าน"
+              />
+              <button
+                type="button"
+                disabled={forwardingToTao || !forwardNote.trim()}
+                onClick={forwardVerifiedIncident}
+                className="mt-3 w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-40 sm:w-auto"
+              >
+                {forwardingToTao ? "กำลังส่ง..." : "ยืนยันและส่งเรื่องให้ อบต."}
+              </button>
+            </div>
+          )}
+
+          {villageMode && inc.requiresTao && (
+            <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 font-bold text-emerald-800">
+              ส่งเรื่องให้ อบต.แล้ว หมู่บ้านสามารถติดตามสถานะและช่วยประสานข้อมูลในพื้นที่ได้
+            </div>
+          )}
 
           {villageMode &&
             ["in_progress", "revision_requested"].includes(inc.status) && (
@@ -11672,7 +11744,7 @@ function AdminIncidentModal({
               </div>
             )}
 
-          {!["assigned", "waiting_review", "revision_requested"].includes(
+          {!villageMode && !["assigned", "waiting_review", "revision_requested"].includes(
             inc.status,
           ) && (
             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">

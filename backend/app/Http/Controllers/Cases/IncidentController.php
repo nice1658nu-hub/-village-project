@@ -95,6 +95,9 @@ class IncidentController extends Controller
         $data = $request->validate([
             'status' => ['required', Rule::in(['pending', 'in_progress', 'resolved', 'cancelled'])],
             'note' => ['nullable', 'string', 'max:2000'],
+            'department' => ['nullable', 'string', 'max:255'],
+            'due_at' => ['nullable', 'date'],
+            'action' => ['nullable', Rule::in(['request_info', 'merge_duplicate'])],
             'resolvedImage' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
         ]);
         $resolvedImage = $incident->resolved_image;
@@ -105,6 +108,9 @@ class IncidentController extends Controller
         $from = $incident->status;
         $incident->update([
             'status' => $data['status'], 'resolved_image' => $resolvedImage,
+            'department' => $data['department'] ?? $incident->department,
+            'due_at' => $data['due_at'] ?? $incident->due_at,
+            'resolution_summary' => $data['status'] === 'resolved' ? ($data['note'] ?? $incident->resolution_summary) : $incident->resolution_summary,
             'first_response_at' => $from === 'pending' && $data['status'] === 'in_progress' ? now() : $incident->first_response_at,
             'resolved_at' => $data['status'] === 'resolved' ? now() : null,
         ]);
@@ -115,6 +121,11 @@ class IncidentController extends Controller
             'resolved' => 'แก้ไขเสร็จแล้ว',
             'cancelled' => 'ยุติเรื่องแล้ว',
         ];
+        if (($data['action'] ?? null) === 'request_info') {
+            $notificationTitles[$data['status']] = 'เจ้าหน้าที่ขอข้อมูลเพิ่มเติม';
+        } elseif (($data['action'] ?? null) === 'merge_duplicate') {
+            $notificationTitles[$data['status']] = 'รวมเรื่องนี้กับเรื่องเดิมแล้ว';
+        }
         $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create([
             'user_id' => $userId,
             'title' => $notificationTitles[$data['status']],
