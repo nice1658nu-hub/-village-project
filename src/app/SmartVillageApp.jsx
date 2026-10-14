@@ -121,6 +121,7 @@ const normalizeMediaUrl = (value) => {
 const normalizeNews = (item) => ({
   ...item,
   image: normalizeMediaUrl(item.image),
+  villageId: item.villageId ?? item.village_id,
   date: item.date ?? item.published_at ?? item.created_at,
   displaySection:
     item.displaySection ??
@@ -584,7 +585,6 @@ export default function App() {
               incidents={incidents}
               setIncidents={setIncidents}
               users={users}
-              setUsers={setUsers}
               villages={villages}
               budgetSettings={budgetSettings}
               setBudgetSettings={setBudgetSettings}
@@ -6936,7 +6936,6 @@ function TaoDashboard({
   setIncidents,
   villages,
   users,
-  setUsers,
   budgetSettings,
   setBudgetSettings,
   news,
@@ -6964,7 +6963,6 @@ function TaoDashboard({
   });
   const [projectEvidenceFile, setProjectEvidenceFile] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [accountSavingId, setAccountSavingId] = useState(null);
   const [editingPublicNews, setEditingPublicNews] = useState(null);
   const [publicNewsForm, setPublicNewsForm] = useState({
     display_section: "news",
@@ -6992,28 +6990,6 @@ function TaoDashboard({
       currency: "THB",
       maximumFractionDigits: 0,
     }).format(Number(value) || 0);
-  const villageAccounts = (users || []).filter(
-    (item) => item.role === "village_admin",
-  );
-  const resetVillageAccount = async (person) => {
-    const moo = person.villageMoo || person.village?.moo || "";
-    const password = window.prompt(
-      `ตั้งรหัสผ่านใหม่ให้ ${person.name}\nอย่างน้อย 8 ตัวอักษร`,
-      `moo${moo}@69`,
-    );
-    if (password === null) return;
-    if (password.length < 8)
-      return alert("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
-    setAccountSavingId(person.id);
-    try {
-      await api.resetUserPassword(person.id, password);
-      alert(`เปลี่ยนรหัสผ่านของ ${person.name} แล้ว`);
-    } catch (error) {
-      alert(error?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
-    } finally {
-      setAccountSavingId(null);
-    }
-  };
   const forwarded = incidents.filter(
     (item) => item.requiresTao || item.budgetRequest,
   );
@@ -7473,53 +7449,6 @@ function TaoDashboard({
                 ))}
               </tbody>
             </table>
-          </div>
-        </section>
-      )}
-      {activeTab === "tao_users" && (
-        <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
-          <h3 className="text-2xl font-black">บัญชีผู้ดูแลหมู่บ้าน</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            อบต. ตรวจสอบบัญชีประจำหมู่บ้านและตั้งรหัสผ่านใหม่ได้
-          </p>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {(villages || []).map((village) => {
-              const person = villageAccounts.find(
-                (item) =>
-                  String(item.villageId || item.village_id || item.village?.id) ===
-                  String(village.id),
-              );
-              return (
-                <div key={village.id} className="rounded-2xl border p-4">
-                  <div className="font-black">
-                    หมู่ {village.moo} {village.name}
-                  </div>
-                  {person ? (
-                    <>
-                      <div className="mt-2 text-sm text-slate-600">{person.name}</div>
-                      <div className="text-sm font-bold text-blue-700">
-                        Username: {person.phone}
-                      </div>
-                      <div className="mt-2 text-xs">
-                        สถานะ: <b>{person.accountStatus === "approved" ? "ใช้งานได้" : person.accountStatus || "-"}</b>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={accountSavingId === person.id}
-                        onClick={() => resetVillageAccount(person)}
-                        className="mt-3 w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-                      >
-                        {accountSavingId === person.id ? "กำลังบันทึก..." : "ตั้งรหัสผ่านใหม่"}
-                      </button>
-                    </>
-                  ) : (
-                    <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
-                      ยังไม่พบบัญชี กรุณา deploy backend ล่าสุด
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </section>
       )}
