@@ -282,6 +282,7 @@ const getPriorityMeta = (priority = 1) =>
 // --- MAIN APP COMPONENT ---
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [restoringSession, setRestoringSession] = useState(() => api.hasSession());
   const [currentView, setCurrentView] = useState(() =>
     new URLSearchParams(window.location.search).has("reset_token")
       ? "auth"
@@ -303,6 +304,9 @@ export default function App() {
   const [apiStatus, setApiStatus] = useState("mock");
 
   useEffect(() => {
+    // An authenticated refresh is restored by /me below. Loading the public
+    // bootstrap at the same time can finish later and overwrite dashboard data.
+    if (api.hasSession()) return undefined;
     let isMounted = true;
 
     api
@@ -387,11 +391,14 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (!api.hasSession()) return undefined;
+    if (!api.hasSession()) {
+      setRestoringSession(false);
+      return undefined;
+    }
     let isMounted = true;
 
-    Promise.all([api.getMe(), api.getDashboardData()])
-      .then(([account, dashboard]) => {
+    api.getMe()
+      .then((account) => {
         if (!isMounted) return;
         const user = normalizeUser(account.user || account);
         setCurrentUser(user);
@@ -403,19 +410,34 @@ export default function App() {
               : "news",
         );
         setCurrentView("dashboard");
-        setUsers((dashboard.users || []).map(normalizeUser));
-        setNews((dashboard.news || []).map(normalizeNews));
-        setIncidents((dashboard.incidents || []).map(normalizeIncident));
-        setNotifications(
-          (dashboard.notifications || []).map(normalizeNotification),
-        );
-        setBudgetSettings(
-          dashboard.budgetSettings || { unit_costs: {}, reserve_percent: 10 },
-        );
-        setVillages(dashboard.villages || []);
-        setApiStatus("connected");
+        setRestoringSession(false);
+
+        // A dashboard-data error must not log the account out. The identity
+        // has already been verified successfully by /me.
+        api.getDashboardData()
+          .then((dashboard) => {
+            if (!isMounted) return;
+            setUsers((dashboard.users || []).map(normalizeUser));
+            setNews((dashboard.news || []).map(normalizeNews));
+            setIncidents((dashboard.incidents || []).map(normalizeIncident));
+            setNotifications(
+              (dashboard.notifications || []).map(normalizeNotification),
+            );
+            setBudgetSettings(
+              dashboard.budgetSettings || { unit_costs: {}, reserve_percent: 10 },
+            );
+            setVillages(dashboard.villages || []);
+            setApiStatus("connected");
+          })
+          .catch(() => setApiStatus("offline"));
       })
-      .catch(() => api.clearSession());
+      .catch(() => {
+        api.clearSession();
+        if (!isMounted) return;
+        setCurrentUser(null);
+        setCurrentView("landing");
+        setRestoringSession(false);
+      });
 
     return () => {
       isMounted = false;
@@ -529,6 +551,14 @@ export default function App() {
   };
 
   // Render Logic
+  if (restoringSession)
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-slate-50 text-slate-600">
+        <div className="rounded-2xl border bg-white px-7 py-5 font-bold shadow-sm">
+          กำลังเปิดหน้าระบบของคุณ...
+        </div>
+      </div>
+    );
   if (currentView === "landing")
     return <LandingPage onNavigate={setCurrentView} news={news} />;
   if (currentView === "auth")
