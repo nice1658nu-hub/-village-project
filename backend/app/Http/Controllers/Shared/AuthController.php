@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 
 use App\Models\User;
 use App\Models\Village;
-use App\Models\VillageNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\PasswordReset;
@@ -41,23 +40,10 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $data['name'], 'phone' => $data['phone'], 'email' => Str::lower($data['email']), 'house_no' => $data['houseNo'], 'village_id' => $data['villageId'] ?? Village::where('moo', 5)->value('id'),
-            'password' => $data['password'], 'role' => 'user', 'account_status' => 'pending',
+            'password' => $data['password'], 'role' => 'user', 'account_status' => 'approved', 'approved_at' => now(),
         ]);
 
-        User::query()
-            ->whereIn('role', ['village_admin', 'staff'])
-            ->where('account_status', 'approved')
-            ->where('village_id', $user->village_id)
-            ->pluck('id')
-            ->each(fn ($adminId) => VillageNotification::create([
-                'user_id' => $adminId,
-                'title' => 'มีคำขอสมัครสมาชิกใหม่',
-                'description' => $user->name.' · บ้านเลขที่ '.$user->house_no,
-                'type' => 'user_registration',
-                'data' => ['user_id' => $user->id, 'village_id' => $user->village_id],
-            ]));
-
-        return response()->json(['message' => 'Registration submitted for approval.', 'user' => $user], 201);
+        return response()->json(['message' => 'Registration completed.', 'user' => $user], 201);
     }
 
     public function login(Request $request): JsonResponse

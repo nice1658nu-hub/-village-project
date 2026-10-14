@@ -494,8 +494,8 @@ export default function App() {
     } catch (error) {
       if (error?.status === 403) {
         const statusText =
-          error?.data?.account_status === "pending"
-            ? "บัญชีนี้มีอยู่ในฐานข้อมูลแล้ว และกำลังรอแอดมินหมู่บ้านอนุมัติ ไม่ต้องสมัครใหม่"
+          error?.data?.account_status === "suspended"
+            ? "บัญชีนี้ถูกระงับ กรุณาติดต่อผู้ดูแลหมู่บ้าน"
             : "บัญชียังไม่สามารถใช้งานได้";
         alert(statusText);
         return;
@@ -553,7 +553,7 @@ export default function App() {
       ...newUser,
       id: Date.now().toString(),
       role: "user",
-      accountStatus: "pending",
+      accountStatus: "approved",
     };
     setUsers([...users, user]);
     return true;
@@ -1377,7 +1377,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
       });
       setMode("login");
       setMessage(
-        "ขณะนี้บัญชีกำลังรอแอดมินหมู่บ้านอนุมัติ หลังอนุมัติให้เข้าสู่ระบบด้วยเบอร์โทรศัพท์นี้",
+        "สมัครสมาชิกสำเร็จแล้ว เข้าสู่ระบบด้วยเบอร์โทรศัพท์และรหัสผ่านที่ตั้งไว้ได้ทันที",
       );
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
@@ -1441,7 +1441,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
               {mode !== "login" && (
                 <p className="mt-2 text-sm leading-6 text-slate-500 lg:mt-3 lg:text-base lg:leading-7">
                   {mode === "register"
-                    ? "กรอกข้อมูลจริงเพื่อให้ผู้ดูแลหมู่บ้านตรวจสอบและอนุมัติบัญชี"
+                    ? "กรอกข้อมูลจริงเพื่อสร้างบัญชีและเข้าสู่ระบบได้ทันที"
                     : "ดำเนินการตามขั้นตอนด้านล่าง"}
                 </p>
               )}
@@ -4015,7 +4015,7 @@ function StaffDashboard({
           </div>
           <h2 className="mt-1 text-3xl font-black">ประชาชนในหมู่บ้าน</h2>
           <p className="mt-2 text-slate-300">
-            เห็นและอนุมัติเฉพาะบัญชีประชาชนที่เลือกหมู่บ้านนี้เท่านั้น
+            ดูรายชื่อและระงับบัญชีประชาชนที่อยู่ในหมู่บ้านนี้
           </p>
         </section>
         <section className="overflow-hidden rounded-3xl border bg-white shadow-sm">
@@ -4040,32 +4040,29 @@ function StaffDashboard({
                       <td className="p-4">{resident.houseNo}</td>
                       <td className="p-4">
                         {{
-                          approved: "อนุมัติแล้ว",
-                          pending: "รออนุมัติ",
-                          rejected: "ไม่อนุมัติ",
+                          approved: "ใช้งานได้",
+                          pending: "ใช้งานได้",
+                          rejected: "ใช้งานได้",
                           suspended: "ระงับ",
                         }[resident.accountStatus] || resident.accountStatus}
                       </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-2">
-                          {resident.accountStatus !== "approved" && (
-                            <button
-                              onClick={() =>
-                                updateResidentStatus(resident, "approved")
-                              }
-                              className="rounded-lg bg-emerald-100 px-3 py-2 text-sm font-bold text-emerald-800"
-                            >
-                              อนุมัติ
-                            </button>
-                          )}
-                          {resident.accountStatus === "approved" && (
+                          {resident.accountStatus !== "suspended" ? (
                             <button
                               onClick={() =>
                                 updateResidentStatus(resident, "suspended")
                               }
                               className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700"
                             >
-                              ระงับ
+                              ระงับบัญชี
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => updateResidentStatus(resident, "approved")}
+                              className="rounded-lg bg-emerald-100 px-3 py-2 text-sm font-bold text-emerald-800"
+                            >
+                              เปิดใช้งานอีกครั้ง
                             </button>
                           )}
                         </div>
@@ -4884,41 +4881,17 @@ function AdminReports({ incidents }) {
               รายงานข้อมูล
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-300">
-              กรองข้อมูลและดาวน์โหลดรายงานการแจ้งเหตุหรือโครงการ
+              กรองข้อมูลและดาวน์โหลดรายงานการแจ้งเหตุเป็นไฟล์ Excel
             </p>
           </div>
-          <div className="grid w-full gap-2 min-[420px]:grid-cols-2 md:w-[520px]">
-            <button
-              disabled={!!exporting}
-              onClick={exportPdf}
-              className="order-1 w-full whitespace-nowrap rounded-xl bg-red-600 px-4 py-3 text-sm sm:text-base font-bold hover:bg-red-500 disabled:opacity-50"
-            >
-              <Download className="mr-2 inline h-5 w-5" />
-              {exporting === "pdf" ? "กำลังสร้าง..." : "PDF การแจ้งเหตุ"}
-            </button>
-            <button
-              disabled={!!exporting}
-              onClick={exportProjects}
-              className="order-4 w-full whitespace-nowrap rounded-xl bg-green-700 px-4 py-3 text-sm sm:text-base font-bold hover:bg-green-600 disabled:opacity-50"
-            >
-              <Download className="mr-2 inline h-5 w-5" />
-              Excel โครงการ
-            </button>
-            <button
-              disabled={!!exporting}
-              onClick={exportProjectsPdf}
-              className="order-3 w-full whitespace-nowrap rounded-xl bg-violet-700 px-4 py-3 text-sm sm:text-base font-bold hover:bg-violet-600 disabled:opacity-50"
-            >
-              <Download className="mr-2 inline h-5 w-5" />
-              PDF โครงการ
-            </button>
+          <div className="w-full md:w-auto">
             <button
               disabled={!!exporting}
               onClick={exportExcel}
-              className="order-2 w-full whitespace-nowrap rounded-xl bg-emerald-600 px-4 py-3 text-sm sm:text-base font-bold hover:bg-emerald-500 disabled:opacity-50"
+              className="w-full whitespace-nowrap rounded-xl bg-emerald-600 px-6 py-3 text-sm sm:text-base font-bold hover:bg-emerald-500 disabled:opacity-50"
             >
               <Download className="mr-2 inline h-5 w-5" />
-              {exporting === "excel" ? "กำลังสร้าง..." : "Excel การแจ้งเหตุ"}
+              {exporting === "excel" ? "กำลังสร้าง..." : "ดาวน์โหลด Excel"}
             </button>
           </div>
         </div>
@@ -7026,8 +6999,6 @@ function DecisionAnalyticsCenter({
   incidents,
   villages = [],
   scope = "village",
-  onOpenWork,
-  onOpenVillages,
 }) {
   const [period, setPeriod] = useState("90");
   const isTao = scope === "tao";
@@ -7264,9 +7235,6 @@ function DecisionAnalyticsCenter({
                 </div>
               ))}
             </div>
-            <button onClick={onOpenWork} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-700">
-              เปิดคิวเรื่องร้องทุกข์ →
-            </button>
           </article>
           <article className="rounded-2xl border border-slate-200 p-5">
             <div className="text-xs font-black text-emerald-700">ประสิทธิภาพ</div>
@@ -7297,7 +7265,6 @@ function DecisionAnalyticsCenter({
                 <div className="text-xs font-black text-orange-700">เปรียบเทียบพื้นที่</div>
                 <h3 className="text-lg font-black text-slate-950">หมู่บ้านที่ควรติดตามก่อน</h3>
               </div>
-              <button onClick={onOpenVillages} className="text-sm font-black text-blue-600">ดูครบ 12 หมู่บ้าน →</button>
             </div>
             <div className="mt-4 grid gap-2">
               {villageRows.map((row, index) => (
@@ -7754,8 +7721,6 @@ function TaoDashboard({
             incidents={forwarded}
             villages={villages}
             scope="tao"
-            onOpenWork={() => setActiveTab("tao_forwarded")}
-            onOpenVillages={() => setActiveTab("tao_villages")}
           />
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
             <div className="flex items-end justify-between gap-3">
@@ -7795,8 +7760,6 @@ function TaoDashboard({
           incidents={forwarded}
           villages={villages}
           scope="tao"
-          onOpenWork={() => setActiveTab("tao_forwarded")}
-          onOpenVillages={() => setActiveTab("tao_villages")}
         />
       )}
       {activeTab === "tao_reports" && (
@@ -7822,30 +7785,31 @@ function TaoDashboard({
               }}
             />
           </div>
-          <div className="grid gap-3">
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <div className="hidden grid-cols-[8rem_1.5fr_1fr_1fr_8rem] gap-4 bg-slate-50 px-4 py-3 text-xs font-black text-slate-500 md:grid">
+              <div>เลขที่เรื่อง</div>
+              <div>ปัญหาและสถานที่</div>
+              <div>หมู่บ้าน</div>
+              <div>หน่วยรับผิดชอบ</div>
+              <div>สถานะ</div>
+            </div>
             {list.map((item) => (
               <button
                 key={item.id}
                 onClick={() => openCase(item)}
-                className="grid gap-3 rounded-2xl border p-4 text-left hover:border-blue-300 md:grid-cols-[1fr_auto]"
+                className="grid w-full gap-3 border-t border-slate-100 p-4 text-left first:border-t-0 hover:bg-blue-50/50 md:grid-cols-[8rem_1.5fr_1fr_1fr_8rem] md:items-center md:gap-4"
               >
+                <div className="font-mono text-sm font-black text-blue-700">{item.referenceNo || `#${item.id}`}</div>
+                <div className="min-w-0">
+                  <div className="truncate font-black text-slate-950">{item.title}</div>
+                  <div className="mt-1 flex items-center gap-1 truncate text-sm text-slate-500"><MapPin className="h-3.5 w-3.5 shrink-0 text-rose-500" />{item.location}</div>
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-blue-600">
-                    หมู่ {item.villageMoo || "-"} {item.villageName || ""} ·{" "}
-                    {item.referenceNo || `#${item.id}`}
-                  </div>
-                  <div className="mt-1 text-lg font-black">{item.title}</div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    {item.location} · {getStatusLabel(item.status)}
-                  </div>
-                  <div className="mt-1 text-xs font-medium text-slate-400">
-                    ส่งต่อ {formatThaiDateTime(item.forwardedToTaoAt || item.date)} น.
-                  </div>
+                  <div className="font-bold text-slate-800">หมู่ {item.villageMoo || "-"} {item.villageName || ""}</div>
+                  <div className="mt-1 text-xs text-slate-400">ส่ง {formatThaiDateTime(item.forwardedToTaoAt || item.date)} น.</div>
                 </div>
-                <div className="md:text-right">
-                  <div className="font-black text-blue-700">{item.department || "รอ อบต.รับเรื่อง"}</div>
-                  <div className="text-xs text-slate-500">{getStatusLabel(item.status)}</div>
-                </div>
+                <div className="font-bold text-slate-700">{item.department || "ยังไม่มอบหมาย"}</div>
+                <div><StatusBadge status={item.status} /></div>
               </button>
             ))}
             {!list.length && (
@@ -8232,19 +8196,49 @@ function TaoDashboard({
             onMouseDown={(event) => event.stopPropagation()}
             className="max-h-[92dvh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl md:rounded-3xl md:p-7"
           >
-            <div className="flex justify-between gap-4">
+            <div className="-mx-4 -mt-4 flex items-center justify-between gap-4 bg-slate-950 p-5 text-white md:-mx-7 md:-mt-7 md:p-6">
               <div>
-                <div className="text-sm font-bold text-blue-600">
-                  หมู่ {selectedCase.villageMoo} {selectedCase.villageName}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-xl font-black md:text-2xl">จัดการเรื่องร้องทุกข์</h3>
+                  <span className="rounded-lg border border-blue-400/40 bg-blue-500/15 px-2.5 py-1 font-mono text-xs font-black text-blue-200">
+                    {selectedCase.referenceNo || `#${selectedCase.id}`}
+                  </span>
                 </div>
-                <h3 className="text-2xl font-black">{selectedCase.title}</h3>
+                <div className="mt-1 text-sm text-slate-300">หมู่ {selectedCase.villageMoo} {selectedCase.villageName} · {selectedCase.category}</div>
               </div>
               <button
                 onClick={() => setSelectedCase(null)}
-                className="h-10 w-10 rounded-full bg-slate-100"
+                className="h-11 w-11 shrink-0 rounded-xl bg-white/10 hover:bg-white/20"
               >
-                <X className="mx-auto" />
+                <X className="mx-auto text-white" />
               </button>
+            </div>
+            {(() => {
+              const step = selectedCase.status === "resolved" ? 4 : selectedCase.status === "in_progress" ? 3 : selectedCase.department ? 2 : 1;
+              return (
+                <div className="-mx-4 mb-5 border-b bg-slate-50 px-4 py-4 md:-mx-7 md:px-7">
+                  <div className="grid grid-cols-4">
+                    {["รับเรื่อง", "มอบหมาย", "ดำเนินการ", "เสร็จสิ้น"].map((label, index) => {
+                      const number = index + 1;
+                      const active = number <= step;
+                      return (
+                        <div key={label} className="relative text-center">
+                          {index > 0 && <span className={`absolute right-1/2 top-4 h-1 w-full ${active ? "bg-blue-600" : "bg-slate-200"}`} />}
+                          <span className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-full border-4 border-white text-sm font-black ${active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>{number}</span>
+                          <span className={`mt-1 block text-[11px] font-black sm:text-xs ${active ? "text-blue-700" : "text-slate-400"}`}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-xl font-black text-slate-950">{selectedCase.title}</h4>
+                <div className="mt-1 text-sm text-slate-500">แจ้งเมื่อ {formatThaiDateTime(selectedCase.date)} น.</div>
+              </div>
+              <StatusBadge status={selectedCase.status} />
             </div>
             <div className="mt-4 rounded-2xl bg-slate-50 p-4">
               <p>{selectedCase.description}</p>
@@ -8556,21 +8550,6 @@ function TaoDashboard({
               </div>
             ) : (
               <div className="mt-5 space-y-4">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900">
-                  <b>เรื่องที่หมู่บ้านขอให้ อบต.ช่วยดำเนินการ</b>
-                  <p className="mt-1 text-sm">
-                    เรื่องนี้ไม่ใช่คำของบประมาณ อบต.ต้องรับเรื่อง
-                    บันทึกผลการดำเนินงาน และปิดเรื่องเมื่อแก้ไขเสร็จ
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
-                    <span className="rounded-full bg-white px-3 py-1">
-                      สถานะปัจจุบัน: {getStatusLabel(selectedCase.status)}
-                    </span>
-                    <span className="rounded-full bg-white px-3 py-1">
-                      เลขที่ {selectedCase.referenceNo || `#${selectedCase.id}`}
-                    </span>
-                  </div>
-                </div>
                 {!["resolved", "cancelled"].includes(selectedCase.status) && (
                   <div className="rounded-2xl border border-slate-200 p-5">
                     <div className="mb-5 flex items-start gap-3 rounded-xl bg-slate-50 p-4">
@@ -8588,6 +8567,23 @@ function TaoDashboard({
                         </div>
                       </div>
                     </div>
+                    {selectedCase.status === "pending" && (
+                      <div className="mb-4">
+                        <div className="mb-2 text-sm font-black text-slate-700">เลือกส่วนงานด่วน</div>
+                        <div className="flex flex-wrap gap-2">
+                          {["กองช่าง", "สำนักปลัด", "งานสาธารณสุข", "งานป้องกันและบรรเทาสาธารณภัย"].map((name) => (
+                            <button
+                              key={name}
+                              type="button"
+                              onClick={() => setCaseDepartment(name)}
+                              className={`rounded-xl border px-3 py-2 text-sm font-bold ${caseDepartment === name ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300"}`}
+                            >
+                              {name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="mb-4 grid gap-3 sm:grid-cols-2">
                       <label className="text-sm font-bold">
                         หน่วยรับผิดชอบ
@@ -8701,8 +8697,8 @@ function VillageOverviewDashboard({
     (item) => item.dueAt && new Date(item.dueAt) < new Date(),
   );
   const resolved = incidents.filter((item) => item.status === "resolved");
-  const pendingResidents = users.filter(
-    (item) => item.role === "user" && item.accountStatus === "pending",
+  const suspendedResidents = users.filter(
+    (item) => item.role === "user" && item.accountStatus === "suspended",
   ).length;
   const urgent = [...incidents]
     .filter((item) => item.status === "pending" && !item.requiresTao)
@@ -8762,16 +8758,15 @@ function VillageOverviewDashboard({
           className="rounded-2xl border bg-white p-5 text-left shadow-sm hover:border-violet-400"
         >
           <div className="text-sm font-bold text-violet-600">บัญชีประชาชน</div>
-          <div className="mt-1 text-xl font-black">ตรวจสอบสมาชิกใหม่</div>
+          <div className="mt-1 text-xl font-black">ดูแลสมาชิกในหมู่บ้าน</div>
           <div className="mt-2 text-sm text-slate-500">
-            {pendingResidents} บัญชีรออนุมัติ
+            {suspendedResidents} บัญชีถูกระงับ
           </div>
         </button>
       </section>
       <DecisionAnalyticsCenter
         incidents={incidents}
         scope="village"
-        onOpenWork={() => setActiveTab("incidents")}
       />
       <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -11251,7 +11246,7 @@ function AdminDashboard({
                   จัดการประชาชน หมู่ {currentUser?.villageMoo || "-"}
                 </h2>
                 <p className="mt-2 text-slate-300">
-                  อนุมัติและดูแลเฉพาะบัญชีประชาชนใน{" "}
+                  ดูรายชื่อและระงับบัญชีประชาชนใน{" "}
                   {currentUser?.villageName || "หมู่บ้านของคุณ"}
                 </p>
               </div>
@@ -11275,11 +11270,11 @@ function AdminDashboard({
                 icon: <Home />,
               },
               {
-                label: "รออนุมัติ",
+                label: "บัญชีถูกระงับ",
                 value: residentUsers.filter(
-                  (u) => u.accountStatus === "pending",
+                  (u) => u.accountStatus === "suspended",
                 ).length,
-                tone: "bg-amber-100 text-amber-700",
+                tone: "bg-red-100 text-red-700",
                 icon: <Clock />,
               },
               {
@@ -11390,13 +11385,13 @@ function AdminDashboard({
                         </td>
                         <td className="p-4">
                           <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${person.accountStatus === "approved" ? "bg-green-100 text-green-700" : person.accountStatus === "pending" ? "bg-amber-100 text-amber-700" : person.accountStatus === "rejected" ? "bg-red-100 text-red-700" : "bg-slate-200 text-slate-700"}`}
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${person.accountStatus === "approved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                           >
                             {
                               {
                                 approved: "ใช้งานได้",
-                                pending: "รออนุมัติ",
-                                rejected: "ไม่อนุมัติ",
+                                pending: "ใช้งานได้",
+                                rejected: "ใช้งานได้",
                                 suspended: "ระงับ",
                               }[person.accountStatus]
                             }
@@ -11404,27 +11399,7 @@ function AdminDashboard({
                         </td>
                         <td className="p-4">
                           <div className="flex justify-end gap-2">
-                            {person.accountStatus !== "approved" && (
-                              <button
-                                onClick={() =>
-                                  updateUserAccountStatus(person.id, "approved")
-                                }
-                                className="rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100"
-                              >
-                                อนุมัติ
-                              </button>
-                            )}
-                            {person.accountStatus === "pending" && (
-                              <button
-                                onClick={() =>
-                                  updateUserAccountStatus(person.id, "rejected")
-                                }
-                                className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
-                              >
-                                ปฏิเสธ
-                              </button>
-                            )}
-                            {person.accountStatus === "approved" && (
+                            {person.accountStatus !== "suspended" ? (
                               <button
                                 onClick={() =>
                                   updateUserAccountStatus(
@@ -11434,7 +11409,14 @@ function AdminDashboard({
                                 }
                                 className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200"
                               >
-                                ระงับ
+                                ระงับบัญชี
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => updateUserAccountStatus(person.id, "approved")}
+                                className="rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100"
+                              >
+                                เปิดใช้งานอีกครั้ง
                               </button>
                             )}
                           </div>

@@ -31,6 +31,7 @@ Write-Host "[1/3] Preparing backend files..." -ForegroundColor Cyan
     "backend/database/migrations/2026_10_15_000001_create_missing_village_admin_accounts.php" `
     "backend/database/migrations/2026_10_15_000002_add_incident_operations_fields.php" `
     "backend/database/migrations/2026_10_15_000003_backfill_news_village_scope.php" `
+    "backend/database/migrations/2026_10_15_000004_auto_approve_existing_citizens.php" `
     "backend/config/cors.php" `
     "backend/config/services.php" `
     "backend/storage/app/firebase/service-account.json" `
