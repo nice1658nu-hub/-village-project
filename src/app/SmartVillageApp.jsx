@@ -1376,9 +1376,7 @@ function AuthPage({ villages, onLogin, onRegister, onBack }) {
         password: "",
       });
       setMode("login");
-      setMessage(
-        "สมัครสมาชิกสำเร็จแล้ว เข้าสู่ระบบด้วยเบอร์โทรศัพท์และรหัสผ่านที่ตั้งไว้ได้ทันที",
-      );
+      setMessage("");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
