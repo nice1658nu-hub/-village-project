@@ -104,7 +104,7 @@ export const api = {
     return request(`/incidents/${id}/project`, { method: 'PATCH', body: JSON.stringify(payload) });
   },
   saveIncidentFeedback: (id, payload) => request(`/incidents/${id}/feedback`, { method: 'PUT', body: JSON.stringify(payload) }),
-  assignIncident: (id, assigned_to, priority = 1, note = null) => request(`/incidents/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assigned_to, priority, note }) }),
+  assignIncident: (id, assigned_to, priority = 1, note = null, department = null, due_at = null) => request(`/incidents/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assigned_to, priority, note, department, due_at }) }),
   startIncident: (id) => request(`/incidents/${id}/start`, { method: 'PATCH', body: JSON.stringify({}) }),
   addIncidentProgress: (id, payload) => request(`/incidents/${id}/progress`, { method: 'POST', body: payload }),
   submitIncidentWork: (id, payload) => request(`/incidents/${id}/submit`, { method: 'POST', body: payload }),

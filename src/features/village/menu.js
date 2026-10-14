@@ -1,6 +1,5 @@
 export const villageMenu = [
-  { id: 'stats', icon: 'analytics', label: 'ภาพรวมงานหมู่บ้าน' },
-  { id: 'analytics', icon: 'analytics', label: 'วิเคราะห์ปัญหาหมู่บ้าน' },
+  { id: 'stats', icon: 'analytics', label: 'ภาพรวมและวิเคราะห์' },
   { id: 'incidents', icon: 'incident', label: 'จัดการเรื่องร้องทุกข์' },
   { id: 'budgets', icon: 'document', label: 'ข้อเสนอโครงการ' },
   { id: 'news', icon: 'notification', label: 'จัดการข่าวสาร' },

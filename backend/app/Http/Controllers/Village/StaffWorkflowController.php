@@ -38,6 +38,8 @@ class StaffWorkflowController extends Controller
         $data = $request->validate([
             'assigned_to' => ['required', Rule::exists('users', 'id')->where(fn ($q) => $q->whereIn('role', ['staff', 'village_admin'])->where('account_status', 'approved')->where('village_id', $incident->village_id))],
             'priority' => ['nullable', 'integer', 'between:1,4'],
+            'department' => ['nullable', 'string', 'max:255'],
+            'due_at' => ['nullable', 'date', 'after:now'],
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
         abort_if(in_array($incident->status, ['resolved', 'cancelled'], true), 409, 'Closed incidents cannot be assigned.');
@@ -45,11 +47,13 @@ class StaffWorkflowController extends Controller
         $incident->update([
             'assigned_to' => $data['assigned_to'], 'assigned_by' => $request->user()->id,
             'assigned_at' => now(), 'priority' => $data['priority'] ?? $incident->priority,
+            'department' => $data['department'] ?? $incident->department,
+            'due_at' => $data['due_at'] ?? $this->defaultDueAt($data['priority'] ?? $incident->priority),
             'status' => 'assigned',
         ]);
         $this->history($incident, $request->user()->id, $from, 'assigned', $data['note'] ?? 'มอบหมายงานให้เจ้าหน้าที่');
         VillageNotification::create(['user_id' => $data['assigned_to'], 'title' => 'คุณได้รับมอบหมายงานใหม่', 'description' => $incident->title, 'type' => 'assignment', 'data' => ['incident_id' => $incident->id]]);
-        VillageNotification::create(['user_id' => $incident->user_id, 'title' => 'เรื่องของคุณได้รับมอบหมายแล้ว', 'description' => $incident->title, 'type' => 'incident_status', 'data' => ['incident_id' => $incident->id]]);
+        $this->notifyResident($incident, 'เรื่องได้รับมอบหมายแล้ว', 'เจ้าหน้าที่รับผิดชอบได้รับงานแล้ว', 'assigned');
         return response()->json($this->load($incident));
     }
 
@@ -94,7 +98,7 @@ class StaffWorkflowController extends Controller
         $image = Storage::disk('public')->url($path);
         IncidentUpdate::create(['incident_id' => $incident->id, 'user_id' => $request->user()->id, 'message' => $data['message'] ?? 'ส่งงานให้ผู้ดูแลตรวจรับ', 'image' => $image, 'type' => 'completion']);
         $from = $incident->status;
-        $incident->update(['status' => 'waiting_review', 'resolved_image' => $image, 'submitted_for_review_at' => now()]);
+        $incident->update(['status' => 'waiting_review', 'resolved_image' => $image, 'resolution_summary' => $data['message'] ?? 'ดำเนินการแก้ไขเรียบร้อย', 'submitted_for_review_at' => now()]);
         $this->history($incident, $request->user()->id, $from, 'waiting_review', $data['message'] ?? 'ส่งงานให้ตรวจรับ');
         $this->notifyAdmins('มีงานรอตรวจรับ', $incident);
         return response()->json($this->load($incident));
@@ -138,13 +142,23 @@ class StaffWorkflowController extends Controller
 
     private function notifyResident(Incident $incident, string $title, string $description, string $status): void
     {
-        VillageNotification::create([
-            'user_id' => $incident->user_id,
+        $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create([
+            'user_id' => $userId,
             'title' => $title,
             'description' => $incident->title.' · '.$description,
             'type' => 'incident_status',
             'data' => ['incident_id' => $incident->id, 'status' => $status],
-        ]);
+        ]));
+    }
+
+    private function defaultDueAt(int $priority)
+    {
+        return match ($priority) {
+            4 => now()->addHours(4),
+            3 => now()->addDay(),
+            2 => now()->addDays(3),
+            default => now()->addDays(7),
+        };
     }
 
     private function notifyAdmins(string $title, Incident $incident): void

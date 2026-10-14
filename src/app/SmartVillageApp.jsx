@@ -139,6 +139,11 @@ const normalizeIncident = (item) => ({
   assignedTo: item.assignedTo ?? item.assigned_to,
   assignedToName: item.assignedToName ?? item.assignee?.name,
   assignedAt: item.assignedAt ?? item.assigned_at,
+  department: item.department ?? null,
+  dueAt: item.dueAt ?? item.due_at,
+  resolutionSummary: item.resolutionSummary ?? item.resolution_summary,
+  citizenConfirmedAt: item.citizenConfirmedAt ?? item.citizen_confirmed_at,
+  reopenedAt: item.reopenedAt ?? item.reopened_at,
   referenceNo: item.referenceNo ?? item.reference_no,
   villageId: item.villageId ?? item.village_id,
   villageName:
@@ -579,6 +584,7 @@ export default function App() {
               incidents={incidents}
               setIncidents={setIncidents}
               users={users}
+              setUsers={setUsers}
               villages={villages}
               budgetSettings={budgetSettings}
               setBudgetSettings={setBudgetSettings}
@@ -2330,17 +2336,20 @@ function CitizenFeedback({ incident, onSaved }) {
   const [rating, setRating] = useState(incident.feedback?.rating || 0);
   const [comment, setComment] = useState(incident.feedback?.comment || "");
   const [saving, setSaving] = useState(false);
+  const [decision, setDecision] = useState("confirm");
 
   const save = async () => {
-    if (!rating) return alert("กรุณาเลือกคะแนน 1–5 ดาว");
+    if (decision === "confirm" && !rating) return alert("กรุณาเลือกคะแนน 1–5 ดาว");
+    if (decision === "reopen" && !comment.trim()) return alert("กรุณาระบุว่าส่วนใดยังไม่เรียบร้อย");
     setSaving(true);
     try {
       const data = await api.saveIncidentFeedback(incident.id, {
-        rating,
+        decision,
+        rating: decision === "confirm" ? rating : null,
         comment: comment.trim() || null,
       });
-      onSaved(data.feedback);
-      alert("ขอบคุณสำหรับการประเมินผล");
+      onSaved(data.feedback, data.incident);
+      alert(decision === "confirm" ? "ยืนยันผลและบันทึกการประเมินแล้ว" : "เปิดเรื่องกลับให้เจ้าหน้าที่ดำเนินการต่อแล้ว");
     } catch (error) {
       alert(error?.message || "บันทึกการประเมินไม่สำเร็จ");
     } finally {
@@ -2351,7 +2360,11 @@ function CitizenFeedback({ incident, onSaved }) {
   return (
     <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
       <div className="font-bold text-amber-950">ประเมินผลหลังแก้ไข</div>
-      <div className="mt-2 flex gap-1" aria-label="คะแนนความพึงพอใจ">
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => setDecision("confirm")} className={`rounded-lg border px-3 py-2 text-sm font-bold ${decision === "confirm" ? "border-emerald-600 bg-emerald-600 text-white" : "bg-white"}`}>ยืนยันว่าแก้แล้ว</button>
+        <button type="button" onClick={() => setDecision("reopen")} className={`rounded-lg border px-3 py-2 text-sm font-bold ${decision === "reopen" ? "border-red-600 bg-red-600 text-white" : "bg-white"}`}>ยังไม่เรียบร้อย</button>
+      </div>
+      {decision === "confirm" && <div className="mt-2 flex gap-1" aria-label="คะแนนความพึงพอใจ">
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             key={value}
@@ -2363,12 +2376,12 @@ function CitizenFeedback({ incident, onSaved }) {
             ★
           </button>
         ))}
-      </div>
+      </div>}
       <textarea
         value={comment}
         onChange={(event) => setComment(event.target.value)}
         className="mt-2 h-16 w-full resize-none rounded-lg border bg-white p-2 text-sm"
-        placeholder="ความคิดเห็นเพิ่มเติม (ไม่บังคับ)"
+        placeholder={decision === "reopen" ? "ระบุว่าส่วนใดยังมีปัญหา (จำเป็น)" : "ความคิดเห็นเพิ่มเติม (ไม่บังคับ)"}
       />
       <button
         type="button"
@@ -2378,7 +2391,7 @@ function CitizenFeedback({ incident, onSaved }) {
       >
         {saving
           ? "กำลังบันทึก..."
-          : incident.feedback
+          : decision === "reopen" ? "ส่งกลับให้แก้ไขต่อ" : incident.feedback
             ? "แก้ไขการประเมิน"
             : "ส่งการประเมิน"}
       </button>
@@ -3240,10 +3253,14 @@ function UserDashboard({
                     {inc.status === "resolved" && !inc.feedback && (
                       <CitizenFeedback
                         incident={inc}
-                        onSaved={(feedback) =>
+                        onSaved={(feedback, savedIncident) =>
                           setIncidents((items) =>
                             items.map((item) =>
-                              item.id === inc.id ? { ...item, feedback } : item,
+                              item.id === inc.id
+                                ? savedIncident
+                                  ? normalizeIncident(savedIncident)
+                                  : { ...item, feedback }
+                                : item,
                             ),
                           )
                         }
@@ -6919,6 +6936,7 @@ function TaoDashboard({
   setIncidents,
   villages,
   users,
+  setUsers,
   budgetSettings,
   setBudgetSettings,
   news,
@@ -6946,6 +6964,7 @@ function TaoDashboard({
   });
   const [projectEvidenceFile, setProjectEvidenceFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [accountSavingId, setAccountSavingId] = useState(null);
   const [editingPublicNews, setEditingPublicNews] = useState(null);
   const [publicNewsForm, setPublicNewsForm] = useState({
     display_section: "news",
@@ -6973,6 +6992,28 @@ function TaoDashboard({
       currency: "THB",
       maximumFractionDigits: 0,
     }).format(Number(value) || 0);
+  const villageAccounts = (users || []).filter(
+    (item) => item.role === "village_admin",
+  );
+  const resetVillageAccount = async (person) => {
+    const moo = person.villageMoo || person.village?.moo || "";
+    const password = window.prompt(
+      `ตั้งรหัสผ่านใหม่ให้ ${person.name}\nอย่างน้อย 8 ตัวอักษร`,
+      `moo${moo}@69`,
+    );
+    if (password === null) return;
+    if (password.length < 8)
+      return alert("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+    setAccountSavingId(person.id);
+    try {
+      await api.resetUserPassword(person.id, password);
+      alert(`เปลี่ยนรหัสผ่านของ ${person.name} แล้ว`);
+    } catch (error) {
+      alert(error?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
+    } finally {
+      setAccountSavingId(null);
+    }
+  };
   const forwarded = incidents.filter(
     (item) => item.requiresTao || item.budgetRequest,
   );
@@ -7302,6 +7343,12 @@ function TaoDashboard({
               </p>
             </button>
           </section>
+          <SimpleAnalyticsDashboard
+            incidents={incidents}
+            villages={villages}
+            scope="tao"
+            scopeLabel="ทั้ง 12 หมู่บ้าน"
+          />
         </>
       )}
       {activeTab === "tao_analysis" && (
@@ -7426,6 +7473,53 @@ function TaoDashboard({
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+      )}
+      {activeTab === "tao_users" && (
+        <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
+          <h3 className="text-2xl font-black">บัญชีผู้ดูแลหมู่บ้าน</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            อบต. ตรวจสอบบัญชีประจำหมู่บ้านและตั้งรหัสผ่านใหม่ได้
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {(villages || []).map((village) => {
+              const person = villageAccounts.find(
+                (item) =>
+                  String(item.villageId || item.village_id || item.village?.id) ===
+                  String(village.id),
+              );
+              return (
+                <div key={village.id} className="rounded-2xl border p-4">
+                  <div className="font-black">
+                    หมู่ {village.moo} {village.name}
+                  </div>
+                  {person ? (
+                    <>
+                      <div className="mt-2 text-sm text-slate-600">{person.name}</div>
+                      <div className="text-sm font-bold text-blue-700">
+                        Username: {person.phone}
+                      </div>
+                      <div className="mt-2 text-xs">
+                        สถานะ: <b>{person.accountStatus === "approved" ? "ใช้งานได้" : person.accountStatus || "-"}</b>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={accountSavingId === person.id}
+                        onClick={() => resetVillageAccount(person)}
+                        className="mt-3 w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        {accountSavingId === person.id ? "กำลังบันทึก..." : "ตั้งรหัสผ่านใหม่"}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
+                      ยังไม่พบบัญชี กรุณา deploy backend ล่าสุด
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -9469,7 +9563,7 @@ function AdminDashboard({
     }
   };
 
-  const assignIncident = async (id, staffId, priority, note) => {
+  const assignIncident = async (id, staffId, priority, note, department, dueAt) => {
     try {
       const updated = normalizeIncident(
         await api.assignIncident(
@@ -9477,6 +9571,8 @@ function AdminDashboard({
           Number(staffId),
           Number(priority),
           note || null,
+          department || null,
+          dueAt || null,
         ),
       );
       setIncidents((prev) =>
@@ -9532,19 +9628,19 @@ function AdminDashboard({
 
       {/* VIEW: STATS */}
       {activeTab === "stats" && (
-        <VillageOverviewDashboard
-          incidents={incidents}
-          users={users}
-          currentUser={currentUser}
-          setActiveTab={setActiveTab}
-        />
-      )}
-      {activeTab === "analytics" && (
-        <SimpleAnalyticsDashboard
-          incidents={incidents}
-          scope="village"
-          scopeLabel={`หมู่ ${currentUser?.villageMoo || "-"} ${currentUser?.villageName || ""}`}
-        />
+        <div className="space-y-6">
+          <VillageOverviewDashboard
+            incidents={incidents}
+            users={users}
+            currentUser={currentUser}
+            setActiveTab={setActiveTab}
+          />
+          <SimpleAnalyticsDashboard
+            incidents={incidents}
+            scope="village"
+            scopeLabel={`หมู่ ${currentUser?.villageMoo || "-"} ${currentUser?.villageName || ""}`}
+          />
+        </div>
       )}
       {false && (
         <div className="space-y-6 animate-fadeIn">
@@ -11281,6 +11377,10 @@ function AdminIncidentModal({
     inc.assignedTo || staff?.[0]?.id || "",
   );
   const [priority, setPriority] = useState(inc.priority || 1);
+  const [department, setDepartment] = useState(inc.department || "");
+  const [dueAt, setDueAt] = useState(
+    inc.dueAt ? new Date(inc.dueAt).toISOString().slice(0, 16) : "",
+  );
   const [workflowNote, setWorkflowNote] = useState("");
   const [inspectionNote, setInspectionNote] = useState("");
   const [inspectionImage, setInspectionImage] = useState(null);
@@ -11388,6 +11488,13 @@ function AdminIncidentModal({
                 </p>
                 <p className="font-bold text-gray-900">{inc.location}</p>
               </div>
+              {inc.dueAt && (
+                <div className={`p-4 rounded-2xl border ${new Date(inc.dueAt) < new Date() && !["resolved", "cancelled"].includes(inc.status) ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+                  <p className="text-sm font-semibold">กำหนดดำเนินการให้เสร็จ</p>
+                  <p className="font-bold">{formatThaiDateTime(inc.dueAt)} น.</p>
+                  {inc.department && <p className="mt-1 text-sm">หน่วยรับผิดชอบ: {inc.department}</p>}
+                </div>
+              )}
             </div>
           </div>
 
@@ -11463,6 +11570,19 @@ function AdminIncidentModal({
                       </option>
                     ))}
                   </select>
+                  <input
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="หน่วยรับผิดชอบ เช่น กองช่าง"
+                    className="px-3 py-3 border rounded-xl bg-white"
+                  />
+                  <input
+                    type="datetime-local"
+                    value={dueAt}
+                    onChange={(e) => setDueAt(e.target.value)}
+                    className="px-3 py-3 border rounded-xl bg-white"
+                    aria-label="กำหนดเสร็จ"
+                  />
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
@@ -11483,7 +11603,7 @@ function AdminIncidentModal({
                     type="button"
                     disabled={!assignedStaffId}
                     onClick={() =>
-                      onAssign(inc.id, assignedStaffId, priority, workflowNote)
+                      onAssign(inc.id, assignedStaffId, priority, workflowNote, department, dueAt)
                     }
                     className="sm:col-span-2 py-3 bg-indigo-600 text-white font-bold rounded-xl disabled:opacity-40"
                   >

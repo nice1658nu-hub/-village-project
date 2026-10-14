@@ -39,7 +39,7 @@ class IncidentController extends Controller
             $path = $request->file('image')->store('incidents', 'public');
             $data['image'] = Storage::disk('public')->url($path);
         }
-        $incident = $request->user()->incidents()->create($data + ['status' => 'pending', 'village_id' => $request->user()->village_id]);
+        $incident = $request->user()->incidents()->create($data + ['status' => 'pending', 'priority' => 1, 'due_at' => now()->addDays(7), 'village_id' => $request->user()->village_id]);
         $incident->update(['reference_no' => sprintf('MT-%s-%02d-%04d', now()->addYears(543)->format('Y'), $incident->village?->moo ?? 0, $incident->id)]);
         IncidentStatusHistory::create(['incident_id' => $incident->id, 'changed_by' => $request->user()->id, 'to_status' => 'pending', 'note' => 'Incident created']);
         User::query()
@@ -115,13 +115,13 @@ class IncidentController extends Controller
             'resolved' => 'แก้ไขเสร็จแล้ว',
             'cancelled' => 'ยุติเรื่องแล้ว',
         ];
-        VillageNotification::create([
-            'user_id' => $incident->user_id,
+        $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create([
+            'user_id' => $userId,
             'title' => $notificationTitles[$data['status']],
             'description' => $incident->title.(! empty($data['note']) ? ' · '.$data['note'] : ''),
             'type' => 'incident_status',
             'data' => ['incident_id' => $incident->id, 'status' => $data['status']],
-        ]);
+        ]));
         return response()->json($incident->fresh([
             'user.village', 'village', 'assignee.village', 'assigner', 'verifier',
             'histories', 'updates.user', 'budgetRequest.requester',

@@ -9,8 +9,8 @@ class Incident extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['reference_no', 'user_id', 'village_id', 'assigned_to', 'assigned_by', 'assigned_at', 'title', 'category', 'description', 'location', 'lat', 'lng', 'image', 'resolved_image', 'status', 'priority', 'first_response_at', 'resolved_at', 'submitted_for_review_at', 'verified_by', 'verified_at', 'requires_tao', 'forwarded_to_tao_at', 'forwarded_by'];
-    protected function casts(): array { return ['lat' => 'decimal:7', 'lng' => 'decimal:7', 'requires_tao' => 'boolean', 'assigned_at' => 'datetime', 'first_response_at' => 'datetime', 'resolved_at' => 'datetime', 'submitted_for_review_at' => 'datetime', 'verified_at' => 'datetime', 'forwarded_to_tao_at' => 'datetime']; }
+    protected $fillable = ['reference_no', 'user_id', 'village_id', 'assigned_to', 'department', 'assigned_by', 'assigned_at', 'title', 'category', 'description', 'location', 'lat', 'lng', 'image', 'resolved_image', 'resolution_summary', 'status', 'priority', 'due_at', 'first_response_at', 'resolved_at', 'citizen_confirmed_at', 'reopened_at', 'submitted_for_review_at', 'verified_by', 'verified_at', 'requires_tao', 'forwarded_to_tao_at', 'forwarded_by'];
+    protected function casts(): array { return ['lat' => 'decimal:7', 'lng' => 'decimal:7', 'requires_tao' => 'boolean', 'assigned_at' => 'datetime', 'due_at' => 'datetime', 'first_response_at' => 'datetime', 'resolved_at' => 'datetime', 'citizen_confirmed_at' => 'datetime', 'reopened_at' => 'datetime', 'submitted_for_review_at' => 'datetime', 'verified_at' => 'datetime', 'forwarded_to_tao_at' => 'datetime']; }
     public function user() { return $this->belongsTo(User::class); }
     public function histories() { return $this->hasMany(IncidentStatusHistory::class); }
     public function assignee() { return $this->belongsTo(User::class, 'assigned_to'); }
