@@ -6974,6 +6974,54 @@ function AdminAnalytics({
   );
 }
 
+function IncidentLocationPanel({ incident, compact = false }) {
+  const lat = Number(incident?.lat);
+  const lng = Number(incident?.lng);
+  const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
+  const mapsUrl = hasCoordinates
+    ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(incident?.location || "")}`;
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-black text-rose-600">
+            <MapPin className="h-4 w-4" /> สถานที่รับแจ้งปัญหา
+          </div>
+          <div className="mt-1 font-black text-slate-950">{incident?.location || "ไม่ระบุสถานที่"}</div>
+          <div className="mt-1 text-sm text-slate-500">
+            หมู่ {incident?.villageMoo || "-"} {incident?.villageName || ""}
+            {incident?.houseNo ? ` · บ้านเลขที่ ${incident.houseNo}` : ""}
+          </div>
+        </div>
+        <a href={mapsUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100">
+          เปิดนำทาง ↗
+        </a>
+      </div>
+      {hasCoordinates ? (
+        <div className={compact ? "h-44" : "h-56"}>
+          <MapContainer center={[lat, lng]} zoom={17} scrollWheelZoom={false} className="h-full w-full" attributionControl={false}>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <CircleMarker center={[lat, lng]} radius={12} pathOptions={{ color: "#ffffff", weight: 4, fillColor: "#ef4444", fillOpacity: 1 }}>
+              <Popup>จุดรับแจ้งเหตุ<br />{incident?.location}</Popup>
+            </CircleMarker>
+          </MapContainer>
+        </div>
+      ) : (
+        <div className="flex min-h-28 items-center justify-center bg-slate-50 p-5 text-center text-sm text-amber-700">
+          เรื่องนี้ยังไม่มีพิกัดแผนที่ ควรขอหมุดจากผู้แจ้งก่อนมอบหมายงาน
+        </div>
+      )}
+      {hasCoordinates && (
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-500">
+          พิกัด {lat.toFixed(6)}, {lng.toFixed(6)} · หมุดคือจุดที่ประชาชนระบุตอนแจ้งเหตุ
+        </div>
+      )}
+    </section>
+  );
+}
+
 function DecisionAnalyticsCenter({
   incidents,
   villages = [],
@@ -6983,13 +7031,23 @@ function DecisionAnalyticsCenter({
 }) {
   const [period, setPeriod] = useState("90");
   const isTao = scope === "tao";
-  const cutoff = period === "all"
+  const periodDays = period === "all" ? null : Number(period);
+  const cutoff = periodDays == null
     ? null
-    : new Date(Date.now() - Number(period) * 24 * 60 * 60 * 1000);
+    : new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+  const previousCutoff = periodDays == null
+    ? null
+    : new Date(Date.now() - periodDays * 2 * 24 * 60 * 60 * 1000);
   const rows = incidents.filter((item) => {
     const date = new Date(item.date);
     return !cutoff || (!Number.isNaN(date.getTime()) && date >= cutoff);
   });
+  const previousRows = periodDays == null
+    ? []
+    : incidents.filter((item) => {
+        const date = new Date(item.date);
+        return !Number.isNaN(date.getTime()) && date >= previousCutoff && date < cutoff;
+      });
   const isOpen = (item) => !["resolved", "cancelled"].includes(item.status);
   const openRows = rows.filter(isOpen);
   const resolvedRows = rows.filter((item) => item.status === "resolved");
@@ -7051,6 +7109,26 @@ function DecisionAnalyticsCenter({
     : 0;
   const topCategory = categoryRows[0];
   const topLocation = locationRows[0];
+  const trendPercent = previousRows.length
+    ? Math.round(((rows.length - previousRows.length) / previousRows.length) * 100)
+    : rows.length
+      ? 100
+      : 0;
+  const coordinateCount = rows.filter(
+    (item) => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)),
+  ).length;
+  const locationCompleteness = rows.length
+    ? Math.round((coordinateCount / rows.length) * 100)
+    : 0;
+  const departmentRows = Object.values(
+    openRows.reduce((result, item) => {
+      const label = item.department || "ยังไม่มอบหมาย";
+      result[label] ||= { label, count: 0, overdue: 0 };
+      result[label].count += 1;
+      if (item.dueAt && new Date(item.dueAt) < new Date()) result[label].overdue += 1;
+      return result;
+    }, {}),
+  ).sort((a, b) => b.overdue - a.overdue || b.count - a.count);
   const recommendations = [];
   if (overdueRows.length)
     recommendations.push(`เร่งติดตาม ${overdueRows.length} เรื่องที่เกินกำหนดก่อนงานใหม่`);
@@ -7116,6 +7194,30 @@ function DecisionAnalyticsCenter({
       </div>
 
       <div className="p-5 md:p-7">
+        <div className="mb-5 grid gap-3 lg:grid-cols-[1.35fr_.65fr]">
+          <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5">
+            <div className="text-xs font-black uppercase tracking-wider text-blue-700">สรุปเพื่อการตัดสินใจ</div>
+            <div className="mt-2 text-xl font-black text-slate-950">
+              {topCategory
+                ? `ปัญหา “${topCategory.label}” เป็นเรื่องหลักในช่วงนี้`
+                : "ยังมีข้อมูลไม่พอสำหรับสรุปแนวโน้ม"}
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {topCategory
+                ? `พบ ${topCategory.count} เรื่อง${topLocation ? ` และพื้นที่ที่ควรเฝ้าระวังคือ ${topLocation.label}` : ""} ขณะนี้มีงานเกินกำหนด ${overdueRows.length} เรื่อง`
+                : "เมื่อมีเรื่องร้องทุกข์ ระบบจะวิเคราะห์ประเภท พื้นที่ซ้ำ ระยะเวลา และผลการแก้ไขให้โดยอัตโนมัติ"}
+            </p>
+          </div>
+          <div className={`rounded-2xl border p-5 ${trendPercent > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+            <div className="text-sm font-bold text-slate-600">เทียบช่วงก่อนหน้า</div>
+            <div className={`mt-2 text-3xl font-black ${trendPercent > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+              {periodDays == null ? "—" : `${trendPercent > 0 ? "+" : ""}${trendPercent}%`}
+            </div>
+            <div className="mt-1 text-sm text-slate-500">
+              {periodDays == null ? "เลือกช่วงเวลาเพื่อเปรียบเทียบ" : trendPercent > 0 ? "จำนวนเรื่องเพิ่มขึ้น" : trendPercent < 0 ? "จำนวนเรื่องลดลง" : "จำนวนเรื่องคงที่"}
+            </div>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             ["เรื่องในช่วงนี้", rows.length, "text-slate-950"],
@@ -7188,7 +7290,8 @@ function DecisionAnalyticsCenter({
         </div>
 
         {isTao && (
-          <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+          <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <article className="rounded-2xl border border-slate-200 p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <div className="text-xs font-black text-orange-700">เปรียบเทียบพื้นที่</div>
@@ -7212,7 +7315,33 @@ function DecisionAnalyticsCenter({
               {!villageRows.length && <div className="py-6 text-center text-sm text-slate-400">ยังไม่มีข้อมูลแยกหมู่บ้าน</div>}
             </div>
           </article>
+          <article className="rounded-2xl border border-slate-200 p-5">
+            <div className="text-xs font-black text-violet-700">ภาระงานส่วนงาน</div>
+            <h3 className="text-lg font-black text-slate-950">หน่วยงานที่ต้องเร่งติดตาม</h3>
+            <div className="mt-4 space-y-2">
+              {departmentRows.slice(0, 5).map((row) => (
+                <div key={row.label} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
+                  <div className="min-w-0">
+                    <div className="truncate font-black">{row.label}</div>
+                    <div className="text-xs text-slate-500">งานค้าง {row.count} เรื่อง</div>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${row.overdue ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                    {row.overdue ? `เกินกำหนด ${row.overdue}` : "ตามกำหนด"}
+                  </span>
+                </div>
+              ))}
+              {!departmentRows.length && <div className="py-6 text-center text-sm text-slate-400">ยังไม่มีงานที่มอบหมาย</div>}
+            </div>
+          </article>
+          </div>
         )}
+        <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="font-black text-slate-950">ความพร้อมของข้อมูลแผนที่</div>
+            <div className="text-sm text-slate-500">มีพิกัด {coordinateCount} จาก {rows.length} เรื่อง เพื่อใช้วิเคราะห์จุดเกิดเหตุซ้ำ</div>
+          </div>
+          <div className={`text-2xl font-black ${locationCompleteness >= 80 ? "text-emerald-700" : "text-amber-700"}`}>{locationCompleteness}%</div>
+        </div>
       </div>
     </section>
   );
@@ -8119,9 +8248,9 @@ function TaoDashboard({
             </div>
             <div className="mt-4 rounded-2xl bg-slate-50 p-4">
               <p>{selectedCase.description}</p>
-              <div className="mt-2 text-sm text-slate-500">
-                {selectedCase.location}
-              </div>
+            </div>
+            <div className="mt-4">
+              <IncidentLocationPanel incident={selectedCase} />
             </div>
             {false && selectedCase.budgetRequest ? (
               <div className="mt-5 space-y-3">
@@ -11689,34 +11818,11 @@ function AdminIncidentModal({
     inc.dueAt ? new Date(inc.dueAt).toISOString().slice(0, 16) : "",
   );
   const [workflowNote, setWorkflowNote] = useState("");
-  const [inspectionNote, setInspectionNote] = useState("");
   const [inspectionImage, setInspectionImage] = useState(null);
-  const [inspectionSaving, setInspectionSaving] = useState(false);
   const [forwardingToTao, setForwardingToTao] = useState(false);
   const [forwardNote, setForwardNote] = useState("");
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-
-  const saveInspection = async () => {
-    if (!inspectionNote.trim() && !inspectionImage)
-      return alert("กรุณากรอกผลตรวจพื้นที่หรือแนบรูปอย่างน้อยหนึ่งอย่าง");
-    const payload = new FormData();
-    if (inspectionNote.trim())
-      payload.append("message", `ผลตรวจพื้นที่: ${inspectionNote.trim()}`);
-    if (inspectionImage) payload.append("image", inspectionImage);
-    setInspectionSaving(true);
-    try {
-      const data = await api.addIncidentProgress(inc.id, payload);
-      onIncidentReplace(data.incident);
-      setInspectionNote("");
-      setInspectionImage(null);
-      alert("บันทึกผลตรวจพื้นที่แล้ว");
-    } catch (error) {
-      alert(error?.message || "บันทึกผลตรวจพื้นที่ไม่สำเร็จ");
-    } finally {
-      setInspectionSaving(false);
-    }
-  };
 
   const handleResImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -11814,12 +11920,6 @@ function AdminIncidentModal({
                   บ้านเลขที่ {inc.houseNo}
                 </p>
               </div>
-              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <p className="text-sm text-blue-600 mb-1 font-semibold flex items-center gap-1">
-                  <MapPin className="w-4 h-4" /> สถานที่ / จุดสังเกต
-                </p>
-                <p className="font-bold text-gray-900">{inc.location}</p>
-              </div>
               {inc.dueAt && (
                 <div className={`p-4 rounded-2xl border ${new Date(inc.dueAt) < new Date() && !["resolved", "cancelled"].includes(inc.status) ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
                   <p className="text-sm font-semibold">กำหนดดำเนินการให้เสร็จ</p>
@@ -11828,6 +11928,10 @@ function AdminIncidentModal({
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="mb-8">
+            <IncidentLocationPanel incident={inc} />
           </div>
 
           <div className="mb-8">
