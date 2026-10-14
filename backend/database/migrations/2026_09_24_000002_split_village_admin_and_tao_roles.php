@@ -22,11 +22,11 @@ return new class extends Migration
         ]);
 
         foreach (DB::table('villages')->orderBy('moo')->get() as $village) {
-            $moo = str_pad((string) $village->moo, 2, '0', STR_PAD_LEFT);
-            DB::table('users')->updateOrInsert(['phone' => "village{$moo}"], [
+            $moo = (string) $village->moo;
+            DB::table('users')->updateOrInsert(['phone' => "moo{$moo}"], [
                 'name' => "แอดมินหมู่ {$village->moo} {$village->name}", 'email' => "village{$moo}@matong.local",
                 'house_no' => '-', 'village_id' => $village->id, 'role' => 'village_admin', 'account_status' => 'approved',
-                'approved_at' => $now, 'password' => Hash::make("Village{$moo}@2569"), 'created_at' => $now, 'updated_at' => $now,
+                'approved_at' => $now, 'password' => Hash::make("moo{$moo}@69"), 'created_at' => $now, 'updated_at' => $now,
             ]);
         }
     }

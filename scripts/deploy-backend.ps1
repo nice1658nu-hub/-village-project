@@ -25,6 +25,8 @@ Write-Host "[1/3] Preparing backend files..." -ForegroundColor Cyan
     "backend/app/Providers/AppServiceProvider.php" `
     "backend/app/Models/Incident.php" `
     "backend/database/migrations/2026_10_14_000001_create_incident_supporters_table.php" `
+    "backend/database/migrations/2026_10_14_000002_simplify_village_admin_credentials.php" `
+    "backend/database/migrations/2026_10_15_000001_create_missing_village_admin_accounts.php" `
     "backend/config/cors.php" `
     "backend/config/services.php" `
     "backend/storage/app/firebase/service-account.json" `
