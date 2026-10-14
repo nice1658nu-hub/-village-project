@@ -5067,70 +5067,6 @@ function AdminReports({ incidents }) {
             </div>
           )}
         </div>
-        {projects.length > 0 && (
-          <div className="mt-7 border-t pt-5">
-            <h3 className="mb-3 text-lg font-black text-indigo-950">
-              สรุปโครงการและงบประมาณ
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] border-collapse text-xs">
-                <thead>
-                  <tr className="bg-indigo-950 text-white">
-                    <th className="border p-2 text-left">โครงการ</th>
-                    <th className="border p-2">สถานะ</th>
-                    <th className="border p-2">งบเสนอ</th>
-                    <th className="border p-2">งบอนุมัติ</th>
-                    <th className="border p-2">ใช้จริง</th>
-                    <th className="border p-2">ความคืบหน้า</th>
-                    <th className="border p-2">กำหนดเสร็จ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.map((item) => (
-                    <tr key={item.id}>
-                      <td className="border p-2">
-                        <b>{item.budgetRequest.project_title || item.title}</b>
-                        <div className="text-slate-500">
-                          {item.referenceNo || `#${item.id}`}
-                        </div>
-                      </td>
-                      <td className="border p-2 text-center">
-                        {projectStatusLabels[
-                          item.budgetRequest.project_status
-                        ] || item.budgetRequest.status}
-                      </td>
-                      <td className="border p-2 text-right">
-                        {Number(
-                          item.budgetRequest.estimated_amount || 0,
-                        ).toLocaleString("th-TH")}
-                      </td>
-                      <td className="border p-2 text-right">
-                        {Number(
-                          item.budgetRequest.approved_amount || 0,
-                        ).toLocaleString("th-TH")}
-                      </td>
-                      <td className="border p-2 text-right">
-                        {Number(
-                          item.budgetRequest.actual_amount || 0,
-                        ).toLocaleString("th-TH")}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {item.budgetRequest.progress_percent || 0}%
-                      </td>
-                      <td className="border p-2 text-center">
-                        {item.budgetRequest.expected_end_date
-                          ? new Date(
-                              item.budgetRequest.expected_end_date,
-                            ).toLocaleDateString("th-TH")
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
         <div className="mt-5 border-t pt-3 text-center text-[10px] text-slate-400">
           ระบบจัดการ{VILLAGE_NAME} - รายงานสร้างจากข้อมูลในระบบ
         </div>
@@ -7333,6 +7269,8 @@ function TaoDashboard({
   const [caseResolvedImage, setCaseResolvedImage] = useState(null);
   const [taoDateFrom, setTaoDateFrom] = useState("");
   const [taoDateTo, setTaoDateTo] = useState("");
+  const [taoStatusFilter, setTaoStatusFilter] = useState("active");
+  const [taoSearch, setTaoSearch] = useState("");
   const [reviewForm, setReviewForm] = useState({
     approved_amount: "",
     fiscal_year: String(new Date().getFullYear() + 543),
@@ -7572,7 +7510,17 @@ function TaoDashboard({
   };
   const generalForwarded = forwarded.filter((item) => !item.budgetRequest);
   const baseList = forwarded;
-  const list = baseList.filter(inTaoDateRange);
+  const list = baseList.filter((item) => {
+    const matchesDate = inTaoDateRange(item);
+    const matchesStatus =
+      taoStatusFilter === "all" ||
+      (taoStatusFilter === "active" && !["resolved", "cancelled"].includes(item.status)) ||
+      item.status === taoStatusFilter;
+    const query = taoSearch.trim().toLowerCase();
+    const matchesSearch = !query || [item.referenceNo, item.title, item.location, item.villageName, item.department]
+      .some((value) => String(value || "").toLowerCase().includes(query));
+    return matchesDate && matchesStatus && matchesSearch;
+  });
   const publicNews = (news || []).filter((item) => item.villageId == null);
   const closePublicNewsForm = () => {
     if (publicNewsImagePreview?.startsWith("blob:"))
@@ -7775,15 +7723,46 @@ function TaoDashboard({
               รับเรื่องที่หมู่บ้านตรวจสอบแล้ว กำหนดหน่วยรับผิดชอบ อัปเดตผล และปิดเรื่อง
             </p>
           </div>
-          <div className="mb-5 max-w-md rounded-2xl bg-slate-50 p-4">
-            <DateRangePicker
-              from={taoDateFrom}
-              to={taoDateTo}
-              onChange={(nextFrom, nextTo) => {
-                setTaoDateFrom(nextFrom);
-                setTaoDateTo(nextTo);
-              }}
-            />
+          <div className="mb-5 space-y-3 rounded-2xl bg-slate-50 p-4">
+            <div className="grid gap-3 lg:grid-cols-[1fr_22rem]">
+              <label className="relative block">
+                <Search className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
+                <input
+                  value={taoSearch}
+                  onChange={(event) => setTaoSearch(event.target.value)}
+                  placeholder="ค้นหาเลขที่เรื่อง ชื่อปัญหา สถานที่ หรือหน่วยงาน"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none focus:border-blue-400"
+                />
+              </label>
+              <DateRangePicker
+                from={taoDateFrom}
+                to={taoDateTo}
+                label=""
+                onChange={(nextFrom, nextTo) => {
+                  setTaoDateFrom(nextFrom);
+                  setTaoDateTo(nextTo);
+                }}
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {[
+                ["active", "งานที่ต้องทำ"],
+                ["pending", "รอรับเรื่อง"],
+                ["in_progress", "กำลังดำเนินการ"],
+                ["resolved", "เสร็จแล้ว"],
+                ["cancelled", "ยุติแล้ว"],
+                ["all", "ทั้งหมด"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTaoStatusFilter(value)}
+                  className={`shrink-0 rounded-xl px-4 py-2 text-sm font-black ${taoStatusFilter === value ? "bg-slate-950 text-white" : "border border-slate-200 bg-white text-slate-600"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <div className="hidden grid-cols-[8rem_1.5fr_1fr_1fr_8rem] gap-4 bg-slate-50 px-4 py-3 text-xs font-black text-slate-500 md:grid">
@@ -7808,7 +7787,9 @@ function TaoDashboard({
                   <div className="font-bold text-slate-800">หมู่ {item.villageMoo || "-"} {item.villageName || ""}</div>
                   <div className="mt-1 text-xs text-slate-400">ส่ง {formatThaiDateTime(item.forwardedToTaoAt || item.date)} น.</div>
                 </div>
-                <div className="font-bold text-slate-700">{item.department || "ยังไม่มอบหมาย"}</div>
+                <div className="font-bold text-slate-700">
+                  {item.department || (["resolved", "cancelled"].includes(item.status) ? "ไม่ได้บันทึก (ข้อมูลเดิม)" : "ยังไม่มอบหมาย")}
+                </div>
                 <div><StatusBadge status={item.status} /></div>
               </button>
             ))}
@@ -8244,7 +8225,7 @@ function TaoDashboard({
               <p>{selectedCase.description}</p>
             </div>
             <div className="mt-4">
-              <IncidentLocationPanel incident={selectedCase} />
+              <IncidentLocationPanel incident={selectedCase} compact />
             </div>
             {false && selectedCase.budgetRequest ? (
               <div className="mt-5 space-y-3">
@@ -12383,6 +12364,14 @@ function StatusBadge({ status, size = "sm" }) {
         className={`bg-green-100 text-green-800 font-bold rounded-full border border-green-300 shadow-sm inline-flex items-center gap-1 ${classes}`}
       >
         <span className="w-2 h-2 rounded-full bg-green-500"></span> แก้ไขแล้ว
+      </span>
+    );
+  if (status === "cancelled")
+    return (
+      <span
+        className={`bg-slate-100 text-slate-700 font-bold rounded-full border border-slate-300 shadow-sm inline-flex items-center gap-1 ${classes}`}
+      >
+        <span className="w-2 h-2 rounded-full bg-slate-500"></span> ยุติแล้ว
       </span>
     );
   return null;
