@@ -8101,7 +8101,7 @@ function TaoDashboard({
         >
           <div
             onMouseDown={(event) => event.stopPropagation()}
-            className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"
+            className="max-h-[92dvh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl md:rounded-3xl md:p-7"
           >
             <div className="flex justify-between gap-4">
               <div>
@@ -8443,7 +8443,22 @@ function TaoDashboard({
                   </div>
                 </div>
                 {!["resolved", "cancelled"].includes(selectedCase.status) && (
-                  <div className="rounded-2xl border p-4">
+                  <div className="rounded-2xl border border-slate-200 p-5">
+                    <div className="mb-5 flex items-start gap-3 rounded-xl bg-slate-50 p-4">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 font-black text-white">
+                        {selectedCase.status === "pending" ? "1" : "2"}
+                      </span>
+                      <div>
+                        <div className="font-black text-slate-950">
+                          {selectedCase.status === "pending" ? "รับเรื่องและมอบหมายหน่วยงาน" : "บันทึกผลการดำเนินงาน"}
+                        </div>
+                        <div className="mt-0.5 text-sm text-slate-500">
+                          {selectedCase.status === "pending"
+                            ? "เลือกผู้รับผิดชอบและกำหนดเสร็จก่อนเริ่มงาน"
+                            : "เมื่อดำเนินการเสร็จ ให้บันทึกผลและแนบรูปก่อนปิดเรื่อง"}
+                        </div>
+                      </div>
+                    </div>
                     <div className="mb-4 grid gap-3 sm:grid-cols-2">
                       <label className="text-sm font-bold">
                         หน่วยรับผิดชอบ
@@ -8462,60 +8477,67 @@ function TaoDashboard({
                       </label>
                     </div>
                     <label className="text-sm font-bold">
-                      ผลการดำเนินงาน / หมายเหตุถึงหมู่บ้านและผู้แจ้ง
+                      {selectedCase.status === "pending" ? "รายละเอียดการมอบหมาย / แจ้งผู้เกี่ยวข้อง" : "ผลการดำเนินงานที่จะแจ้งประชาชน"}
                       <textarea
                         value={caseNote}
                         onChange={(event) => setCaseNote(event.target.value)}
                         className="mt-2 h-24 w-full resize-none rounded-xl border p-3 font-normal outline-none focus:border-blue-500"
-                        placeholder="เช่น อบต.รับประสานกองช่างแล้ว หรือดำเนินการซ่อมเสร็จแล้ว"
+                        placeholder={selectedCase.status === "pending" ? "เช่น มอบหมายกองช่างตรวจสอบและซ่อมภายในวันที่กำหนด" : "เช่น ซ่อมพื้นผิวถนนบริเวณดังกล่าวเรียบร้อยแล้ว"}
                       />
                     </label>
-                    <label className="mt-3 block text-sm font-bold">
-                      รูปหลักฐานหลังดำเนินการ (จำเป็นก่อนปิดเรื่อง)
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={(event) => setCaseResolvedImage(event.target.files?.[0] || null)}
-                        className="mt-2 w-full rounded-xl border bg-white p-3 font-normal"
-                      />
-                    </label>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {selectedCase.status !== "in_progress" && (
+                    {selectedCase.status !== "pending" && (
+                      <label className="mt-3 block text-sm font-bold">
+                        รูปหลักฐานหลังดำเนินการ (จำเป็นก่อนปิดเรื่อง)
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={(event) => setCaseResolvedImage(event.target.files?.[0] || null)}
+                          className="mt-2 w-full rounded-xl border bg-white p-3 font-normal"
+                        />
+                      </label>
+                    )}
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {selectedCase.status === "pending" ? (
                         <button
                           disabled={saving}
                           onClick={() => updateGeneralCase("in_progress")}
-                          className="rounded-xl bg-blue-600 px-4 py-3 font-bold text-white disabled:opacity-50"
+                          className="min-h-12 rounded-xl bg-blue-600 px-4 py-3 font-bold text-white disabled:opacity-50 sm:col-span-2"
                         >
-                          รับเรื่องและเริ่มดำเนินการ
+                          ยืนยันรับเรื่องและส่งให้หน่วยงาน →
+                        </button>
+                      ) : (
+                        <button
+                          disabled={saving}
+                          onClick={() => updateGeneralCase("resolved")}
+                          className="min-h-12 rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white disabled:opacity-50 sm:col-span-2"
+                        >
+                          บันทึกผลและส่งให้ประชาชนยืนยัน →
                         </button>
                       )}
-                      <button
-                        disabled={saving}
-                        onClick={() => updateGeneralCase("resolved")}
-                        className="rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white disabled:opacity-50"
-                      >
-                        บันทึกผลและปิดเรื่อง
-                      </button>
+                      {selectedCase.status === "pending" && (
+                        <>
+                          <button
+                            disabled={saving || !caseNote.trim()}
+                            onClick={() => updateGeneralCase("pending", "request_info")}
+                            className="rounded-xl border border-amber-300 px-4 py-3 font-bold text-amber-800 disabled:opacity-40"
+                          >
+                            ขอข้อมูลเพิ่มเติม
+                          </button>
+                          <button
+                            disabled={saving || !caseNote.trim()}
+                            onClick={() => updateGeneralCase("cancelled", "merge_duplicate")}
+                            className="rounded-xl border border-slate-300 px-4 py-3 font-bold text-slate-700 disabled:opacity-40"
+                          >
+                            รวมกับเรื่องเดิม
+                          </button>
+                        </>
+                      )}
                       <button
                         disabled={saving}
                         onClick={() => updateGeneralCase("cancelled")}
                         className="rounded-xl border border-red-300 px-4 py-3 font-bold text-red-700 disabled:opacity-50 sm:col-span-2"
                       >
-                        ยุติเรื่อง (กรณีดำเนินการไม่ได้)
-                      </button>
-                      <button
-                        disabled={saving || !caseNote.trim()}
-                        onClick={() => updateGeneralCase("pending", "request_info")}
-                        className="rounded-xl border border-amber-300 px-4 py-3 font-bold text-amber-800 disabled:opacity-40"
-                      >
-                        ขอข้อมูลจากผู้แจ้งเพิ่มเติม
-                      </button>
-                      <button
-                        disabled={saving || !caseNote.trim()}
-                        onClick={() => updateGeneralCase("cancelled", "merge_duplicate")}
-                        className="rounded-xl border border-slate-300 px-4 py-3 font-bold text-slate-700 disabled:opacity-40"
-                      >
-                        รวมกับเรื่องเดิม/เหตุซ้ำ
+                        ยุติเรื่องพร้อมระบุเหตุผล
                       </button>
                     </div>
                   </div>
@@ -11728,9 +11750,16 @@ function AdminIncidentModal({
       return alert("กรุณาระบุผลตรวจสอบเบื้องต้นก่อนส่งให้ อบต.");
     setForwardingToTao(true);
     try {
+      if (inspectionImage) {
+        const evidence = new FormData();
+        evidence.append("message", `หลักฐานยืนยันจากหมู่บ้าน: ${forwardNote.trim()}`);
+        evidence.append("image", inspectionImage);
+        await api.addIncidentProgress(inc.id, evidence);
+      }
       const updated = await api.forwardIncidentToTao(inc.id, forwardNote.trim());
       onIncidentReplace(updated);
       setForwardNote("");
+      setInspectionImage(null);
       alert("ยืนยันและส่งเรื่องให้ อบต.แล้ว");
     } catch (error) {
       alert(error?.message || "ส่งเรื่องให้ อบต.ไม่สำเร็จ");
@@ -11741,7 +11770,7 @@ function AdminIncidentModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn relative">
+      <div className="bg-white rounded-2xl md:rounded-3xl w-full max-w-4xl max-h-[92dvh] overflow-y-auto shadow-2xl animate-fadeIn relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
@@ -11749,7 +11778,7 @@ function AdminIncidentModal({
           <X className="w-6 h-6 text-gray-600" />
         </button>
 
-        <div className="p-8">
+        <div className="p-5 md:p-8">
           <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -11812,9 +11841,15 @@ function AdminIncidentModal({
 
           {villageMode && !inc.requiresTao && !["resolved", "cancelled"].includes(inc.status) && (
             <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-5">
-              <h3 className="font-black text-blue-950">ผลตรวจสอบของหมู่บ้าน</h3>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-black text-white">1</span>
+                <div>
+                  <h3 className="font-black text-blue-950">ตรวจสอบแล้วส่งให้ อบต.</h3>
+                  <p className="text-sm text-blue-800">หน้าที่ของหมู่บ้านจบที่การยืนยันข้อมูลและประสานพื้นที่</p>
+                </div>
+              </div>
               <p className="mt-1 text-sm text-blue-800">
-                ตรวจข้อมูลและจุดเกิดเหตุให้ถูกต้อง แล้วส่งให้ อบต.เป็นผู้รับผิดชอบดำเนินการ
+                ระบุว่าพบเหตุจริงหรือไม่ จุดเกิดเหตุถูกต้องหรือไม่ และข้อมูลสำคัญที่ อบต.ควรรู้
               </p>
               <textarea
                 value={forwardNote}
@@ -11822,13 +11857,22 @@ function AdminIncidentModal({
                 className="mt-3 h-24 w-full rounded-xl border border-blue-200 bg-white p-3"
                 placeholder="เช่น ตรวจสอบแล้วพบเหตุจริง บริเวณหน้าศาลาหมู่บ้าน"
               />
+              <label className="mt-3 block text-sm font-bold text-blue-950">
+                รูปยืนยันจากพื้นที่ (ถ้ามี)
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => setInspectionImage(event.target.files?.[0] || null)}
+                  className="mt-2 w-full rounded-xl border border-blue-200 bg-white p-3 font-normal"
+                />
+              </label>
               <button
                 type="button"
                 disabled={forwardingToTao || !forwardNote.trim()}
                 onClick={forwardVerifiedIncident}
                 className="mt-3 w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-40 sm:w-auto"
               >
-                {forwardingToTao ? "กำลังส่ง..." : "ยืนยันและส่งเรื่องให้ อบต."}
+                {forwardingToTao ? "กำลังส่ง..." : "ส่งเรื่องให้ อบต.ดำเนินการ →"}
               </button>
             </div>
           )}
@@ -11838,40 +11882,6 @@ function AdminIncidentModal({
               ส่งเรื่องให้ อบต.แล้ว หมู่บ้านสามารถติดตามสถานะและช่วยประสานข้อมูลในพื้นที่ได้
             </div>
           )}
-
-          {villageMode &&
-            ["in_progress", "revision_requested"].includes(inc.status) && (
-              <div className="mb-8 rounded-2xl border border-cyan-200 bg-cyan-50 p-5">
-                <h3 className="font-black text-cyan-950">
-                  บันทึกผลตรวจพื้นที่
-                </h3>
-                <p className="mt-1 text-sm text-cyan-800">
-                  ใช้บันทึกสิ่งที่พบจากการลงพื้นที่และรูปหลักฐานเพิ่มเติม
-                </p>
-                <textarea
-                  value={inspectionNote}
-                  onChange={(event) => setInspectionNote(event.target.value)}
-                  className="mt-3 h-24 w-full rounded-xl border bg-white p-3"
-                  placeholder="เช่น ตรวจพบผิวถนนแตกร้าวยาวประมาณ 15 เมตร ต้องใช้วัสดุและเครื่องจักรเพิ่มเติม"
-                />
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) =>
-                    setInspectionImage(event.target.files?.[0] || null)
-                  }
-                  className="mt-3 w-full rounded-xl border bg-white p-3 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={inspectionSaving}
-                  onClick={saveInspection}
-                  className="mt-3 rounded-xl bg-cyan-700 px-5 py-3 font-bold text-white disabled:opacity-50"
-                >
-                  {inspectionSaving ? "กำลังบันทึก..." : "บันทึกผลตรวจพื้นที่"}
-                </button>
-              </div>
-            )}
 
           {!villageMode && (
             <div className="mb-8 p-5 rounded-2xl border border-indigo-200 bg-indigo-50/60">
