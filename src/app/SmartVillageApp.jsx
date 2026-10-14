@@ -6974,6 +6974,250 @@ function AdminAnalytics({
   );
 }
 
+function DecisionAnalyticsCenter({
+  incidents,
+  villages = [],
+  scope = "village",
+  onOpenWork,
+  onOpenVillages,
+}) {
+  const [period, setPeriod] = useState("90");
+  const isTao = scope === "tao";
+  const cutoff = period === "all"
+    ? null
+    : new Date(Date.now() - Number(period) * 24 * 60 * 60 * 1000);
+  const rows = incidents.filter((item) => {
+    const date = new Date(item.date);
+    return !cutoff || (!Number.isNaN(date.getTime()) && date >= cutoff);
+  });
+  const isOpen = (item) => !["resolved", "cancelled"].includes(item.status);
+  const openRows = rows.filter(isOpen);
+  const resolvedRows = rows.filter((item) => item.status === "resolved");
+  const overdueRows = openRows.filter((item) => {
+    if (item.dueAt) return new Date(item.dueAt) < new Date();
+    return getHoursDiff(item.date, new Date().toISOString()) > 24;
+  });
+  const averageResolution = resolvedRows
+    .map((item) => getHoursDiff(item.date, item.resolvedAt))
+    .filter((value) => value != null && value >= 0);
+  const avgResolutionHours = averageResolution.length
+    ? averageResolution.reduce((sum, value) => sum + value, 0) /
+      averageResolution.length
+    : null;
+  const categoryRows = Object.values(
+    rows.reduce((result, item) => {
+      const label = item.category || "ไม่ระบุประเภท";
+      result[label] ||= { label, count: 0, open: 0 };
+      result[label].count += 1;
+      if (isOpen(item)) result[label].open += 1;
+      return result;
+    }, {}),
+  )
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const locationRows = Object.values(
+    rows.reduce((result, item) => {
+      const label = item.location?.trim() || "ไม่ระบุสถานที่";
+      result[label] ||= { label, count: 0, open: 0 };
+      result[label].count += 1;
+      if (isOpen(item)) result[label].open += 1;
+      return result;
+    }, {}),
+  )
+    .filter((row) => row.count > 1 || row.open > 0)
+    .sort((a, b) => b.count - a.count || b.open - a.open)
+    .slice(0, 5);
+  const villageRows = villages
+    .map((village) => {
+      const villageIncidents = rows.filter(
+        (item) => String(item.villageId || "") === String(village.id),
+      );
+      return {
+        ...village,
+        total: villageIncidents.length,
+        open: villageIncidents.filter(isOpen).length,
+        overdue: villageIncidents.filter(
+          (item) => isOpen(item) && item.dueAt && new Date(item.dueAt) < new Date(),
+        ).length,
+      };
+    })
+    .filter((row) => row.total > 0)
+    .sort((a, b) => b.overdue - a.overdue || b.open - a.open)
+    .slice(0, 5);
+  const maxCategory = Math.max(1, ...categoryRows.map((row) => row.count));
+  const maxLocation = Math.max(1, ...locationRows.map((row) => row.count));
+  const resolutionRate = rows.length
+    ? Math.round((resolvedRows.length / rows.length) * 100)
+    : 0;
+  const topCategory = categoryRows[0];
+  const topLocation = locationRows[0];
+  const recommendations = [];
+  if (overdueRows.length)
+    recommendations.push(`เร่งติดตาม ${overdueRows.length} เรื่องที่เกินกำหนดก่อนงานใหม่`);
+  if (topCategory)
+    recommendations.push(
+      `วางแผนป้องกัน “${topCategory.label}” เพราะพบมากที่สุด ${topCategory.count} เรื่อง`,
+    );
+  if (topLocation && topLocation.count > 1)
+    recommendations.push(
+      `ตรวจพื้นที่ “${topLocation.label}” พบเหตุซ้ำ ${topLocation.count} ครั้ง`,
+    );
+  if (!recommendations.length)
+    recommendations.push("ยังไม่มีสัญญาณปัญหาเร่งด่วนจากข้อมูลในช่วงนี้");
+
+  const BarList = ({ data, max, emptyText }) => (
+    <div className="mt-5 space-y-4">
+      {data.map((row) => (
+        <div key={row.label}>
+          <div className="mb-1.5 flex items-start justify-between gap-3 text-sm">
+            <span className="min-w-0 truncate font-bold text-slate-700" title={row.label}>
+              {row.label}
+            </span>
+            <span className="shrink-0 font-black text-slate-950">{row.count} เรื่อง</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-blue-600"
+              style={{ width: `${Math.max(7, (row.count / max) * 100)}%` }}
+            />
+          </div>
+          {row.open > 0 && (
+            <div className="mt-1 text-xs font-medium text-amber-700">ยังไม่เสร็จ {row.open} เรื่อง</div>
+          )}
+        </div>
+      ))}
+      {!data.length && <div className="py-8 text-center text-sm text-slate-400">{emptyText}</div>}
+    </div>
+  );
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">ศูนย์วิเคราะห์ข้อมูล</div>
+            <h2 className="mt-1 text-2xl font-black">เห็นปัญหา เพื่อตัดสินใจและลงมือแก้</h2>
+            <p className="mt-1 text-sm text-slate-300">คำนวณจากเรื่องร้องทุกข์จริง ไม่ใช่ข้อมูลตัวอย่าง</p>
+          </div>
+          <label className="text-sm font-bold text-slate-200">
+            ช่วงข้อมูล
+            <select
+              value={period}
+              onChange={(event) => setPeriod(event.target.value)}
+              className="ml-2 h-11 rounded-xl border border-white/20 bg-white px-3 text-sm font-bold text-slate-900"
+            >
+              <option value="30">30 วัน</option>
+              <option value="90">90 วัน</option>
+              <option value="365">1 ปี</option>
+              <option value="all">ทั้งหมด</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="p-5 md:p-7">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            ["เรื่องในช่วงนี้", rows.length, "text-slate-950"],
+            ["ยังไม่เสร็จ", openRows.length, "text-amber-700"],
+            ["เกินกำหนด", overdueRows.length, "text-red-700"],
+            ["อัตราแก้สำเร็จ", `${resolutionRate}%`, "text-emerald-700"],
+          ].map(([label, value, tone]) => (
+            <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className={`text-2xl font-black md:text-3xl ${tone}`}>{value}</div>
+              <div className="mt-1 text-sm font-bold text-slate-500">{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <article className="rounded-2xl border border-slate-200 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-black text-blue-600">ปัญหาหลัก</div>
+                <h3 className="text-lg font-black text-slate-950">ประเภทปัญหาที่พบบ่อย</h3>
+              </div>
+              {topCategory && <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">อันดับ 1: {topCategory.label}</span>}
+            </div>
+            <BarList data={categoryRows} max={maxCategory} emptyText="ยังไม่มีข้อมูลประเภทปัญหา" />
+          </article>
+          <article className="rounded-2xl border border-slate-200 p-5">
+            <div>
+              <div className="text-xs font-black text-violet-600">พื้นที่เฝ้าระวัง</div>
+              <h3 className="text-lg font-black text-slate-950">จุดที่เกิดเหตุซ้ำหรือยังค้าง</h3>
+            </div>
+            <BarList data={locationRows} max={maxLocation} emptyText="ยังไม่พบพื้นที่เกิดเหตุซ้ำ" />
+          </article>
+        </div>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+            <div className="text-xs font-black text-blue-700">ข้อเสนอแนะจากข้อมูล</div>
+            <h3 className="mt-1 text-lg font-black text-slate-950">สิ่งที่ควรทำต่อ</h3>
+            <div className="mt-4 space-y-3">
+              {recommendations.map((text, index) => (
+                <div key={text} className="flex gap-3 rounded-xl bg-white p-3 text-sm font-bold text-slate-700 shadow-sm">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs text-white">{index + 1}</span>
+                  <span className="pt-1">{text}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={onOpenWork} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-700">
+              เปิดคิวเรื่องร้องทุกข์ →
+            </button>
+          </article>
+          <article className="rounded-2xl border border-slate-200 p-5">
+            <div className="text-xs font-black text-emerald-700">ประสิทธิภาพ</div>
+            <h3 className="mt-1 text-lg font-black text-slate-950">ผลการดำเนินงาน</h3>
+            <div className="mt-5">
+              <div className="flex items-end justify-between">
+                <span className="text-sm font-bold text-slate-500">แก้ไขสำเร็จ</span>
+                <span className="text-3xl font-black text-emerald-700">{resolutionRate}%</span>
+              </div>
+              <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${resolutionRate}%` }} />
+              </div>
+              <div className="mt-5 rounded-xl bg-slate-50 p-4">
+                <div className="text-sm font-bold text-slate-500">เวลาเฉลี่ยจนปิดเรื่อง</div>
+                <div className="mt-1 text-xl font-black text-slate-950">
+                  {avgResolutionHours == null ? "ยังไม่มีข้อมูล" : formatHours(avgResolutionHours)}
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        {isTao && (
+          <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="text-xs font-black text-orange-700">เปรียบเทียบพื้นที่</div>
+                <h3 className="text-lg font-black text-slate-950">หมู่บ้านที่ควรติดตามก่อน</h3>
+              </div>
+              <button onClick={onOpenVillages} className="text-sm font-black text-blue-600">ดูครบ 12 หมู่บ้าน →</button>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {villageRows.map((row, index) => (
+                <div key={row.id} className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">{index + 1}</span>
+                  <div className="min-w-0">
+                    <div className="truncate font-black">หมู่ {row.moo} {row.name}</div>
+                    <div className="text-xs text-slate-500">ค้าง {row.open} เรื่อง</div>
+                  </div>
+                  <div className={`text-sm font-black ${row.overdue ? "text-red-700" : "text-emerald-700"}`}>
+                    {row.overdue ? `เกินกำหนด ${row.overdue}` : "ไม่เกินกำหนด"}
+                  </div>
+                </div>
+              ))}
+              {!villageRows.length && <div className="py-6 text-center text-sm text-slate-400">ยังไม่มีข้อมูลแยกหมู่บ้าน</div>}
+            </div>
+          </article>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function TaoDashboard({
   activeTab,
   setActiveTab,
@@ -7233,7 +7477,7 @@ function TaoDashboard({
   const generalForwarded = forwarded.filter((item) => !item.budgetRequest);
   const baseList = forwarded;
   const list = baseList.filter(inTaoDateRange);
-  const publicNews = (news || []).filter((item) => item.village_id == null);
+  const publicNews = (news || []).filter((item) => item.villageId == null);
   const closePublicNewsForm = () => {
     if (publicNewsImagePreview?.startsWith("blob:"))
       URL.revokeObjectURL(publicNewsImagePreview);
@@ -7328,6 +7572,18 @@ function TaoDashboard({
     <div className="mx-auto max-w-7xl space-y-5 animate-fadeIn">
       {activeTab === "tao_overview" && (
         <>
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-sm font-black text-blue-600">ศูนย์รับเรื่อง อบต.มะต้อง</div>
+                <h1 className="mt-1 text-2xl font-black text-slate-950 md:text-3xl">งานที่ต้องจัดการวันนี้</h1>
+                <p className="mt-1 text-sm text-slate-500">รับเรื่องจากหมู่บ้าน มอบหมายส่วนงาน ติดตามกำหนด และใช้ข้อมูลวางแผนแก้ปัญหา</p>
+              </div>
+              <button onClick={() => setActiveTab("tao_forwarded")} className="min-h-12 rounded-xl bg-blue-600 px-5 py-3 font-black text-white shadow-sm hover:bg-blue-700">
+                เปิดคิวงาน {newForwarded.length ? `(${newForwarded.length} เรื่องใหม่)` : ""}
+              </button>
+            </div>
+          </section>
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               {
@@ -7357,7 +7613,7 @@ function TaoDashboard({
             ].map((card) => (
               <div
                 key={card.label}
-                className={`rounded-2xl border p-5 ${card.tone}`}
+                className={`rounded-2xl border p-4 shadow-sm md:p-5 ${card.tone}`}
               >
                 <div className="text-sm font-bold">{card.label}</div>
                 <div className="mt-2 text-3xl font-black">{card.value}</div>
@@ -7365,35 +7621,53 @@ function TaoDashboard({
               </div>
             ))}
           </section>
-          <section className="grid gap-5 lg:grid-cols-2">
-            <button
-              onClick={() => setActiveTab("tao_forwarded")}
-              className="rounded-3xl border bg-white p-6 text-left shadow-sm hover:border-blue-300"
-            >
-              <div className="text-sm font-bold text-blue-600">
-                กล่องงาน อบต.
+          <DecisionAnalyticsCenter
+            incidents={forwarded}
+            villages={villages}
+            scope="tao"
+            onOpenWork={() => setActiveTab("tao_forwarded")}
+            onOpenVillages={() => setActiveTab("tao_villages")}
+          />
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <div className="text-sm font-black text-red-600">คิวเร่งด่วน</div>
+                <h2 className="text-xl font-black text-slate-950">เรื่องที่ควรเปิดดูก่อน</h2>
               </div>
-              <div className="mt-2 text-2xl font-black">
-                ตรวจเรื่องที่หมู่บ้านส่งต่อ
-              </div>
-              <p className="mt-2 text-slate-500">
-                ตรวจเหตุผล หลักฐาน หมู่บ้านต้นทาง และติดตามสถานะการแก้ไข
-              </p>
-            </button>
-            <button onClick={() => setActiveTab("tao_villages")} className="rounded-3xl border bg-white p-6 text-left shadow-sm hover:border-emerald-300">
-              <div className="text-sm font-bold text-emerald-600">ภาพรวมพื้นที่</div>
-              <div className="mt-2 text-2xl font-black">เปรียบเทียบทั้ง 12 หมู่บ้าน</div>
-              <p className="mt-2 text-slate-500">ดูเรื่องค้าง งานเกินกำหนด และผลการดำเนินงานของแต่ละหมู่บ้าน</p>
-            </button>
+              <button onClick={() => setActiveTab("tao_forwarded")} className="text-sm font-black text-blue-600">ดูทั้งหมด →</button>
+            </div>
+            <div className="mt-4 divide-y divide-slate-100">
+              {[...activeForwarded]
+                .sort((a, b) => {
+                  const aLate = a.dueAt && new Date(a.dueAt) < new Date() ? 1 : 0;
+                  const bLate = b.dueAt && new Date(b.dueAt) < new Date() ? 1 : 0;
+                  return bLate - aLate || Number(b.priority || 1) - Number(a.priority || 1) || new Date(a.date) - new Date(b.date);
+                })
+                .slice(0, 5)
+                .map((item) => (
+                  <button key={item.id} onClick={() => { openCase(item); setActiveTab("tao_forwarded"); }} className="grid w-full gap-2 py-4 text-left sm:grid-cols-[1fr_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <div className="truncate font-black text-slate-950">{item.title}</div>
+                      <div className="mt-1 text-sm text-slate-500">หมู่ {item.villageMoo || "-"} · {item.category} · {item.department || "ยังไม่มอบหมาย"}</div>
+                    </div>
+                    <div className="sm:text-right">
+                      <StatusBadge status={item.status} />
+                      {item.dueAt && new Date(item.dueAt) < new Date() && <div className="mt-1 text-xs font-black text-red-600">เกินกำหนด</div>}
+                    </div>
+                  </button>
+                ))}
+              {!activeForwarded.length && <div className="py-8 text-center text-sm text-slate-400">ไม่มีเรื่องค้างในขณะนี้</div>}
+            </div>
           </section>
         </>
       )}
       {activeTab === "tao_analysis" && (
-        <SimpleAnalyticsDashboard
-          incidents={incidents}
+        <DecisionAnalyticsCenter
+          incidents={forwarded}
           villages={villages}
           scope="tao"
-          scopeLabel="ทั้ง 12 หมู่บ้าน"
+          onOpenWork={() => setActiveTab("tao_forwarded")}
+          onOpenVillages={() => setActiveTab("tao_villages")}
         />
       )}
       {activeTab === "tao_reports" && (
@@ -8289,12 +8563,19 @@ function VillageOverviewDashboard({
     .slice(0, 5);
   return (
     <div className="mx-auto max-w-7xl space-y-5 animate-fadeIn">
-      <section className="rounded-3xl bg-gradient-to-br from-slate-950 to-blue-950 p-6 text-white shadow-xl md:p-8">
-        <div className="text-sm font-bold text-blue-200">
-          หมู่ {currentUser?.villageMoo || "-"} {currentUser?.villageName || ""}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-sm font-black text-blue-600">
+              หมู่ {currentUser?.villageMoo || "-"} {currentUser?.villageName || ""}
+            </div>
+            <h1 className="mt-1 text-2xl font-black text-slate-950 md:text-3xl">งานที่ต้องจัดการวันนี้</h1>
+            <p className="mt-1 text-sm text-slate-500">ตรวจข้อมูลจากประชาชน ยืนยันพื้นที่ และส่งเรื่องให้ อบต. พร้อมดูแนวโน้มปัญหาของหมู่บ้าน</p>
+          </div>
+          <button onClick={() => setActiveTab("incidents")} className="min-h-12 rounded-xl bg-blue-600 px-5 py-3 font-black text-white shadow-sm hover:bg-blue-700">
+            เปิดคิวงาน {pending.length ? `(${pending.length} เรื่องใหม่)` : ""}
+          </button>
         </div>
-        <h2 className="mt-1 text-3xl font-black">ภาพรวมงานหมู่บ้าน</h2>
-        <p className="mt-2 text-slate-300">ตรวจเรื่องจากประชาชน เพิ่มข้อมูลพื้นที่ และส่งให้ อบต.ดำเนินการ</p>
       </section>
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
@@ -8336,6 +8617,11 @@ function VillageOverviewDashboard({
           </div>
         </button>
       </section>
+      <DecisionAnalyticsCenter
+        incidents={incidents}
+        scope="village"
+        onOpenWork={() => setActiveTab("incidents")}
+      />
       <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>

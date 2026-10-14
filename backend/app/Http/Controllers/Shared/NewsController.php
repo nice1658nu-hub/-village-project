@@ -39,7 +39,7 @@ class NewsController extends Controller
         } else {
             unset($data['image']);
         }
-        $news->fill($data + ['created_by' => $request->user()->id, 'village_id' => $request->user()->isVillageAdmin() ? $request->user()->village_id : null, 'published_at' => $data['published_at'] ?? now()])->save();
+        $news->fill($data + ['created_by' => $request->user()->id, 'village_id' => $request->user()->isVillageCoordinator() ? $request->user()->village_id : null, 'published_at' => $data['published_at'] ?? now()])->save();
         return $news;
     }
 
