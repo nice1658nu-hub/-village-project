@@ -4,6 +4,15 @@ const isVercelDeployment =
 const API_BASE_URL = isVercelDeployment ? '/api' : configuredApiBaseUrl;
 const TOKEN_KEY = 'smart_village_token';
 
+// Keep authentication per browser tab. This allows a citizen, a village
+// coordinator and TAO staff to be tested in separate tabs without the most
+// recent login replacing every other tab. sessionStorage survives refresh.
+const tokenStorage = {
+  get: () => sessionStorage.getItem(TOKEN_KEY),
+  set: (value) => sessionStorage.setItem(TOKEN_KEY, value),
+  clear: () => sessionStorage.removeItem(TOKEN_KEY),
+};
+
 export class ApiError extends Error {
   constructor(message, status, data = null) {
     super(message);
@@ -14,7 +23,7 @@ export class ApiError extends Error {
 }
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = tokenStorage.get();
   const isFormData = options.body instanceof FormData;
   let response;
   try {
@@ -41,17 +50,17 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  hasSession: () => Boolean(localStorage.getItem(TOKEN_KEY)),
-  clearSession: () => localStorage.removeItem(TOKEN_KEY),
+  hasSession: () => Boolean(tokenStorage.get()),
+  clearSession: () => tokenStorage.clear(),
   getBootstrapData: () => request('/bootstrap'),
   getMe: () => request('/me'),
   login: async (phone, password) => {
     const data = await request('/login', { method: 'POST', body: JSON.stringify({ phone, password }) });
-    localStorage.setItem(TOKEN_KEY, data.token);
+    tokenStorage.set(data.token);
     return data;
   },
   logout: async () => {
-    try { await request('/logout', { method: 'POST' }); } finally { localStorage.removeItem(TOKEN_KEY); }
+    try { await request('/logout', { method: 'POST' }); } finally { tokenStorage.clear(); }
   },
   getDashboardData: () => request('/dashboard/bootstrap'),
   register: (payload) => request('/register', {

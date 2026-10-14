@@ -265,6 +265,21 @@ const getStatusLabel = (status) =>
     cancelled: "ยกเลิก",
   })[status] || status;
 
+const ACTIVE_TAB_KEY = "smart_village_active_tab";
+const defaultTabForRole = (role) =>
+  isTaoRole(role) ? "tao_overview" : isVillageAdminRole(role) ? "stats" : "news";
+const allowedTabsForRole = (role) => {
+  if (isTaoRole(role))
+    return ["tao_overview", "tao_analysis", "tao_forwarded", "tao_budget", "tao_villages", "tao_reports", "tao_content"];
+  if (isVillageAdminRole(role))
+    return ["stats", "analytics", "incidents", "budgets", "news", "users", "reports"];
+  return ["news", "village_incidents", "report", "history"];
+};
+const restoredTabForRole = (role) => {
+  const saved = sessionStorage.getItem(ACTIVE_TAB_KEY);
+  return allowedTabsForRole(role).includes(saved) ? saved : defaultTabForRole(role);
+};
+
 const getPriorityMeta = (priority = 1) =>
   ({
     1: { label: "ปกติ", color: "bg-slate-100 text-slate-700 border-slate-200" },
@@ -288,7 +303,9 @@ export default function App() {
       ? "auth"
       : "landing",
   ); // landing, auth, dashboard
-  const [activeTab, setActiveTab] = useState("news"); // Managed globally for sidebar integration
+  const [activeTab, setActiveTab] = useState(
+    () => sessionStorage.getItem(ACTIVE_TAB_KEY) || "news",
+  ); // Managed globally for sidebar integration
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // App Data State
@@ -302,6 +319,10 @@ export default function App() {
   });
   const [villages, setVillages] = useState([]);
   const [apiStatus, setApiStatus] = useState("mock");
+
+  useEffect(() => {
+    sessionStorage.setItem(ACTIVE_TAB_KEY, activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     // An authenticated refresh is restored by /me below. Loading the public
@@ -402,13 +423,7 @@ export default function App() {
         if (!isMounted) return;
         const user = normalizeUser(account.user || account);
         setCurrentUser(user);
-        setActiveTab(
-          isTaoRole(user.role)
-            ? "tao_overview"
-            : isVillageAdminRole(user.role)
-              ? "stats"
-              : "news",
-        );
+        setActiveTab(restoredTabForRole(user.role));
         setCurrentView("dashboard");
         setRestoringSession(false);
 
