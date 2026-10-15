@@ -2468,6 +2468,7 @@ function UserDashboard({
   const [villageIncidentStatus, setVillageIncidentStatus] = useState("active");
   const [villageIncidentSearch, setVillageIncidentSearch] = useState("");
   const [supportingIncidentId, setSupportingIncidentId] = useState(null);
+  const [supportConfirmationId, setSupportConfirmationId] = useState(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const reportSubmitLock = useRef(false);
 
@@ -2593,6 +2594,7 @@ function UserDashboard({
             : item,
         ),
       );
+      setSupportConfirmationId(incident.id);
     } catch (error) {
       if (!USE_MOCK_DATA) {
         alert(error?.message || "ติดตามเหตุนี้ไม่สำเร็จ กรุณาลองใหม่");
@@ -2609,6 +2611,7 @@ function UserDashboard({
             : item,
         ),
       );
+      setSupportConfirmationId(incident.id);
     } finally {
       setSupportingIncidentId(null);
     }
@@ -2682,7 +2685,7 @@ function UserDashboard({
   const villageNews = news.filter(
     (item) =>
       String(item.villageId || "") === String(currentUser.villageId || ""),
-  );
+  ).sort((a, b) => new Date(b.date) - new Date(a.date));
   const citizenVillageLabel = currentUser.villageMoo
     ? `หมู่ ${currentUser.villageMoo} ${currentUser.villageName || ""}`
     : "หมู่บ้านของคุณ";
@@ -2712,44 +2715,34 @@ function UserDashboard({
 
       {/* VIEW: NEWS */}
       {activeTab === "news" && (
-        <div className="space-y-6 animate-fadeIn">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              ข่าวสารจาก{citizenVillageLabel}
-            </h2>
-          </div>
-          <div className="grid gap-6">
+        <div className="space-y-5 animate-fadeIn">
+          <section className="rounded-3xl bg-gradient-to-r from-slate-950 to-blue-950 p-5 text-white shadow-lg sm:p-7">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-blue-200">ข่าวที่เกี่ยวข้องกับพื้นที่ของคุณ</p>
+                <h2 className="mt-1 text-2xl font-black sm:text-3xl">ข่าวสารและประกาศ</h2>
+                <p className="mt-2 text-sm text-slate-300">จาก{citizenVillageLabel} · เรียงข่าวล่าสุดก่อน</p>
+              </div>
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10"><Bell className="h-7 w-7" /></span>
+            </div>
+          </section>
+          <div className="grid gap-4 md:grid-cols-2">
             {villageNews.map((n) => (
-              <div
+              <article
                 key={n.id}
                 onClick={() => setSelectedNews(n)}
-                className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col sm:flex-row hover:shadow-xl hover:border-blue-200 cursor-pointer transition-all group relative"
+                className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg"
               >
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm">
-                  <ChevronRight className="w-5 h-5 text-blue-600" />
+                <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+                  {n.image ? <img src={n.image} alt={n.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-slate-300"><Image className="h-12 w-12" /></div>}
                 </div>
-                <div className="sm:w-1/3 h-56 sm:h-auto overflow-hidden">
-                  <img
-                    src={n.image}
-                    alt="news"
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                  />
+                <div className="p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><Calendar className="h-4 w-4" />{formatThaiDateTime(n.date)} น.</div>
+                  <h3 className="mt-3 line-clamp-2 text-xl font-black leading-snug text-slate-900 transition group-hover:text-blue-700">{n.title}</h3>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{n.content}</p>
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-sm font-bold text-blue-700"><span>อ่านรายละเอียด</span><ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" /></div>
                 </div>
-                <div className="p-6 sm:w-2/3 flex flex-col justify-center">
-                  <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold mb-3 w-max border border-blue-100">
-                    ประกาศเมื่อ: {formatThaiDateTime(n.date)} น.
-                  </span>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-700 transition">
-                    {n.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed line-clamp-2">
-                    {n.content}
-                  </p>
-                  <p className="text-sm text-blue-500 font-semibold mt-4">
-                    คลิกเพื่ออ่านรายละเอียดทั้งหมด...
-                  </p>
-                </div>
-              </div>
+              </article>
             ))}
             {villageNews.length === 0 && (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
@@ -2834,7 +2827,7 @@ function UserDashboard({
                 const isOwn = incident.userId === currentUser.id || incident.isOwn;
                 const affectedCount = 1 + Number(incident.supporterCount || 0);
                 return (
-                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex sm:h-[300px] lg:h-[320px]">
+                  <article key={incident.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex sm:min-h-[300px]">
                     <button
                       type="button"
                       disabled={!incident.image}
@@ -2871,9 +2864,14 @@ function UserDashboard({
                           onClick={() => supportVillageIncident(incident)}
                           className="min-h-11 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-default disabled:bg-slate-100 disabled:text-slate-500 sm:w-auto"
                         >
-                          {isOwn ? "เรื่องที่คุณแจ้ง" : incident.supportedByMe ? "ติดตามเหตุนี้แล้ว" : supportingIncidentId === incident.id ? "กำลังบันทึก..." : "ฉันพบปัญหานี้ด้วย"}
+                          {isOwn ? "เรื่องที่คุณแจ้ง" : incident.supportedByMe ? "บันทึกว่าพบเหตุแล้ว" : supportingIncidentId === incident.id ? "กำลังส่งข้อมูล..." : "ฉันพบปัญหานี้ด้วย"}
                         </button>
                       </div>
+                      {!isOwn && incident.supportedByMe && (
+                        <div className={`mt-3 rounded-xl border px-3 py-2.5 text-xs leading-5 ${String(supportConfirmationId) === String(incident.id) ? "border-blue-200 bg-blue-50 text-blue-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+                          <span className="font-black">บันทึกข้อมูลแล้ว</span> ระบบรวมคุณไว้กับเรื่องนี้ ส่งจำนวนผู้พบปัญหาให้ผู้ดูแลหมู่บ้าน และจะแจ้งเตือนคุณเมื่อมีการเปลี่ยนสถานะ โดยไม่สร้างเรื่องร้องเรียนซ้ำ
+                        </div>
+                      )}
                     </div>
                   </article>
                 );
@@ -11152,10 +11150,8 @@ function AdminDashboard({
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  จัดการประกาศข่าวสาร
-                </h2>
+              <div className="mb-5 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div><h2 className="text-2xl font-black text-slate-900">จัดการข่าวสารและประกาศ</h2><p className="mt-1 text-sm text-slate-500">ข่าวที่เผยแพร่ให้ประชาชนในหมู่บ้านเห็น</p></div>
                 <button
                   onClick={() => startEditNews()}
                   className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-2"
@@ -11163,32 +11159,28 @@ function AdminDashboard({
                   <Plus className="w-5 h-5" /> สร้างข่าวใหม่
                 </button>
               </div>
-              <div className="grid gap-6">
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {news.map((n) => (
                   <div
                     key={n.id}
-                    className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-all"
+                    className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-blue-200 hover:shadow-md md:flex-col"
                   >
-                    <div className="sm:w-1/4 h-48 sm:h-auto overflow-hidden">
-                      <img
-                        src={n.image}
-                        alt="news"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="h-36 w-36 shrink-0 overflow-hidden bg-slate-100 md:aspect-[16/9] md:h-auto md:w-full">
+                      {n.image ? <img src={n.image} alt={n.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-slate-300"><Image className="h-10 w-10" /></div>}
                     </div>
-                    <div className="p-6 sm:w-3/4 flex flex-col justify-between">
+                    <div className="flex min-w-0 flex-1 flex-col justify-between p-4 md:p-5">
                       <div>
-                        <span className="text-xs font-bold text-gray-400 mb-2 block">
-                          {n.date}
+                        <span className="mb-2 flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                          <Calendar className="h-3.5 w-3.5" /> เผยแพร่ {formatThaiDateTime(n.date)} น.
                         </span>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        <h3 className="line-clamp-2 text-lg font-black text-slate-900 md:text-xl">
                           {n.title}
                         </h3>
-                        <p className="text-gray-600 line-clamp-2">
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
                           {n.content}
                         </p>
                       </div>
-                      <div className="mt-4 flex gap-3">
+                      <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
                         <button
                           onClick={() => startEditNews(n)}
                           className="flex items-center gap-1 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100"

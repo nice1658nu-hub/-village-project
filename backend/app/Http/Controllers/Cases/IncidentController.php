@@ -78,7 +78,22 @@ class IncidentController extends Controller
         abort_if($incident->status === 'cancelled', 409, 'Cancelled incidents cannot be followed.');
 
         if ((int) $incident->user_id !== (int) $user->id) {
-            $incident->supporters()->syncWithoutDetaching([$user->id]);
+            $syncResult = $incident->supporters()->syncWithoutDetaching([$user->id]);
+
+            if (count($syncResult['attached'] ?? []) > 0) {
+                User::query()
+                    ->whereIn('role', ['village_admin', 'staff'])
+                    ->where('account_status', 'approved')
+                    ->where('village_id', $incident->village_id)
+                    ->pluck('id')
+                    ->each(fn ($adminId) => VillageNotification::create([
+                        'user_id' => $adminId,
+                        'title' => 'มีประชาชนพบเหตุเดียวกันเพิ่ม',
+                        'description' => $incident->title.' · ผู้พบปัญหารวม '.($incident->supporters()->count() + 1).' คน',
+                        'type' => 'incident_support',
+                        'data' => ['incident_id' => $incident->id, 'village_id' => $incident->village_id],
+                    ]));
+            }
         }
 
         return response()->json([
