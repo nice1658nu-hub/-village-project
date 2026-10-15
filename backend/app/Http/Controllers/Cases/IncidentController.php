@@ -146,13 +146,29 @@ class IncidentController extends Controller
         } elseif (($data['action'] ?? null) === 'merge_duplicate') {
             $notificationTitles[$data['status']] = 'รวมเรื่องนี้กับเรื่องเดิมแล้ว';
         }
-        $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create([
-            'user_id' => $userId,
-            'title' => $notificationTitles[$data['status']],
-            'description' => $incident->title.(! empty($data['note']) ? ' · '.$data['note'] : ''),
-            'type' => 'incident_status',
-            'data' => ['incident_id' => $incident->id, 'status' => $data['status']],
-        ]));
+        if (($data['action'] ?? null) === 'request_info') {
+            User::query()
+                ->where('account_status', 'approved')
+                ->where('village_id', $incident->village_id)
+                ->whereIn('role', ['village_admin', 'staff'])
+                ->pluck('id')
+                ->unique()
+                ->each(fn ($userId) => VillageNotification::create([
+                    'user_id' => $userId,
+                    'title' => 'อบต.ขอข้อมูลเพิ่มเติม',
+                    'description' => $incident->title.(! empty($data['note']) ? ' · '.$data['note'] : ''),
+                    'type' => 'incident_status',
+                    'data' => ['incident_id' => $incident->id, 'status' => $data['status'], 'action' => 'request_info'],
+                ]));
+        } else {
+            $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create([
+                'user_id' => $userId,
+                'title' => $notificationTitles[$data['status']],
+                'description' => $incident->title.(! empty($data['note']) ? ' · '.$data['note'] : ''),
+                'type' => 'incident_status',
+                'data' => ['incident_id' => $incident->id, 'status' => $data['status']],
+            ]));
+        }
         return response()->json($incident->fresh([
             'user.village', 'village', 'assignee.village', 'assigner', 'verifier',
             'histories', 'updates.user', 'budgetRequest.requester',

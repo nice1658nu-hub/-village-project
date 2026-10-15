@@ -7645,7 +7645,9 @@ function TaoDashboard({
       setSelectedCase(updated);
       setCaseNote("");
       alert(
-        status === "in_progress"
+        action === "request_info"
+          ? "ส่งคำขอข้อมูลเพิ่มเติมให้หมู่บ้านแล้ว"
+          : status === "in_progress"
           ? "อบต.รับเรื่องและเริ่มดำเนินการแล้ว"
           : status === "resolved"
             ? "ปิดเรื่องเรียบร้อยแล้ว"
@@ -8865,7 +8867,7 @@ function TaoDashboard({
                           onClick={() => updateGeneralCase("in_progress")}
                           className="min-h-12 rounded-xl bg-blue-600 px-4 py-3 font-bold text-white disabled:opacity-50 sm:col-span-2"
                         >
-                          ยืนยันรับเรื่องและส่งให้หน่วยงาน →
+                          ยืนยันรับเรื่อง
                         </button>
                       ) : (
                         <button
@@ -8890,7 +8892,7 @@ function TaoDashboard({
                         onClick={() => updateGeneralCase("cancelled")}
                         className="rounded-xl border border-red-300 px-4 py-3 font-bold text-red-700 disabled:opacity-50 sm:col-span-2"
                       >
-                        ยุติเรื่องพร้อมระบุเหตุผล
+                        ยุติเรื่อง
                       </button>
                     </div>
                   </div>
@@ -11164,34 +11166,17 @@ function AdminDashboard({
                   ))}
                 </select>
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs font-bold text-slate-600">
-                  ตั้งแต่
-                  <input
-                    type="date"
-                    value={incidentDateFrom}
-                    max={incidentDateTo || undefined}
-                    onChange={(event) => {
-                      setIncidentDateFrom(event.target.value);
-                      setIncidentPage(1);
-                    }}
-                    className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-2 py-2.5 text-sm"
-                  />
-                </label>
-                <label className="text-xs font-bold text-slate-600">
-                  ถึงวันที่
-                  <input
-                    type="date"
-                    value={incidentDateTo}
-                    min={incidentDateFrom || undefined}
-                    onChange={(event) => {
-                      setIncidentDateTo(event.target.value);
-                      setIncidentPage(1);
-                    }}
-                    className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-2 py-2.5 text-sm"
-                  />
-                </label>
-              </div>
+              <DateRangePicker
+                from={incidentDateFrom}
+                to={incidentDateTo}
+                label="วันที่ / ช่วงวันที่"
+                labelClassName="text-xs text-slate-600"
+                onChange={(nextFrom, nextTo) => {
+                  setIncidentDateFrom(nextFrom);
+                  setIncidentDateTo(nextTo);
+                  setIncidentPage(1);
+                }}
+              />
             </div>
             <div className="mt-4 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
               <span className="text-slate-500">
