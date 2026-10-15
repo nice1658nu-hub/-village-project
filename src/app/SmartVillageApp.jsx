@@ -133,6 +133,7 @@ const normalizeIncident = (item) => ({
   image: normalizeMediaUrl(item.image),
   userId: item.userId ?? item.user_id,
   userName: item.userName ?? item.user?.name,
+  userPhone: item.userPhone ?? item.user?.phone,
   houseNo: item.houseNo ?? item.user?.house_no,
   resolvedImage: normalizeMediaUrl(item.resolvedImage ?? item.resolved_image),
   firstResponseAt: item.firstResponseAt ?? item.first_response_at,
@@ -8199,10 +8200,13 @@ function TaoDashboard({
                       const number = index + 1;
                       const active = number <= step;
                       return (
-                        <div key={label} className="relative text-center">
-                          {index > 0 && <span className={`absolute right-1/2 top-4 h-1 w-full ${active ? "bg-blue-600" : "bg-slate-200"}`} />}
-                          <span className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-full border-4 border-white text-sm font-black ${active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>{number}</span>
-                          <span className={`mt-1 block text-[11px] font-black sm:text-xs ${active ? "text-blue-700" : "text-slate-400"}`}>{label}</span>
+                        <div key={label} className="min-w-0 text-center">
+                          <div className="flex items-center">
+                            <span className={`h-1 flex-1 rounded-full ${index === 0 ? "bg-transparent" : active ? "bg-blue-600" : "bg-slate-200"}`} />
+                            <span className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-4 border-white text-sm font-black shadow-sm ${active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>{number}</span>
+                            <span className={`h-1 flex-1 rounded-full ${index === 3 ? "bg-transparent" : number < step ? "bg-blue-600" : "bg-slate-200"}`} />
+                          </div>
+                          <span className={`mt-2 block truncate px-1 text-[10px] font-black sm:text-xs ${active ? "text-blue-700" : "text-slate-400"}`}>{label}</span>
                         </div>
                       );
                     })}
@@ -8217,9 +8221,34 @@ function TaoDashboard({
               </div>
               <StatusBadge status={selectedCase.status} />
             </div>
-            <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-              <p>{selectedCase.description}</p>
-            </div>
+            <section className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                <h5 className="font-black text-slate-900">รายละเอียดที่ประชาชนแจ้ง</h5>
+                <p className="mt-0.5 text-xs text-slate-500">ข้อมูลต้นฉบับสำหรับตรวจสอบก่อนมอบหมายงาน</p>
+              </div>
+              <div className="grid gap-4 p-4 md:grid-cols-[1fr_15rem]">
+                <div className="min-w-0 space-y-4">
+                  <div>
+                    <div className="text-xs font-bold text-slate-500">รายละเอียดปัญหา</div>
+                    <p className="mt-1 whitespace-pre-wrap leading-7 text-slate-800">{selectedCase.description || "ผู้แจ้งไม่ได้ระบุรายละเอียดเพิ่มเติม"}</p>
+                  </div>
+                  <div className="grid gap-3 rounded-xl bg-slate-50 p-3 text-sm sm:grid-cols-2">
+                    <div><span className="block text-xs font-bold text-slate-500">ผู้แจ้ง</span><span className="font-bold text-slate-900">{selectedCase.userName || "ไม่พบชื่อผู้แจ้ง"}</span></div>
+                    <div><span className="block text-xs font-bold text-slate-500">เบอร์ติดต่อ</span><span className="font-bold text-slate-900">{selectedCase.userPhone || "ไม่พบเบอร์ติดต่อ"}</span></div>
+                    <div><span className="block text-xs font-bold text-slate-500">บ้านเลขที่</span><span className="font-bold text-slate-900">{selectedCase.houseNo || "ไม่ได้ระบุ"}</span></div>
+                    <div><span className="block text-xs font-bold text-slate-500">ผู้พบปัญหารวม</span><span className="font-bold text-slate-900">{1 + Number(selectedCase.supporterCount || 0)} คน</span></div>
+                  </div>
+                </div>
+                {selectedCase.image ? (
+                  <a href={selectedCase.image} target="_blank" rel="noreferrer" className="group relative min-h-40 overflow-hidden rounded-xl bg-slate-100">
+                    <img src={selectedCase.image} alt={`ภาพประกอบ ${selectedCase.title}`} className="h-full max-h-52 w-full object-cover" />
+                    <span className="absolute inset-x-2 bottom-2 rounded-lg bg-slate-950/75 px-3 py-2 text-center text-xs font-bold text-white">กดเพื่อดูภาพเต็ม</span>
+                  </a>
+                ) : (
+                  <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl bg-slate-100 text-sm text-slate-400"><Camera className="h-8 w-8" />ไม่มีภาพประกอบ</div>
+                )}
+              </div>
+            </section>
             <div className="mt-4">
               <IncidentLocationPanel incident={selectedCase} compact />
             </div>

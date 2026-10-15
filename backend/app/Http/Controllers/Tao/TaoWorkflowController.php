@@ -27,6 +27,18 @@ class TaoWorkflowController extends Controller
         $this->audit($request, 'incident.forwarded_to_tao', $incident, $old, $incident->only(array_keys($old)));
 
         $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create(['user_id' => $userId, 'title' => 'ส่งเรื่องให้ อบต.มะต้องแล้ว', 'description' => $data['note'] ?? $incident->title, 'type' => 'incident_status', 'data' => ['incident_id' => $incident->id]]));
+        User::query()
+            ->whereIn('role', ['tao', 'admin'])
+            ->where('account_status', 'approved')
+            ->where('id', '!=', $user->id)
+            ->pluck('id')
+            ->each(fn ($taoId) => VillageNotification::create([
+                'user_id' => $taoId,
+                'title' => 'มีเรื่องร้องทุกข์ส่งเข้า อบต. ใหม่',
+                'description' => 'หมู่ '.($incident->village?->moo ?? '-').' · '.$incident->title.' · '.$incident->location,
+                'type' => 'incident_forwarded',
+                'data' => ['incident_id' => $incident->id, 'village_id' => $incident->village_id],
+            ]));
         return response()->json($this->load($incident));
     }
 
