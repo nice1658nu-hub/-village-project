@@ -35,6 +35,7 @@ class StaffWorkflowController extends Controller
     public function assign(Request $request, Incident $incident)
     {
         abort_unless($request->user()->isTao(), 403);
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         $data = $request->validate([
             'assigned_to' => ['required', Rule::exists('users', 'id')->where(fn ($q) => $q->whereIn('role', ['staff', 'village_admin'])->where('account_status', 'approved')->where('village_id', $incident->village_id))],
             'priority' => ['nullable', 'integer', 'between:1,4'],
@@ -107,6 +108,7 @@ class StaffWorkflowController extends Controller
     public function review(Request $request, Incident $incident)
     {
         abort_unless($request->user()->isTao(), 403);
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         abort_unless($incident->status === 'waiting_review', 409, 'Only submitted work can be reviewed.');
         $data = $request->validate(['decision' => ['required', Rule::in(['approve', 'revision'])], 'note' => ['nullable', 'string', 'max:2000']]);
         if ($data['decision'] === 'revision') {

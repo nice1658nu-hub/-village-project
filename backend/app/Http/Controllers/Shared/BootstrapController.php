@@ -30,6 +30,10 @@ class BootstrapController extends Controller
         $user = $request->user();
         $incidents = Incident::with(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'budgetRequest.requester', 'budgetRequest.reviewer', 'feedback'])
             ->withCount('supporters')
+            // TAO receives a case only after the village has verified and
+            // explicitly forwarded it. Unverified village cases are private
+            // to that village and the reporting citizen.
+            ->when($user->isTao(), fn ($q) => $q->where('requires_tao', true))
             ->when($user->isVillageAdmin(), fn ($q) => $q->where('village_id', $user->village_id))
             ->when(! $user->isTao() && ! $user->isVillageAdmin(), fn ($q) => $q
                 ->where('village_id', $user->village_id)

@@ -18,8 +18,9 @@ class TaoWorkflowController extends Controller
     public function forward(Request $request, Incident $incident)
     {
         $user = $request->user();
-        abort_unless($user->isTao() || ($user->isVillageAdmin() && $user->village_id === $incident->village_id), 403);
+        abort_unless($user->isVillageAdmin() && $user->village_id === $incident->village_id, 403, 'Only this village administrator can forward the incident to TAO.');
         abort_if(in_array($incident->status, ['resolved', 'cancelled'], true), 409, 'Closed incidents cannot be forwarded.');
+        abort_if($incident->requires_tao, 409, 'This incident has already been forwarded to TAO.');
 
         $data = $request->validate(['note' => ['nullable', 'string', 'max:2000']]);
         $old = $incident->only(['requires_tao', 'forwarded_to_tao_at', 'forwarded_by']);
@@ -45,7 +46,8 @@ class TaoWorkflowController extends Controller
     public function saveBudget(Request $request, Incident $incident)
     {
         $user = $request->user();
-        abort_unless($user->isTao() || ($user->isVillageAdmin() && $user->village_id === $incident->village_id), 403);
+        abort_unless($user->isTao(), 403);
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         $data = $request->validate([
             'project_title' => ['required', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:3000'],
@@ -83,6 +85,7 @@ class TaoWorkflowController extends Controller
     public function reviewBudget(Request $request, Incident $incident)
     {
         abort_unless($request->user()->isTao(), 403);
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         $budget = $incident->budgetRequest;
         abort_unless($budget && $budget->status === 'submitted', 409, 'Only submitted budgets can be reviewed.');
         $data = $request->validate([
@@ -117,6 +120,7 @@ class TaoWorkflowController extends Controller
     public function updateProject(Request $request, Incident $incident)
     {
         abort_unless($request->user()->isTao(), 403);
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         $budget = $incident->budgetRequest;
         abort_unless($budget && in_array($budget->status, ['approved', 'completed'], true), 409, 'Project budget must be approved first.');
 
@@ -165,7 +169,8 @@ class TaoWorkflowController extends Controller
     public function recordActual(Request $request, Incident $incident)
     {
         $user = $request->user();
-        abort_unless($user->isTao() || ($user->isVillageAdmin() && $user->village_id === $incident->village_id), 403);
+        abort_unless($user->isTao(), 403);
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         $budget = $incident->budgetRequest;
         abort_unless($budget && $budget->status === 'approved', 409, 'Budget must be approved first.');
         $data = $request->validate([

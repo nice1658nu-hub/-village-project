@@ -106,7 +106,8 @@ class IncidentController extends Controller
     public function updateStatus(Request $request, Incident $incident)
     {
         $user = $request->user();
-        abort_unless($user->isTao() || ($user->isVillageAdmin() && $user->village_id === $incident->village_id), 403);
+        abort_unless($user->isTao(), 403, 'Only TAO officers can manage a forwarded incident.');
+        abort_unless($incident->requires_tao, 403, 'This incident has not been forwarded by the village.');
         $data = $request->validate([
             'status' => ['required', Rule::in(['pending', 'in_progress', 'resolved', 'cancelled'])],
             'note' => ['nullable', 'string', 'max:2000'],

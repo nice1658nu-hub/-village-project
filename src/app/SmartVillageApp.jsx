@@ -3233,65 +3233,97 @@ function UserDashboard({
                         </span>
                       )}
                     </div>
-                    {((inc.histories || []).length > 0 ||
-                      (inc.updates || []).length > 0) && (
-                      <details className="mt-4 border-t pt-3">
-                        <summary className="cursor-pointer text-sm font-bold text-blue-600">
-                          ดู Timeline การดำเนินงาน
-                        </summary>
-                        <div className="mt-3 space-y-3 border-l-2 border-blue-200 pl-4">
-                          {[
-                            ...(inc.histories || []).map((item) => ({
-                              id: `h-${item.id}`,
-                              at: item.created_at,
-                              title: getStatusLabel(item.to_status),
-                              note: item.note,
-                            })),
-                            ...(inc.updates || []).map((item) => ({
-                              id: `u-${item.id}`,
-                              at: item.created_at,
-                              title:
-                                item.type === "completion"
-                                  ? "เจ้าหน้าที่ส่งงานให้ตรวจ"
-                                  : "อัปเดตจากเจ้าหน้าที่",
-                              note: item.message,
-                              image: item.image,
-                            })),
-                          ]
-                            .sort((a, b) => new Date(a.at) - new Date(b.at))
-                            .map((item) => (
-                              <div key={item.id} className="relative">
-                                <span className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-white" />
-                                <div className="font-bold text-sm">
-                                  {item.title}
+                    <section className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      {(() => {
+                        const currentStep = inc.status === "resolved"
+                          ? 4
+                          : ["in_progress", "waiting_review", "revision_requested"].includes(inc.status)
+                            ? 3
+                            : inc.status === "assigned" || inc.requiresTao
+                              ? 2
+                              : 1;
+                        const currentMessage = inc.status === "resolved"
+                          ? "ดำเนินการเสร็จแล้ว คุณสามารถตรวจสอบผลและประเมินการแก้ไขได้"
+                          : inc.status === "waiting_review"
+                            ? "เจ้าหน้าที่ดำเนินการแล้ว กำลังรอตรวจรับผล"
+                            : inc.status === "revision_requested"
+                              ? "ผลการแก้ไขถูกส่งกลับให้เจ้าหน้าที่ดำเนินการเพิ่มเติม"
+                              : inc.status === "in_progress"
+                                ? `${inc.department || "หน่วยงานที่รับผิดชอบ"}กำลังดำเนินการแก้ไข`
+                                : inc.requiresTao
+                                  ? "หมู่บ้านตรวจสอบและส่งเรื่องให้ อบต. แล้ว"
+                                  : "ระบบรับเรื่องแล้ว กำลังรอผู้ดูแลหมู่บ้านตรวจสอบ";
+                        const events = [
+                          ...(inc.histories || []).map((item) => ({
+                            id: `h-${item.id}`,
+                            at: item.created_at,
+                            title: getStatusLabel(item.to_status),
+                            note: item.note === "Incident created" ? "ระบบได้รับเรื่องแจ้งของคุณแล้ว" : item.note,
+                          })),
+                          ...(inc.updates || []).map((item) => ({
+                            id: `u-${item.id}`,
+                            at: item.created_at,
+                            title: item.type === "completion" ? "ส่งผลการดำเนินงานแล้ว" : "เจ้าหน้าที่อัปเดตความคืบหน้า",
+                            note: item.message,
+                            image: item.image,
+                          })),
+                        ].sort((a, b) => new Date(b.at) - new Date(a.at));
+                        return (
+                          <>
+                            <div className="border-b border-slate-200 bg-white p-4">
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                  <div className="text-xs font-black uppercase tracking-wide text-blue-600">สถานะล่าสุด</div>
+                                  <div className="mt-1 font-black text-slate-900">{currentMessage}</div>
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  {formatThaiDateTime(item.at)} น.
-                                </div>
-                                {item.note && (
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {item.note}
-                                  </p>
-                                )}
-                                {item.image && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setSelectedIncidentImage({
-                                        src: item.image,
-                                        title: item.title,
-                                      })
-                                    }
-                                    className="text-sm text-blue-600 font-bold mt-1"
-                                  >
-                                    ดูรูปประกอบ
-                                  </button>
-                                )}
+                                <StatusBadge status={inc.status} />
                               </div>
-                            ))}
-                        </div>
-                      </details>
-                    )}
+                              <div className="mt-5 grid grid-cols-4">
+                                {["รับเรื่อง", "ส่งต่อ", "ดำเนินการ", "เสร็จสิ้น"].map((label, index) => {
+                                  const number = index + 1;
+                                  const active = number <= currentStep;
+                                  return (
+                                    <div key={label} className="min-w-0 text-center">
+                                      <div className="flex items-center">
+                                        <span className={`h-1 flex-1 ${index === 0 ? "bg-transparent" : active ? "bg-blue-600" : "bg-slate-200"}`} />
+                                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-xs font-black shadow-sm ${active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>{active && number < currentStep ? "✓" : number}</span>
+                                        <span className={`h-1 flex-1 ${index === 3 ? "bg-transparent" : number < currentStep ? "bg-blue-600" : "bg-slate-200"}`} />
+                                      </div>
+                                      <span className={`mt-2 block truncate px-1 text-[10px] font-black sm:text-xs ${active ? "text-blue-700" : "text-slate-400"}`}>{label}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <h4 className="font-black text-slate-900">ประวัติการดำเนินงาน</h4>
+                              <div className="mt-3 space-y-2">
+                                {events.map((item, index) => (
+                                  <div key={item.id} className="grid grid-cols-[2rem_1fr] gap-2 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                                    <span className={`flex h-8 w-8 items-center justify-center rounded-full ${index === 0 ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700"}`}>
+                                      {index === 0 ? <Clock className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                                    </span>
+                                    <div className="min-w-0">
+                                      <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
+                                        <span className="text-sm font-black text-slate-900">{item.title}</span>
+                                        <span className="text-xs text-slate-500">{formatThaiDateTime(item.at)} น.</span>
+                                      </div>
+                                      {item.note && <p className="mt-1 text-sm leading-6 text-slate-600">{item.note}</p>}
+                                      {item.image && (
+                                        <button type="button" onClick={() => setSelectedIncidentImage({ src: item.image, title: item.title })} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700">
+                                          <Camera className="h-3.5 w-3.5" /> ดูรูปความคืบหน้า
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                {!events.length && <div className="rounded-xl bg-white p-4 text-sm text-slate-500">ยังไม่มีประวัติเพิ่มเติม ระบบกำลังรอผู้ดูแลรับเรื่อง</div>}
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </section>
                     {inc.status === "resolved" && !inc.feedback && (
                       <CitizenFeedback
                         incident={inc}
@@ -4682,6 +4714,8 @@ function AdminReports({ incidents }) {
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [reportPage, setReportPage] = useState(1);
+  const [reportPageSize, setReportPageSize] = useState(25);
   const [exporting, setExporting] = useState(null);
 
   const filtered = incidents.filter((item) => {
@@ -4720,6 +4754,16 @@ function AdminReports({ incidents }) {
   const generatedAt = formatThaiDateTime(new Date().toISOString());
   const fileDate = new Date().toISOString().slice(0, 10);
   const projects = filtered.filter((item) => item.budgetRequest);
+  const reportTotalPages = Math.max(1, Math.ceil(filtered.length / reportPageSize));
+  const safeReportPage = Math.min(reportPage, reportTotalPages);
+  const visibleReportRows = filtered.slice(
+    (safeReportPage - 1) * reportPageSize,
+    safeReportPage * reportPageSize,
+  );
+
+  useEffect(() => {
+    setReportPage(1);
+  }, [dateFrom, dateTo, statusFilter, categoryFilter, reportPageSize]);
 
   const downloadBlob = (content, type, fileName) => {
     const url = URL.createObjectURL(new Blob([content], { type }));
@@ -5029,7 +5073,7 @@ function AdminReports({ incidents }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item, index) => (
+              {visibleReportRows.map((item, index) => (
                 <tr
                   key={item.id}
                   className={index % 2 ? "bg-slate-50" : "bg-white"}
@@ -5064,6 +5108,44 @@ function AdminReports({ incidents }) {
             </div>
           )}
         </div>
+        {filtered.length > 0 && (
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <span>
+                แสดง <b className="text-slate-900">{(safeReportPage - 1) * reportPageSize + 1}-{Math.min(safeReportPage * reportPageSize, filtered.length)}</b> จาก <b className="text-slate-900">{filtered.length}</b> รายการ
+              </span>
+              <label className="flex items-center gap-2">
+                ต่อหน้า
+                <select
+                  value={reportPageSize}
+                  onChange={(event) => setReportPageSize(Number(event.target.value))}
+                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 font-bold text-slate-800"
+                >
+                  {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="flex items-center justify-between gap-2 sm:justify-end">
+              <button
+                type="button"
+                disabled={safeReportPage === 1}
+                onClick={() => setReportPage((page) => Math.max(1, page - 1))}
+                className="min-h-10 rounded-lg border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ก่อนหน้า
+              </button>
+              <span className="min-w-24 text-center text-sm font-bold text-slate-700">หน้า {safeReportPage} / {reportTotalPages}</span>
+              <button
+                type="button"
+                disabled={safeReportPage === reportTotalPages}
+                onClick={() => setReportPage((page) => Math.min(reportTotalPages, page + 1))}
+                className="min-h-10 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
+        )}
         <div className="mt-5 border-t pt-3 text-center text-[10px] text-slate-400">
           ระบบจัดการ{VILLAGE_NAME} - รายงานสร้างจากข้อมูลในระบบ
         </div>
