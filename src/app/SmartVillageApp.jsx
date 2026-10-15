@@ -7034,12 +7034,45 @@ function DecisionAnalyticsCenter({
   const overdueRows = openRows.filter(
     (item) => item.dueAt && new Date(item.dueAt) < new Date(),
   );
-  const averageResolution = resolvedRows
-    .map((item) => getHoursDiff(item.date, item.resolvedAt))
-    .filter((value) => value != null && value >= 0);
-  const avgResolutionHours = averageResolution.length
-    ? averageResolution.reduce((sum, value) => sum + value, 0) /
-      averageResolution.length
+  const median = (values) => {
+    const sorted = values
+      .filter((value) => value != null && value >= 0)
+      .sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2
+      ? sorted[middle]
+      : (sorted[middle - 1] + sorted[middle]) / 2;
+  };
+  const durationMetric = (label, description, startKey, endKey) => {
+    const values = rows
+      .map((item) => getHoursDiff(item[startKey], item[endKey]))
+      .filter((value) => value != null && value >= 0);
+    return { label, description, value: median(values), samples: values.length };
+  };
+  const responseMetrics = [
+    durationMetric(
+      "หมู่บ้านตรวจสอบและส่งต่อ",
+      "ตั้งแต่ประชาชนแจ้ง จนหมู่บ้านส่งให้ อบต.",
+      "date",
+      "forwardedToTaoAt",
+    ),
+    durationMetric(
+      "อบต. รับเรื่อง",
+      "ตั้งแต่หมู่บ้านส่งต่อ จน อบต. เริ่มดำเนินการ",
+      "forwardedToTaoAt",
+      "firstResponseAt",
+    ),
+    durationMetric(
+      "ดำเนินการจนเสร็จ",
+      "ตั้งแต่ อบต. เริ่มดำเนินการ จนปิดเรื่อง",
+      "firstResponseAt",
+      "resolvedAt",
+    ),
+  ];
+  const measuredResponseMetrics = responseMetrics.filter((item) => item.value != null);
+  const slowestStage = measuredResponseMetrics.length
+    ? [...measuredResponseMetrics].sort((a, b) => b.value - a.value)[0]
     : null;
   const categoryRows = Object.values(
     rows.reduce((result, item) => {
@@ -7051,7 +7084,11 @@ function DecisionAnalyticsCenter({
     }, {}),
   )
     .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+    .slice(0, 5)
+    .map((row) => ({
+      ...row,
+      percent: rows.length ? Math.round((row.count / rows.length) * 100) : 0,
+    }));
   const locationRows = Object.values(
     rows.reduce((result, item) => {
       const label = item.location?.trim() || "ไม่ระบุสถานที่";
@@ -7137,7 +7174,9 @@ function DecisionAnalyticsCenter({
             <span className="min-w-0 truncate font-bold text-slate-700" title={row.label}>
               {row.label}
             </span>
-            <span className="shrink-0 font-black text-slate-950">{row.count} เรื่อง</span>
+            <span className="shrink-0 font-black text-slate-950">
+              {row.count} เรื่อง{row.percent != null ? ` · ${row.percent}%` : ""}
+            </span>
           </div>
           <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
             <div
@@ -7225,132 +7264,68 @@ function DecisionAnalyticsCenter({
           ))}
         </div>
 
-        <article className="mt-5 rounded-2xl border border-slate-200 p-5">
-          <div>
-            <div className="text-xs font-black text-slate-500">สถานะของเรื่อง</div>
-            <h3 className="text-lg font-black text-slate-950">เรื่องทั้งหมดอยู่ขั้นตอนไหน</h3>
-          </div>
-          <div className="mt-4 flex h-4 overflow-hidden rounded-full bg-slate-100">
-            {statusRows.filter((item) => item.count > 0).map((item) => (
-              <span key={item.label} className={item.tone} style={{ width: `${rows.length ? (item.count / rows.length) * 100 : 0}%` }} />
-            ))}
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-            {statusRows.map((item) => (
-              <div key={item.label} className="rounded-xl bg-slate-50 p-3">
-                <div className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-full ${item.tone}`} /><span className="text-xs font-bold text-slate-500">{item.label}</span></div>
-                <div className="mt-1 text-xl font-black text-slate-900">{item.count}</div>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
           <article className="rounded-2xl border border-slate-200 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-black text-blue-600">ปัญหาหลัก</div>
-                <h3 className="text-lg font-black text-slate-950">ประเภทปัญหาที่พบบ่อย</h3>
+                <div className="text-xs font-black text-blue-600">1 · แยกประเภทปัญหา</div>
+                <h3 className="text-lg font-black text-slate-950">ชุมชนกำลังเจอปัญหาอะไร</h3>
               </div>
               {topCategory && <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">อันดับ 1: {topCategory.label}</span>}
             </div>
             <BarList data={categoryRows} max={maxCategory} emptyText="ยังไม่มีข้อมูลประเภทปัญหา" />
           </article>
           <article className="rounded-2xl border border-slate-200 p-5">
+            <div className="text-xs font-black text-violet-600">2 · ระยะเวลาดำเนินการ</div>
+            <h3 className="text-lg font-black text-slate-950">แต่ละขั้นตอนใช้เวลานานเท่าไร</h3>
+            <p className="mt-1 text-xs text-slate-500">ใช้ค่ากลางของข้อมูลจริง เพื่อไม่ให้เคสที่นานผิดปกติทำให้ผลคลาดเคลื่อน</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {responseMetrics.map((metric) => (
+                <div key={metric.label} className="rounded-xl bg-slate-50 p-4">
+                  <div className="text-sm font-black text-slate-900">{metric.label}</div>
+                  <div className="mt-2 text-2xl font-black text-violet-700">
+                    {metric.value == null ? "—" : formatHours(metric.value)}
+                  </div>
+                  <div className="mt-1 text-xs leading-5 text-slate-500">
+                    {metric.value == null ? "ยังไม่มีข้อมูลครบขั้นตอน" : `${metric.description} · ${metric.samples} เรื่อง`}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 p-3 text-sm font-bold text-violet-900">
+              {slowestStage
+                ? `ขั้นตอนที่ใช้เวลามากที่สุดตอนนี้: ${slowestStage.label} (${formatHours(slowestStage.value)})`
+                : "เมื่อมีข้อมูลครบแต่ละขั้นตอน ระบบจะแสดงจุดที่ใช้เวลานานที่สุดให้"}
+            </div>
+          </article>
+        </div>
+
+        <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="text-xs font-black text-violet-600">พื้นที่เฝ้าระวัง</div>
-              <h3 className="text-lg font-black text-slate-950">จุดที่เกิดเหตุซ้ำหรือยังค้าง</h3>
+              <div className="text-xs font-black text-rose-600">3 · วิเคราะห์เชิงพื้นที่</div>
+              <h3 className="text-lg font-black text-slate-950">แผนที่จุดเสี่ยงและเหตุซ้ำ</h3>
+              <p className="mt-1 text-sm text-slate-500">วงใหญ่และสีเข้มหมายถึงมีหลายเหตุในบริเวณใกล้กัน</p>
             </div>
-            <BarList data={locationRows} max={maxLocation} emptyText="ยังไม่พบพื้นที่เกิดเหตุซ้ำ" />
-          </article>
-        </div>
-
-        <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
-          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <div className="text-xs font-black text-blue-700">ผลที่ระบบพบ</div>
-            <h3 className="mt-1 text-lg font-black text-slate-950">ข้อค้นพบสำคัญจากข้อมูล</h3>
-            <div className="mt-4 space-y-3">
-              {findings.map((text) => (
-                <div key={text} className="flex gap-3 rounded-xl bg-white p-3 text-sm font-bold text-slate-700 shadow-sm">
-                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" />
-                  <span>{text}</span>
-                </div>
-              ))}
+            <div className="text-sm font-bold text-slate-600">
+              มีพิกัด {coordinateCount} จาก {rows.length} เรื่อง ({locationCompleteness}%)
             </div>
-          </article>
-          <article className="rounded-2xl border border-slate-200 p-5">
-            <div className="text-xs font-black text-emerald-700">ประสิทธิภาพ</div>
-            <h3 className="mt-1 text-lg font-black text-slate-950">ผลการดำเนินงาน</h3>
-            <div className="mt-5">
-              <div className="flex items-end justify-between">
-                <span className="text-sm font-bold text-slate-500">แก้ไขสำเร็จ</span>
-                <span className="text-3xl font-black text-emerald-700">{resolutionRate}%</span>
-              </div>
-              <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${resolutionRate}%` }} />
-              </div>
-              <div className="mt-5 rounded-xl bg-slate-50 p-4">
-                <div className="text-sm font-bold text-slate-500">เวลาเฉลี่ยจนปิดเรื่อง</div>
-                <div className="mt-1 text-xl font-black text-slate-950">
-                  {avgResolutionHours == null ? "ยังไม่มีข้อมูล" : formatHours(avgResolutionHours)}
-                </div>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        {isTao && (
-          <div className="mt-5 grid gap-5 lg:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-xs font-black text-orange-700">เปรียบเทียบพื้นที่</div>
-                <h3 className="text-lg font-black text-slate-950">หมู่บ้านที่ควรติดตามก่อน</h3>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-2">
-              {villageRows.map((row, index) => (
-                <div key={row.id} className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 rounded-xl bg-slate-50 p-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">{index + 1}</span>
-                  <div className="min-w-0">
-                    <div className="truncate font-black">หมู่ {row.moo} {row.name}</div>
-                    <div className="text-xs text-slate-500">ค้าง {row.open} เรื่อง</div>
-                  </div>
-                  <div className={`text-sm font-black ${row.overdue ? "text-red-700" : "text-emerald-700"}`}>
-                    {row.overdue ? `เกินกำหนด ${row.overdue}` : "ไม่เกินกำหนด"}
-                  </div>
-                </div>
-              ))}
-              {!villageRows.length && <div className="py-6 text-center text-sm text-slate-400">ยังไม่มีข้อมูลแยกหมู่บ้าน</div>}
-            </div>
-          </article>
-          <article className="rounded-2xl border border-slate-200 p-5">
-            <div className="text-xs font-black text-violet-700">ภาระงานส่วนงาน</div>
-            <h3 className="text-lg font-black text-slate-950">หน่วยงานที่ต้องเร่งติดตาม</h3>
-            <div className="mt-4 space-y-2">
-              {departmentRows.slice(0, 5).map((row) => (
-                <div key={row.label} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
-                  <div className="min-w-0">
-                    <div className="truncate font-black">{row.label}</div>
-                    <div className="text-xs text-slate-500">งานค้าง {row.count} เรื่อง</div>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${row.overdue ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
-                    {row.overdue ? `เกินกำหนด ${row.overdue}` : "ตามกำหนด"}
-                  </span>
-                </div>
-              ))}
-              {!departmentRows.length && <div className="py-6 text-center text-sm text-slate-400">ยังไม่มีงานที่มอบหมาย</div>}
-            </div>
-          </article>
           </div>
-        )}
-        <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="font-black text-slate-950">ความพร้อมของข้อมูลแผนที่</div>
-            <div className="text-sm text-slate-500">มีพิกัด {coordinateCount} จาก {rows.length} เรื่อง เพื่อใช้วิเคราะห์จุดเกิดเหตุซ้ำ</div>
+          <div className="mt-4">
+            {coordinateCount > 0 ? (
+              <SpatialAnalyticsMap incidents={rows} />
+            ) : (
+              <div className="flex h-64 items-center justify-center rounded-2xl bg-slate-50 text-sm font-bold text-slate-400">
+                ยังไม่มีพิกัดสำหรับวิเคราะห์บนแผนที่
+              </div>
+            )}
           </div>
-          <div className={`text-2xl font-black ${locationCompleteness >= 80 ? "text-emerald-700" : "text-amber-700"}`}>{locationCompleteness}%</div>
-        </div>
+          {topLocation && topLocation.count > 1 && (
+            <div className="mt-3 rounded-xl bg-rose-50 p-3 text-sm font-bold text-rose-900">
+              พื้นที่ที่พบเหตุซ้ำมากที่สุด: {topLocation.label} · {topLocation.count} เรื่อง
+            </div>
+          )}
+        </article>
       </div>
     </section>
   );
@@ -7722,7 +7697,7 @@ function TaoDashboard({
     <div className="mx-auto max-w-7xl space-y-5 animate-fadeIn">
       {activeTab === "tao_overview" && (
         <>
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+          <section className="hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-sm font-black text-blue-600">ศูนย์รับเรื่อง อบต.มะต้อง</div>
@@ -7734,7 +7709,7 @@ function TaoDashboard({
               </button>
             </div>
           </section>
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <section className="hidden grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               {
                 label: "เรื่องใหม่รอรับ",
@@ -7776,7 +7751,7 @@ function TaoDashboard({
             villages={villages}
             scope="tao"
           />
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <section className="hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <div className="text-sm font-black text-red-600">คิวเร่งด่วน</div>
@@ -8825,7 +8800,7 @@ function VillageOverviewDashboard({
     .slice(0, 5);
   return (
     <div className="mx-auto max-w-7xl space-y-5 animate-fadeIn">
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+      <section className="hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-sm font-black text-blue-600">
@@ -8839,7 +8814,7 @@ function VillageOverviewDashboard({
           </button>
         </div>
       </section>
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="hidden grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["รอตรวจสอบ", pending.length, "text-blue-700 bg-blue-50"],
           ["ส่งให้ อบต.แล้ว", forwarded.length, "text-amber-700 bg-amber-50"],
@@ -8855,7 +8830,7 @@ function VillageOverviewDashboard({
           </div>
         ))}
       </section>
-      <section className="grid gap-3 md:grid-cols-2">
+      <section className="hidden gap-3 md:grid-cols-2">
         <button
           onClick={() => setActiveTab("incidents")}
           className="rounded-2xl border bg-white p-5 text-left shadow-sm hover:border-blue-400"
@@ -8883,7 +8858,7 @@ function VillageOverviewDashboard({
         incidents={incidents}
         scope="village"
       />
-      <section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
+      <section className="hidden rounded-3xl border bg-white p-5 shadow-sm md:p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h3 className="text-xl font-black">งานที่ควรตรวจสอบก่อน</h3>

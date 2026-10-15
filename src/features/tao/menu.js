@@ -1,5 +1,5 @@
 export const taoMenu = [
-  { id: 'tao_overview', icon: 'analytics', label: 'วิเคราะห์ข้อมูลและงาน' },
+  { id: 'tao_overview', icon: 'analytics', label: 'ภาพรวมและวิเคราะห์ข้อมูล' },
   { id: 'tao_forwarded', icon: 'incident', label: 'จัดการเรื่องร้องทุกข์' },
   { id: 'tao_villages', icon: 'home', label: 'สรุปผล 12 หมู่บ้าน' },
   { id: 'tao_reports', icon: 'document', label: 'รายงาน' },
