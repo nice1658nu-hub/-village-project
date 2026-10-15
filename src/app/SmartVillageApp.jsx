@@ -7009,25 +7009,41 @@ function DecisionAnalyticsCenter({
   villages = [],
   scope = "village",
 }) {
-  const [period, setPeriod] = useState("90");
-  const isTao = scope === "tao";
-  const periodDays = period === "all" ? null : Number(period);
-  const cutoff = periodDays == null
-    ? null
-    : new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
-  const previousCutoff = periodDays == null
-    ? null
-    : new Date(Date.now() - periodDays * 2 * 24 * 60 * 60 * 1000);
-  const rows = incidents.filter((item) => {
-    const date = new Date(item.date);
-    return !cutoff || (!Number.isNaN(date.getTime()) && date >= cutoff);
+  const toDateKey = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const [analysisDateFrom, setAnalysisDateFrom] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 89);
+    return toDateKey(date);
   });
-  const previousRows = periodDays == null
-    ? []
-    : incidents.filter((item) => {
+  const [analysisDateTo, setAnalysisDateTo] = useState(() => toDateKey(new Date()));
+  const [analysisVillage, setAnalysisVillage] = useState("all");
+  const isTao = scope === "tao";
+  const scopedIncidents = isTao && analysisVillage !== "all"
+    ? incidents.filter(
+        (item) => String(item.villageId || "") === String(analysisVillage),
+      )
+    : incidents;
+  const rangeStart = analysisDateFrom ? new Date(`${analysisDateFrom}T00:00:00`) : null;
+  const rangeEnd = analysisDateTo ? new Date(`${analysisDateTo}T23:59:59.999`) : null;
+  const rows = scopedIncidents.filter((item) => {
+    const date = new Date(item.date);
+    if (Number.isNaN(date.getTime())) return !rangeStart && !rangeEnd;
+    return (!rangeStart || date >= rangeStart) && (!rangeEnd || date <= rangeEnd);
+  });
+  const rangeDuration = rangeStart && rangeEnd
+    ? rangeEnd.getTime() - rangeStart.getTime() + 1
+    : null;
+  const previousRangeEnd = rangeStart ? new Date(rangeStart.getTime() - 1) : null;
+  const previousRangeStart = rangeDuration && previousRangeEnd
+    ? new Date(previousRangeEnd.getTime() - rangeDuration + 1)
+    : null;
+  const previousRows = previousRangeStart && previousRangeEnd
+    ? scopedIncidents.filter((item) => {
         const date = new Date(item.date);
-        return !Number.isNaN(date.getTime()) && date >= previousCutoff && date < cutoff;
-      });
+        return !Number.isNaN(date.getTime()) && date >= previousRangeStart && date <= previousRangeEnd;
+      })
+    : [];
   const isOpen = (item) => !["resolved", "cancelled"].includes(item.status);
   const openRows = rows.filter(isOpen);
   const resolvedRows = rows.filter((item) => item.status === "resolved");
@@ -7074,6 +7090,82 @@ function DecisionAnalyticsCenter({
   const slowestStage = measuredResponseMetrics.length
     ? [...measuredResponseMetrics].sort((a, b) => b.value - a.value)[0]
     : null;
+  const trendRangeStart = rangeStart || (() => {
+    const dates = rows.map((item) => new Date(item.date)).filter((date) => !Number.isNaN(date.getTime()));
+    return dates.length ? new Date(Math.min(...dates.map((date) => date.getTime()))) : null;
+  })();
+  const trendRangeEnd = rangeEnd || (() => {
+    const dates = rows.map((item) => new Date(item.date)).filter((date) => !Number.isNaN(date.getTime()));
+    return dates.length ? new Date(Math.max(...dates.map((date) => date.getTime()))) : null;
+  })();
+  const trendDays = trendRangeStart && trendRangeEnd
+    ? Math.max(1, Math.ceil((trendRangeEnd - trendRangeStart) / (24 * 60 * 60 * 1000)) + 1)
+    : 0;
+  const trendMode = trendDays <= 14 ? "day" : trendDays <= 120 ? "week" : "month";
+  const trendBuckets = new Map();
+  if (trendRangeStart && trendRangeEnd) {
+    if (trendMode === "day") {
+      for (let cursor = new Date(trendRangeStart); cursor <= trendRangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+        const date = new Date(cursor);
+        const key = toDateKey(date);
+        trendBuckets.set(key, {
+          key,
+          label: date.toLocaleDateString("th-TH", { day: "numeric", month: "short" }),
+          count: 0,
+          time: date.getTime(),
+        });
+      }
+    } else if (trendMode === "week") {
+      const count = Math.ceil(trendDays / 7);
+      Array.from({ length: count }).forEach((_, index) => {
+        const date = new Date(trendRangeStart.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+        trendBuckets.set(`week-${index}`, {
+          key: `week-${index}`,
+          label: date.toLocaleDateString("th-TH", { day: "numeric", month: "short" }),
+          count: 0,
+          time: date.getTime(),
+        });
+      });
+    } else {
+      const cursor = new Date(trendRangeStart.getFullYear(), trendRangeStart.getMonth(), 1);
+      const last = new Date(trendRangeEnd.getFullYear(), trendRangeEnd.getMonth(), 1);
+      while (cursor <= last) {
+        const date = new Date(cursor);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        trendBuckets.set(key, {
+          key,
+          label: date.toLocaleDateString("th-TH", { month: "short", year: "2-digit" }),
+          count: 0,
+          time: date.getTime(),
+        });
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+    }
+  }
+  rows.forEach((item) => {
+    const date = new Date(item.date);
+    if (Number.isNaN(date.getTime())) return;
+    let key;
+    let label;
+    if (trendMode === "day") {
+      key = toDateKey(date);
+      label = date.toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+    } else if (trendMode === "week" && trendRangeStart) {
+      const index = Math.floor((date - trendRangeStart) / (7 * 24 * 60 * 60 * 1000));
+      const start = new Date(trendRangeStart.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+      key = `week-${index}`;
+      label = start.toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+    } else {
+      key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      label = date.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
+    }
+    const bucket = trendBuckets.get(key) || { key, label, count: 0, time: date.getTime() };
+    bucket.count += 1;
+    bucket.time = Math.min(bucket.time, date.getTime());
+    trendBuckets.set(key, bucket);
+  });
+  const trendRows = [...trendBuckets.values()].sort((a, b) => a.time - b.time);
+  const maxTrend = Math.max(1, ...trendRows.map((item) => item.count));
   const categoryRows = Object.values(
     rows.reduce((result, item) => {
       const label = item.category || "ไม่ระบุประเภท";
@@ -7120,16 +7212,15 @@ function DecisionAnalyticsCenter({
     .slice(0, 5);
   const maxCategory = Math.max(1, ...categoryRows.map((row) => row.count));
   const maxLocation = Math.max(1, ...locationRows.map((row) => row.count));
-  const resolutionRate = rows.length
-    ? Math.round((resolvedRows.length / rows.length) * 100)
+  const resolutionBase = rows.filter((item) => item.status !== "cancelled").length;
+  const resolutionRate = resolutionBase
+    ? Math.round((resolvedRows.length / resolutionBase) * 100)
     : 0;
   const topCategory = categoryRows[0];
   const topLocation = locationRows[0];
   const trendPercent = previousRows.length
     ? Math.round(((rows.length - previousRows.length) / previousRows.length) * 100)
-    : rows.length
-      ? 100
-      : 0;
+    : null;
   const coordinateCount = rows.filter(
     (item) => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)),
   ).length;
@@ -7202,19 +7293,35 @@ function DecisionAnalyticsCenter({
             <h2 className="mt-1 text-2xl font-black">สรุปสถานการณ์จากเรื่องร้องทุกข์</h2>
             <p className="mt-1 text-sm text-slate-300">หน้านี้ใช้ดูข้อมูลและผลวิเคราะห์เท่านั้น ไม่มีคำสั่งจัดการเรื่อง</p>
           </div>
-          <label className="text-sm font-bold text-slate-200">
-            ช่วงข้อมูล
-            <select
-              value={period}
-              onChange={(event) => setPeriod(event.target.value)}
-              className="ml-2 h-11 rounded-xl border border-white/20 bg-white px-3 text-sm font-bold text-slate-900"
-            >
-              <option value="30">30 วัน</option>
-              <option value="90">90 วัน</option>
-              <option value="365">1 ปี</option>
-              <option value="all">ทั้งหมด</option>
-            </select>
-          </label>
+          <div className={`grid w-full gap-3 ${isTao ? "sm:w-[34rem] sm:grid-cols-2" : "sm:w-80"}`}>
+            {isTao && (
+              <label className="text-sm font-bold text-slate-200">
+                หมู่บ้าน
+                <select
+                  value={analysisVillage}
+                  onChange={(event) => setAnalysisVillage(event.target.value)}
+                  className="mt-1 h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm font-bold text-slate-900"
+                >
+                  <option value="all">ทุกหมู่บ้าน</option>
+                  {villages.map((village) => (
+                    <option key={village.id} value={village.id}>
+                      หมู่ {village.moo} {village.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <DateRangePicker
+              from={analysisDateFrom}
+              to={analysisDateTo}
+              label="ช่วงข้อมูล"
+              labelClassName="text-sm text-slate-200"
+              onChange={(nextFrom, nextTo) => {
+                setAnalysisDateFrom(nextFrom);
+                setAnalysisDateTo(nextTo);
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -7243,10 +7350,18 @@ function DecisionAnalyticsCenter({
           <div className={`rounded-2xl border p-5 ${trendPercent > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
             <div className="text-sm font-bold text-slate-600">เทียบช่วงก่อนหน้า</div>
             <div className={`mt-2 text-3xl font-black ${trendPercent > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-              {periodDays == null ? "—" : `${trendPercent > 0 ? "+" : ""}${trendPercent}%`}
+              {!rangeDuration || trendPercent == null ? "—" : `${trendPercent > 0 ? "+" : ""}${trendPercent}%`}
             </div>
             <div className="mt-1 text-sm text-slate-500">
-              {periodDays == null ? "เลือกช่วงเวลาเพื่อเปรียบเทียบ" : trendPercent > 0 ? "จำนวนเรื่องเพิ่มขึ้น" : trendPercent < 0 ? "จำนวนเรื่องลดลง" : "จำนวนเรื่องคงที่"}
+              {!rangeDuration
+                ? "เลือกช่วงวันเพื่อเปรียบเทียบ"
+                : trendPercent == null
+                  ? "ยังไม่มีข้อมูลในช่วงก่อนหน้า"
+                  : trendPercent > 0
+                    ? "จำนวนเรื่องเพิ่มขึ้น"
+                    : trendPercent < 0
+                      ? "จำนวนเรื่องลดลง"
+                      : "จำนวนเรื่องคงที่"}
             </div>
           </div>
         </div>
@@ -7263,6 +7378,42 @@ function DecisionAnalyticsCenter({
             </div>
           ))}
         </div>
+
+        <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-xs font-black text-cyan-700">แนวโน้มตามเวลา</div>
+              <h3 className="text-lg font-black text-slate-950">จำนวนเหตุเพิ่มขึ้นหรือลดลงเมื่อใด</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {trendMode === "day" ? "แสดงรายวัน" : trendMode === "week" ? "แสดงรายสัปดาห์" : "แสดงรายเดือน"} จากวันที่ประชาชนแจ้งเหตุ
+              </p>
+            </div>
+            <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-black text-cyan-800">
+              ข้อมูลจากเรื่องร้องทุกข์ {rows.length} เรื่อง
+            </span>
+          </div>
+          {trendRows.length ? (
+            <div className="mt-5 overflow-x-auto pb-2">
+              <div className="flex h-52 min-w-[42rem] items-end gap-2 border-b border-slate-200 px-2">
+                {trendRows.map((item) => (
+                  <div key={item.key} className="flex h-full min-w-10 flex-1 flex-col items-center justify-end">
+                    <div className="mb-1 text-xs font-black text-slate-700">{item.count}</div>
+                    <div
+                      className={`w-full max-w-12 rounded-t-lg ${item.count ? "bg-cyan-600" : "bg-slate-100"}`}
+                      style={{ height: `${item.count ? Math.max(12, (item.count / maxTrend) * 135) : 4}px` }}
+                      title={`${item.label}: ${item.count} เรื่อง`}
+                    />
+                    <div className="mt-2 h-8 text-center text-[10px] font-bold leading-4 text-slate-500">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl bg-slate-50 py-10 text-center text-sm font-bold text-slate-400">
+              ยังไม่มีข้อมูลในช่วงวันที่และหมู่บ้านที่เลือก
+            </div>
+          )}
+        </article>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
           <article className="rounded-2xl border border-slate-200 p-5">
@@ -8730,22 +8881,13 @@ function TaoDashboard({
                         </button>
                       )}
                       {selectedCase.status === "pending" && (
-                        <>
-                          <button
-                            disabled={saving || !caseNote.trim()}
-                            onClick={() => updateGeneralCase("pending", "request_info")}
-                            className="rounded-xl border border-amber-300 px-4 py-3 font-bold text-amber-800 disabled:opacity-40"
-                          >
-                            ขอข้อมูลเพิ่มเติม
-                          </button>
-                          <button
-                            disabled={saving || !caseNote.trim()}
-                            onClick={() => updateGeneralCase("cancelled", "merge_duplicate")}
-                            className="rounded-xl border border-slate-300 px-4 py-3 font-bold text-slate-700 disabled:opacity-40"
-                          >
-                            รวมกับเรื่องเดิม
-                          </button>
-                        </>
+                        <button
+                          disabled={saving || !caseNote.trim()}
+                          onClick={() => updateGeneralCase("pending", "request_info")}
+                          className="rounded-xl border border-amber-300 px-4 py-3 font-bold text-amber-800 disabled:opacity-40 sm:col-span-2"
+                        >
+                          ขอข้อมูลเพิ่มเติม
+                        </button>
                       )}
                       <button
                         disabled={saving}
