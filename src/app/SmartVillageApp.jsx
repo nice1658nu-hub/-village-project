@@ -5053,12 +5053,6 @@ function AdminReports({ incidents }) {
             </div>
           ))}
         </div>
-        <div className="mb-4 rounded-xl bg-blue-50 px-4 py-3 text-sm">
-          <b>ระยะเวลาแก้ไขเฉลี่ย:</b>{" "}
-          {avgResolveHours == null
-            ? "ยังไม่มีข้อมูล"
-            : formatHours(avgResolveHours)}
-        </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[11px]">
             <thead>
@@ -7037,10 +7031,9 @@ function DecisionAnalyticsCenter({
   const isOpen = (item) => !["resolved", "cancelled"].includes(item.status);
   const openRows = rows.filter(isOpen);
   const resolvedRows = rows.filter((item) => item.status === "resolved");
-  const overdueRows = openRows.filter((item) => {
-    if (item.dueAt) return new Date(item.dueAt) < new Date();
-    return getHoursDiff(item.date, new Date().toISOString()) > 24;
-  });
+  const overdueRows = openRows.filter(
+    (item) => item.dueAt && new Date(item.dueAt) < new Date(),
+  );
   const averageResolution = resolvedRows
     .map((item) => getHoursDiff(item.date, item.resolvedAt))
     .filter((value) => value != null && value >= 0);
@@ -7115,19 +7108,26 @@ function DecisionAnalyticsCenter({
       return result;
     }, {}),
   ).sort((a, b) => b.overdue - a.overdue || b.count - a.count);
-  const recommendations = [];
+  const statusRows = [
+    { label: "รอหมู่บ้านตรวจสอบ", count: rows.filter((item) => item.status === "pending" && !item.requiresTao).length, tone: "bg-amber-500" },
+    { label: "ส่งให้ อบต.แล้ว", count: rows.filter((item) => item.requiresTao && item.status === "pending").length, tone: "bg-indigo-500" },
+    { label: "กำลังดำเนินการ", count: rows.filter((item) => ["assigned", "in_progress", "waiting_review", "revision_requested"].includes(item.status)).length, tone: "bg-blue-600" },
+    { label: "เสร็จสิ้น", count: resolvedRows.length, tone: "bg-emerald-500" },
+    { label: "ยุติแล้ว", count: rows.filter((item) => item.status === "cancelled").length, tone: "bg-slate-400" },
+  ];
+  const findings = [];
   if (overdueRows.length)
-    recommendations.push(`เร่งติดตาม ${overdueRows.length} เรื่องที่เกินกำหนดก่อนงานใหม่`);
+    findings.push(`มีเรื่องเกินกำหนด ${overdueRows.length} เรื่อง จากกำหนดวันที่ อบต.บันทึกไว้`);
   if (topCategory)
-    recommendations.push(
-      `วางแผนป้องกัน “${topCategory.label}” เพราะพบมากที่สุด ${topCategory.count} เรื่อง`,
+    findings.push(
+      `ประเภทที่พบมากที่สุดคือ “${topCategory.label}” จำนวน ${topCategory.count} เรื่อง`,
     );
   if (topLocation && topLocation.count > 1)
-    recommendations.push(
-      `ตรวจพื้นที่ “${topLocation.label}” พบเหตุซ้ำ ${topLocation.count} ครั้ง`,
+    findings.push(
+      `พื้นที่ “${topLocation.label}” มีเหตุซ้ำ ${topLocation.count} ครั้ง`,
     );
-  if (!recommendations.length)
-    recommendations.push("ยังไม่มีสัญญาณปัญหาเร่งด่วนจากข้อมูลในช่วงนี้");
+  if (!findings.length)
+    findings.push("ข้อมูลในช่วงที่เลือกยังไม่พบรูปแบบปัญหาซ้ำหรือเรื่องเกินกำหนด");
 
   const BarList = ({ data, max, emptyText }) => (
     <div className="mt-5 space-y-4">
@@ -7159,9 +7159,9 @@ function DecisionAnalyticsCenter({
       <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">ศูนย์วิเคราะห์ข้อมูล</div>
-            <h2 className="mt-1 text-2xl font-black">เห็นปัญหา เพื่อตัดสินใจและลงมือแก้</h2>
-            <p className="mt-1 text-sm text-slate-300">คำนวณจากเรื่องร้องทุกข์จริง ไม่ใช่ข้อมูลตัวอย่าง</p>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">ภาพรวมและวิเคราะห์ข้อมูล</div>
+            <h2 className="mt-1 text-2xl font-black">สรุปสถานการณ์จากเรื่องร้องทุกข์</h2>
+            <p className="mt-1 text-sm text-slate-300">หน้านี้ใช้ดูข้อมูลและผลวิเคราะห์เท่านั้น ไม่มีคำสั่งจัดการเรื่อง</p>
           </div>
           <label className="text-sm font-bold text-slate-200">
             ช่วงข้อมูล
@@ -7180,6 +7180,13 @@ function DecisionAnalyticsCenter({
       </div>
 
       <div className="p-5 md:p-7">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-black text-slate-950">ภาพรวมข้อมูล</h3>
+            <p className="text-sm text-slate-500">คำนวณจาก {rows.length} เรื่องในช่วงเวลาที่เลือก</p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">อัปเดตจากข้อมูลระบบ</span>
+        </div>
         <div className="mb-5 grid gap-3 lg:grid-cols-[1.35fr_.65fr]">
           <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5">
             <div className="text-xs font-black uppercase tracking-wider text-blue-700">สรุปเพื่อการตัดสินใจ</div>
@@ -7218,6 +7225,26 @@ function DecisionAnalyticsCenter({
           ))}
         </div>
 
+        <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+          <div>
+            <div className="text-xs font-black text-slate-500">สถานะของเรื่อง</div>
+            <h3 className="text-lg font-black text-slate-950">เรื่องทั้งหมดอยู่ขั้นตอนไหน</h3>
+          </div>
+          <div className="mt-4 flex h-4 overflow-hidden rounded-full bg-slate-100">
+            {statusRows.filter((item) => item.count > 0).map((item) => (
+              <span key={item.label} className={item.tone} style={{ width: `${rows.length ? (item.count / rows.length) * 100 : 0}%` }} />
+            ))}
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {statusRows.map((item) => (
+              <div key={item.label} className="rounded-xl bg-slate-50 p-3">
+                <div className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-full ${item.tone}`} /><span className="text-xs font-bold text-slate-500">{item.label}</span></div>
+                <div className="mt-1 text-xl font-black text-slate-900">{item.count}</div>
+              </div>
+            ))}
+          </div>
+        </article>
+
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <article className="rounded-2xl border border-slate-200 p-5">
             <div className="flex items-center justify-between gap-3">
@@ -7240,13 +7267,13 @@ function DecisionAnalyticsCenter({
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
           <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <div className="text-xs font-black text-blue-700">ข้อเสนอแนะจากข้อมูล</div>
-            <h3 className="mt-1 text-lg font-black text-slate-950">สิ่งที่ควรทำต่อ</h3>
+            <div className="text-xs font-black text-blue-700">ผลที่ระบบพบ</div>
+            <h3 className="mt-1 text-lg font-black text-slate-950">ข้อค้นพบสำคัญจากข้อมูล</h3>
             <div className="mt-4 space-y-3">
-              {recommendations.map((text, index) => (
+              {findings.map((text) => (
                 <div key={text} className="flex gap-3 rounded-xl bg-white p-3 text-sm font-bold text-slate-700 shadow-sm">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs text-white">{index + 1}</span>
-                  <span className="pt-1">{text}</span>
+                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" />
+                  <span>{text}</span>
                 </div>
               ))}
             </div>
@@ -11984,7 +12011,7 @@ function AdminIncidentModal({
                   บ้านเลขที่ {inc.houseNo}
                 </p>
               </div>
-              {inc.dueAt && (
+              {inc.requiresTao && inc.dueAt && (
                 <div className={`p-4 rounded-2xl border ${new Date(inc.dueAt) < new Date() && !["resolved", "cancelled"].includes(inc.status) ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
                   <p className="text-sm font-semibold">กำหนดดำเนินการให้เสร็จ</p>
                   <p className="font-bold">{formatThaiDateTime(inc.dueAt)} น.</p>

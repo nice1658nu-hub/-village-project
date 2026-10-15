@@ -72,12 +72,17 @@ class StaffWorkflowController extends Controller
     public function progress(Request $request, Incident $incident)
     {
         $this->assignedStaffOnly($request, $incident);
-        abort_unless(in_array($incident->status, ['in_progress', 'revision_requested'], true), 409, 'Progress cannot be added in the current status.');
+        $isVillageVerification = $incident->status === 'pending' && ! $incident->requires_tao;
+        abort_unless(
+            $isVillageVerification || in_array($incident->status, ['in_progress', 'revision_requested'], true),
+            409,
+            'ไม่สามารถแนบหลักฐานในสถานะปัจจุบันได้'
+        );
         $data = $request->validate([
             'message' => ['nullable', 'string', 'max:3000'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
         ]);
-        abort_if(empty($data['message']) && ! $request->hasFile('image'), 422, 'A message or image is required.');
+        abort_if(empty($data['message']) && ! $request->hasFile('image'), 422, 'กรุณาระบุข้อความหรือแนบรูปหลักฐาน');
         $image = null;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('incident-progress', 'public');
