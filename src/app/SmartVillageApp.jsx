@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import writeExcelFile from "write-excel-file/browser";
 import {
   CircleMarker,
   LayersControl,
@@ -577,13 +578,14 @@ export default function App() {
     );
   if (currentView === "landing")
     return <LandingPage onNavigate={setCurrentView} news={news} />;
-  if (currentView === "auth")
+  if (["auth", "register"].includes(currentView))
     return (
       <AuthPage
         villages={villages}
         onLogin={handleLogin}
         onRegister={handleRegister}
         onBack={() => setCurrentView("landing")}
+        initialMode={currentView === "register" ? "register" : "login"}
       />
     );
 
@@ -827,7 +829,7 @@ function LandingPage({ onNavigate, news }) {
                   {label}<ChevronRight className="h-5 w-5 lg:h-6 lg:w-6" />
                 </button>
               ))}
-              <button type="button" onClick={() => onNavigate("auth")} className="mt-1 w-full rounded-xl border border-blue-200 px-4 py-3 text-left font-bold text-blue-700 hover:bg-blue-50 lg:px-5 lg:py-4 lg:text-lg">
+              <button type="button" onClick={() => onNavigate("register")} className="mt-1 w-full rounded-xl border border-blue-200 px-4 py-3 text-left font-bold text-blue-700 hover:bg-blue-50 lg:px-5 lg:py-4 lg:text-lg">
                 สมัครสมาชิก
               </button>
             </div>
@@ -1276,10 +1278,10 @@ function PasswordInput({ label, className = "", ...props }) {
   );
 }
 
-function AuthPage({ villages, onLogin, onRegister, onBack }) {
+function AuthPage({ villages, onLogin, onRegister, onBack, initialMode = "login" }) {
   const params = new URLSearchParams(window.location.search);
   const resetToken = params.get("reset_token") || "";
-  const [mode, setMode] = useState(resetToken ? "reset" : "login");
+  const [mode, setMode] = useState(resetToken ? "reset" : initialMode);
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [reg, setReg] = useState({
@@ -4804,45 +4806,117 @@ function AdminReports({ incidents }) {
     if (!filtered.length) return alert("ไม่มีข้อมูลตามตัวกรองสำหรับออกรายงาน");
     setExporting("excel");
     try {
-      const headers = [
-        "เลขที่งาน",
-        "วันที่แจ้ง",
-        "หัวข้อ",
-        "หมวดหมู่",
-        "ผู้แจ้ง",
-        "บ้านเลขที่",
-        "สถานที่",
-        "สถานะ",
-        "ความสำคัญ",
-        "วันที่เสร็จ",
-        "ระยะเวลา (ชม.)",
-      ];
-      const rows = filtered.map((item) => [
-        String(item.id),
-        formatThaiDateTime(item.date),
-        item.title || "",
-        item.category || "",
-        item.userName || "",
-        item.houseNo || "",
-        item.location || "",
-        getStatusLabel(item.status),
-        getPriorityMeta(item.priority).label,
-        item.resolvedAt ? formatThaiDateTime(item.resolvedAt) : "-",
-        getHoursDiff(item.date, item.resolvedAt) == null
-          ? ""
-          : getHoursDiff(item.date, item.resolvedAt).toFixed(1),
-      ]);
-      const csvCell = (value) => {
-        const text = String(value ?? "");
-        const safeText = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
-        return `"${safeText.replace(/"/g, '""')}"`;
+      const border = { borderColor: "#CBD5E1", borderStyle: "thin" };
+      const titleCell = {
+        value: "รายงานสรุปการแจ้งเหตุ",
+        columnSpan: 7,
+        fontSize: 18,
+        fontWeight: "bold",
+        textColor: "#172554",
+        height: 30,
       };
-      const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
-      downloadBlob(
-        csv,
-        "text/csv;charset=utf-8",
-        `smart-village-report-${fileDate}.csv`,
-      );
+      const subtitleCell = {
+        value: `${VILLAGE_NAME} · จัดทำเมื่อ ${generatedAt} น.`,
+        columnSpan: 7,
+        fontWeight: "bold",
+        textColor: "#475569",
+        height: 24,
+      };
+      const summaryCell = (label, value, color) => ({
+        value: `${value}\n${label}`,
+        fontWeight: "bold",
+        fontSize: 12,
+        textColor: color,
+        backgroundColor: "#F8FAFC",
+        align: "center",
+        alignVertical: "center",
+        wrap: true,
+        height: 42,
+        ...border,
+      });
+      const headerCell = (value) => ({
+        value,
+        fontWeight: "bold",
+        textColor: "#FFFFFF",
+        backgroundColor: "#172554",
+        align: "center",
+        alignVertical: "center",
+        height: 28,
+        ...border,
+      });
+      const bodyCell = (value, options = {}) => ({
+        value,
+        alignVertical: "center",
+        wrap: true,
+        height: 34,
+        ...border,
+        ...options,
+      });
+      const sheetData = [
+        [titleCell, null, null, null, null, null, null],
+        [subtitleCell, null, null, null, null, null, null],
+        [
+          summaryCell("ทั้งหมด", filtered.length, "#0F172A"),
+          summaryCell("รอตรวจสอบ", pendingCount, "#C2410C"),
+          summaryCell("กำลังดำเนินการ", activeCount, "#1D4ED8"),
+          summaryCell("เสร็จสิ้น", resolvedCount, "#15803D"),
+          { value: "", columnSpan: 3 }, null, null,
+        ],
+        [{
+          value: `ระยะเวลาแก้ไขเฉลี่ย: ${avgResolveHours == null ? "ยังไม่มีข้อมูล" : formatHours(avgResolveHours)}`,
+          columnSpan: 7,
+          fontWeight: "bold",
+          backgroundColor: "#EFF6FF",
+          textColor: "#172554",
+          height: 26,
+        }, null, null, null, null, null, null],
+        ["เลขที่", "วันที่แจ้ง", "เรื่อง / สถานที่", "หมวดหมู่", "สถานะ", "ความสำคัญ", "วันที่เสร็จ"].map(headerCell),
+        ...filtered.map((item, index) => {
+          const fill = index % 2 ? "#F8FAFC" : "#FFFFFF";
+          const createdAt = item.date ? new Date(item.date) : null;
+          const resolvedAt = item.resolvedAt ? new Date(item.resolvedAt) : null;
+          return [
+            bodyCell(`#${item.id}`, { align: "center", backgroundColor: fill }),
+            bodyCell(createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : "-", {
+              type: createdAt && !Number.isNaN(createdAt.getTime()) ? Date : String,
+              format: "dd/mm/yyyy hh:mm",
+              align: "center",
+              backgroundColor: fill,
+            }),
+            bodyCell(`${item.title || "-"}\n${item.location || "-"}`, {
+              fontWeight: "bold",
+              backgroundColor: fill,
+            }),
+            bodyCell(item.category || "-", { backgroundColor: fill }),
+            bodyCell(getStatusLabel(item.status), { align: "center", backgroundColor: fill }),
+            bodyCell(getPriorityMeta(item.priority).label, { align: "center", backgroundColor: fill }),
+            bodyCell(resolvedAt && !Number.isNaN(resolvedAt.getTime()) ? resolvedAt : "-", {
+              type: resolvedAt && !Number.isNaN(resolvedAt.getTime()) ? Date : String,
+              format: "dd/mm/yyyy hh:mm",
+              align: "center",
+              backgroundColor: fill,
+            }),
+          ];
+        }),
+      ];
+      await writeExcelFile(sheetData, {
+        sheet: "รายงานการแจ้งเหตุ",
+        columns: [
+          { width: 12 },
+          { width: 22 },
+          { width: 34 },
+          { width: 28 },
+          { width: 20 },
+          { width: 16 },
+          { width: 22 },
+        ],
+        stickyRowsCount: 5,
+        orientation: "landscape",
+        showGridLines: false,
+      }, {
+        fontFamily: "Tahoma",
+        fontSize: 11,
+      }).toFile(`smart-village-report-${fileDate}.xlsx`);
     } catch (error) {
       console.error(error);
       alert("สร้างไฟล์ Excel ไม่สำเร็จ");
@@ -8501,6 +8575,29 @@ function TaoDashboard({
             <div className="mt-4">
               <IncidentLocationPanel incident={selectedCase} compact />
             </div>
+            {selectedCase.feedback?.rating && (
+              <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h5 className="font-black text-amber-950">ผลประเมินจากประชาชน</h5>
+                  <span className="text-sm font-bold text-amber-800">
+                    {selectedCase.feedback.rating} / 5 คะแนน
+                  </span>
+                </div>
+                <div className="mt-2 flex gap-1" aria-label={`${selectedCase.feedback.rating} ดาว`}>
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <span
+                      key={value}
+                      className={`text-2xl ${value <= Number(selectedCase.feedback.rating) ? "text-amber-500" : "text-slate-300"}`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                  {selectedCase.feedback.comment || "ไม่มีความคิดเห็นเพิ่มเติม"}
+                </p>
+              </section>
+            )}
             {false && selectedCase.budgetRequest ? (
               <div className="mt-5 space-y-3">
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -12162,6 +12259,30 @@ function AdminIncidentModal({
               {inc.description}
             </div>
           </div>
+
+          {villageMode && inc.feedback?.rating && (
+            <section className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="font-black text-amber-950">ผลประเมินจากประชาชน</h3>
+                <span className="text-sm font-bold text-amber-800">
+                  {inc.feedback.rating} / 5 คะแนน
+                </span>
+              </div>
+              <div className="mt-2 flex gap-1" aria-label={`${inc.feedback.rating} ดาว`}>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <span
+                    key={value}
+                    className={`text-2xl ${value <= Number(inc.feedback.rating) ? "text-amber-500" : "text-slate-300"}`}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                {inc.feedback.comment || "ไม่มีความคิดเห็นเพิ่มเติม"}
+              </p>
+            </section>
+          )}
 
           {villageMode && !inc.requiresTao && !["resolved", "cancelled"].includes(inc.status) && (
             <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-5">
