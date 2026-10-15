@@ -7102,7 +7102,7 @@ function DecisionAnalyticsCenter({
     ? Math.max(1, Math.ceil((trendRangeEnd - trendRangeStart) / (24 * 60 * 60 * 1000)) + 1)
     : 0;
   const trendMode = trendDays <= 14 ? "day" : trendDays <= 120 ? "week" : "month";
-  const trendBuckets = new Map();
+  const trendBuckets = new globalThis.Map();
   if (trendRangeStart && trendRangeEnd) {
     if (trendMode === "day") {
       for (let cursor = new Date(trendRangeStart); cursor <= trendRangeEnd; cursor.setDate(cursor.getDate() + 1)) {
