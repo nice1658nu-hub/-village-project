@@ -2380,20 +2380,18 @@ function CitizenFeedback({ incident, onSaved }) {
   const [rating, setRating] = useState(incident.feedback?.rating || 0);
   const [comment, setComment] = useState(incident.feedback?.comment || "");
   const [saving, setSaving] = useState(false);
-  const [decision, setDecision] = useState("confirm");
 
   const save = async () => {
-    if (decision === "confirm" && !rating) return alert("กรุณาเลือกคะแนน 1–5 ดาว");
-    if (decision === "reopen" && !comment.trim()) return alert("กรุณาระบุว่าส่วนใดยังไม่เรียบร้อย");
+    if (!rating) return alert("กรุณาเลือกคะแนน 1–5 ดาว");
     setSaving(true);
     try {
       const data = await api.saveIncidentFeedback(incident.id, {
-        decision,
-        rating: decision === "confirm" ? rating : null,
+        decision: "confirm",
+        rating,
         comment: comment.trim() || null,
       });
       onSaved(data.feedback, data.incident);
-      alert(decision === "confirm" ? "ยืนยันผลและบันทึกการประเมินแล้ว" : "เปิดเรื่องกลับให้เจ้าหน้าที่ดำเนินการต่อแล้ว");
+      alert("บันทึกการประเมินแล้ว");
     } catch (error) {
       alert(error?.message || "บันทึกการประเมินไม่สำเร็จ");
     } finally {
@@ -2404,11 +2402,7 @@ function CitizenFeedback({ incident, onSaved }) {
   return (
     <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
       <div className="font-bold text-amber-950">ประเมินผลหลังแก้ไข</div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => setDecision("confirm")} className={`rounded-lg border px-3 py-2 text-sm font-bold ${decision === "confirm" ? "border-emerald-600 bg-emerald-600 text-white" : "bg-white"}`}>ยืนยันว่าแก้แล้ว</button>
-        <button type="button" onClick={() => setDecision("reopen")} className={`rounded-lg border px-3 py-2 text-sm font-bold ${decision === "reopen" ? "border-red-600 bg-red-600 text-white" : "bg-white"}`}>ยังไม่เรียบร้อย</button>
-      </div>
-      {decision === "confirm" && <div className="mt-2 flex gap-1" aria-label="คะแนนความพึงพอใจ">
+      <div className="mt-3 flex gap-1" aria-label="คะแนนความพึงพอใจ">
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             key={value}
@@ -2420,12 +2414,12 @@ function CitizenFeedback({ incident, onSaved }) {
             ★
           </button>
         ))}
-      </div>}
+      </div>
       <textarea
         value={comment}
         onChange={(event) => setComment(event.target.value)}
         className="mt-2 h-16 w-full resize-none rounded-lg border bg-white p-2 text-sm"
-        placeholder={decision === "reopen" ? "ระบุว่าส่วนใดยังมีปัญหา (จำเป็น)" : "ความคิดเห็นเพิ่มเติม (ไม่บังคับ)"}
+        placeholder="ความคิดเห็นเพิ่มเติม (ไม่บังคับ)"
       />
       <button
         type="button"
@@ -2433,11 +2427,7 @@ function CitizenFeedback({ incident, onSaved }) {
         onClick={save}
         className="mt-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
       >
-        {saving
-          ? "กำลังบันทึก..."
-          : decision === "reopen" ? "ส่งกลับให้แก้ไขต่อ" : incident.feedback
-            ? "แก้ไขการประเมิน"
-            : "ส่งการประเมิน"}
+        {saving ? "กำลังบันทึก..." : "ส่งการประเมิน"}
       </button>
     </div>
   );
@@ -2722,7 +2712,7 @@ function UserDashboard({
               <div>
                 <p className="text-sm font-bold text-blue-200">ข่าวที่เกี่ยวข้องกับพื้นที่ของคุณ</p>
                 <h2 className="mt-1 text-2xl font-black sm:text-3xl">ข่าวสารและประกาศ</h2>
-                <p className="mt-2 text-sm text-slate-300">จาก{citizenVillageLabel} · เรียงข่าวล่าสุดก่อน</p>
+                <p className="mt-2 text-sm text-slate-300">จาก{citizenVillageLabel} </p>
               </div>
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10"><Bell className="h-7 w-7" /></span>
             </div>
@@ -3260,15 +3250,23 @@ function UserDashboard({
                             title: "หมู่บ้านส่งเรื่องให้ อบต.",
                             note: "หมู่บ้านตรวจสอบข้อมูลและส่งต่อให้ อบต.ดำเนินการแล้ว",
                           }] : []),
-                          ...(inc.histories || []).map((item) => ({
-                            id: `h-${item.id}`,
-                            at: item.created_at,
-                            title: getStatusLabel(item.to_status),
-                            note: item.note === "Incident created" ? "ระบบได้รับเรื่องแจ้งของคุณแล้ว" : item.note,
-                          })),
+                          ...(inc.histories || [])
+                            .filter(
+                              (item) =>
+                                !item.from_status ||
+                                item.from_status !== item.to_status,
+                            )
+                            .map((item) => ({
+                              id: `h-${item.id}`,
+                              at: item.created_at,
+                              title: getStatusLabel(item.to_status),
+                              note: item.note === "Incident created" ? "ระบบได้รับเรื่องแจ้งของคุณแล้ว" : item.note,
+                            })),
                           ...(inc.updates || [])
                             .filter((item) =>
                               item.type !== "village_verification" &&
+                              item.type !== "info_request" &&
+                              item.type !== "info_response" &&
                               !String(item.message || "").startsWith("หลักฐานยืนยันจากหมู่บ้าน:"),
                             )
                             .map((item) => ({
@@ -8468,6 +8466,7 @@ function TaoDashboard({
               const villageEvidence = (selectedCase.updates || []).filter(
                 (item) =>
                   item.type === "village_verification" ||
+                  item.type === "info_response" ||
                   String(item.message || "").startsWith("หลักฐานยืนยันจากหมู่บ้าน:"),
               );
               if (!villageEvidence.length) return null;
@@ -8482,7 +8481,7 @@ function TaoDashboard({
                       <div key={item.id} className="grid gap-3 rounded-xl bg-white p-4 sm:grid-cols-[1fr_auto]">
                         <div>
                           <div className="text-xs font-bold text-slate-500">
-                            {item.user?.name || "ผู้ดูแลหมู่บ้าน"} · {formatThaiDateTime(item.created_at)} น.
+                            {item.type === "info_response" ? "ข้อมูลเพิ่มเติม" : "ผลตรวจสอบหน้างาน"} · {item.user?.name || "ผู้ดูแลหมู่บ้าน"} · {formatThaiDateTime(item.created_at)} น.
                           </div>
                           <p className="mt-1 whitespace-pre-wrap font-bold text-slate-800">
                             {String(item.message || "").replace(/^หลักฐานยืนยันจากหมู่บ้าน:\s*/, "")}
@@ -8875,7 +8874,7 @@ function TaoDashboard({
                           onClick={() => updateGeneralCase("resolved")}
                           className="min-h-12 rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white disabled:opacity-50 sm:col-span-2"
                         >
-                          บันทึกผลและส่งให้ประชาชนยืนยัน →
+                          ยืนยันดำเนินการเสร็จ
                         </button>
                       )}
                       {selectedCase.status === "pending" && (
@@ -12010,8 +12009,21 @@ function AdminIncidentModal({
   const [inspectionImage, setInspectionImage] = useState(null);
   const [forwardingToTao, setForwardingToTao] = useState(false);
   const [forwardNote, setForwardNote] = useState("");
+  const [infoResponse, setInfoResponse] = useState("");
+  const [infoResponseImage, setInfoResponseImage] = useState(null);
+  const [sendingInfoResponse, setSendingInfoResponse] = useState(false);
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+
+  const latestInfoRequest = [...(inc.updates || [])]
+    .filter((item) => item.type === "info_request")
+    .sort((a, b) => Number(b.id) - Number(a.id))[0];
+  const latestInfoResponse = [...(inc.updates || [])]
+    .filter((item) => item.type === "info_response")
+    .sort((a, b) => Number(b.id) - Number(a.id))[0];
+  const needsInformationResponse =
+    latestInfoRequest &&
+    (!latestInfoResponse || Number(latestInfoResponse.id) < Number(latestInfoRequest.id));
 
   const handleResImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -12058,6 +12070,27 @@ function AdminIncidentModal({
       alert(error?.message || "ส่งเรื่องให้ อบต.ไม่สำเร็จ");
     } finally {
       setForwardingToTao(false);
+    }
+  };
+
+  const sendAdditionalInformation = async () => {
+    if (!infoResponse.trim() && !infoResponseImage)
+      return alert("กรุณาระบุข้อมูลเพิ่มเติมหรือแนบรูป");
+    setSendingInfoResponse(true);
+    try {
+      const payload = new FormData();
+      payload.append("action", "info_response");
+      if (infoResponse.trim()) payload.append("message", infoResponse.trim());
+      if (infoResponseImage) payload.append("image", infoResponseImage);
+      const result = await api.addIncidentProgress(inc.id, payload);
+      onIncidentReplace(result.incident);
+      setInfoResponse("");
+      setInfoResponseImage(null);
+      alert("ส่งข้อมูลเพิ่มเติมให้ อบต.แล้ว");
+    } catch (error) {
+      alert(error?.message || "ส่งข้อมูลเพิ่มเติมไม่สำเร็จ");
+    } finally {
+      setSendingInfoResponse(false);
     }
   };
 
@@ -12166,14 +12199,14 @@ function AdminIncidentModal({
                 >
                   {forwardingToTao
                     ? "กำลังส่ง..."
-                    : "พบเหตุจริง — ส่งให้ อบต.ดำเนินการ →"}
+                    : "ยืนยันและส่งต่อ อบต."}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCancelForm(true)}
                   className="rounded-xl border border-red-300 bg-white px-5 py-3 font-bold text-red-600 hover:bg-red-50"
                 >
-                  ไม่พบเหตุ / ข้อมูลไม่จริง
+                  ยุติเรื่อง
                 </button>
               </div>
 
@@ -12217,9 +12250,44 @@ function AdminIncidentModal({
           )}
 
           {villageMode && inc.requiresTao && (
-            <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 font-bold text-emerald-800">
-              ส่งเรื่องให้ อบต.แล้ว หมู่บ้านสามารถติดตามสถานะและช่วยประสานข้อมูลในพื้นที่ได้
-            </div>
+            needsInformationResponse ? (
+              <section className="mb-8 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5">
+                <h3 className="font-black text-amber-950">อบต.ขอข้อมูลเพิ่มเติม</h3>
+                <p className="mt-2 rounded-xl bg-white p-3 font-bold text-slate-800">
+                  {latestInfoRequest.message || "กรุณาติดต่อ อบต.เพื่อสอบถามรายละเอียด"}
+                </p>
+                <label className="mt-4 block text-sm font-bold text-slate-800">
+                  ข้อมูลที่ต้องการส่งกลับ
+                  <textarea
+                    value={infoResponse}
+                    onChange={(event) => setInfoResponse(event.target.value)}
+                    className="mt-2 h-24 w-full rounded-xl border border-amber-200 bg-white p-3 font-normal outline-none focus:border-amber-500"
+                    placeholder="ระบุข้อมูลเพิ่มเติมตามที่ อบต.ร้องขอ"
+                  />
+                </label>
+                <label className="mt-3 block text-sm font-bold text-slate-800">
+                  รูปประกอบ (ถ้ามี)
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => setInfoResponseImage(event.target.files?.[0] || null)}
+                    className="mt-2 w-full rounded-xl border border-amber-200 bg-white p-3 font-normal"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={sendingInfoResponse || (!infoResponse.trim() && !infoResponseImage)}
+                  onClick={sendAdditionalInformation}
+                  className="mt-4 w-full rounded-xl bg-amber-600 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                >
+                  {sendingInfoResponse ? "กำลังส่ง..." : "ส่งข้อมูลเพิ่มเติม"}
+                </button>
+              </section>
+            ) : (
+              <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 font-bold text-emerald-800">
+                ส่งเรื่องให้ อบต.แล้ว หมู่บ้านสามารถติดตามสถานะและช่วยประสานข้อมูลในพื้นที่ได้
+              </div>
+            )
           )}
 
           {!villageMode && (

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
+use App\Models\IncidentUpdate;
 use App\Models\User;
 use App\Models\VillageNotification;
 use Illuminate\Http\Request;
@@ -142,6 +143,12 @@ class IncidentController extends Controller
             'cancelled' => 'ยุติเรื่องแล้ว',
         ];
         if (($data['action'] ?? null) === 'request_info') {
+            IncidentUpdate::create([
+                'incident_id' => $incident->id,
+                'user_id' => $user->id,
+                'message' => $data['note'] ?? null,
+                'type' => 'info_request',
+            ]);
             $notificationTitles[$data['status']] = 'เจ้าหน้าที่ขอข้อมูลเพิ่มเติม';
         } elseif (($data['action'] ?? null) === 'merge_duplicate') {
             $notificationTitles[$data['status']] = 'รวมเรื่องนี้กับเรื่องเดิมแล้ว';

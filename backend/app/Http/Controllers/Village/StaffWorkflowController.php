@@ -73,14 +73,16 @@ class StaffWorkflowController extends Controller
     {
         $this->assignedStaffOnly($request, $incident);
         $isVillageVerification = $incident->status === 'pending' && ! $incident->requires_tao;
+        $isInformationResponse = $incident->requires_tao && $request->input('action') === 'info_response';
         abort_unless(
-            $isVillageVerification || in_array($incident->status, ['in_progress', 'revision_requested'], true),
+            $isVillageVerification || $isInformationResponse || in_array($incident->status, ['in_progress', 'revision_requested'], true),
             409,
             'ไม่สามารถแนบหลักฐานในสถานะปัจจุบันได้'
         );
         $data = $request->validate([
             'message' => ['nullable', 'string', 'max:3000'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'action' => ['nullable', Rule::in(['info_response'])],
         ]);
         abort_if(empty($data['message']) && ! $request->hasFile('image'), 422, 'กรุณาระบุข้อความหรือแนบรูปหลักฐาน');
         $image = null;
@@ -88,7 +90,26 @@ class StaffWorkflowController extends Controller
             $path = $request->file('image')->store('incident-progress', 'public');
             $image = Storage::disk('public')->url($path);
         }
-        $update = IncidentUpdate::create(['incident_id' => $incident->id, 'user_id' => $request->user()->id, 'message' => $data['message'] ?? null, 'image' => $image, 'type' => 'progress']);
+        $update = IncidentUpdate::create([
+            'incident_id' => $incident->id,
+            'user_id' => $request->user()->id,
+            'message' => $data['message'] ?? null,
+            'image' => $image,
+            'type' => $isInformationResponse ? 'info_response' : 'progress',
+        ]);
+        if ($isInformationResponse) {
+            User::query()
+                ->whereIn('role', ['tao', 'admin'])
+                ->where('account_status', 'approved')
+                ->pluck('id')
+                ->each(fn ($userId) => VillageNotification::create([
+                    'user_id' => $userId,
+                    'title' => 'หมู่บ้านส่งข้อมูลเพิ่มเติมแล้ว',
+                    'description' => $incident->title.' · '.($data['message'] ?? 'มีรูปประกอบเพิ่มเติม'),
+                    'type' => 'incident_status',
+                    'data' => ['incident_id' => $incident->id, 'action' => 'info_response'],
+                ]));
+        }
         return response()->json(['update' => $update->load('user'), 'incident' => $this->load($incident)], 201);
     }
 
