@@ -3458,11 +3458,11 @@ function UserDashboard({
 // ==========================================
 // MAP COMPONENTS
 // ==========================================
-// บ้านไผ่ถ้ำ หมู่ 5 ตำบลมะต้อง อำเภอพรหมพิราม จังหวัดพิษณุโลก
-const VILLAGE_MAP_CENTER = [17.1161397, 100.1908249];
+// ศูนย์กลางพื้นที่ให้บริการขององค์การบริหารส่วนตำบลมะต้อง
+const VILLAGE_MAP_CENTER = [17.07948, 100.1799];
 const VILLAGE_MAP_BOUNDS = [
-  [17.0911397, 100.1658249],
-  [17.1411397, 100.2158249],
+  [17.02, 100.11],
+  [17.16, 100.24],
 ];
 
 class MapErrorBoundary extends React.Component {
@@ -3718,7 +3718,7 @@ function FitIncidentBounds({ incidents }) {
   return null;
 }
 
-function SpatialAnalyticsMap({ incidents }) {
+function SpatialAnalyticsMap({ incidents, lockToTao = false }) {
   const validIncidents = incidents.filter(
     (item) =>
       Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)),
@@ -3731,10 +3731,12 @@ function SpatialAnalyticsMap({ incidents }) {
     ).length;
 
   return (
-    <div className="relative isolate z-0 h-80 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:h-96">
+    <div className="relative isolate z-0 h-72 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:h-80">
       <MapContainer
         center={VILLAGE_MAP_CENTER}
-        zoom={14}
+        zoom={lockToTao ? 13 : 14}
+        maxBounds={lockToTao ? VILLAGE_MAP_BOUNDS : undefined}
+        maxBoundsViscosity={lockToTao ? 1 : 0}
         scrollWheelZoom
         className="relative z-0 h-full w-full"
       >
@@ -3758,7 +3760,7 @@ function SpatialAnalyticsMap({ incidents }) {
             />
           </LayersControl.Overlay>
         </LayersControl>
-        <FitIncidentBounds incidents={validIncidents} />
+        {!lockToTao && <FitIncidentBounds incidents={validIncidents} />}
         {validIncidents.map((incident) => {
           const density = densityAt(incident);
           const isClosed = ["resolved", "cancelled"].includes(incident.status);
@@ -7258,7 +7260,7 @@ function DecisionAnalyticsCenter({
     findings.push("ข้อมูลในช่วงที่เลือกยังไม่พบรูปแบบปัญหาซ้ำหรือเรื่องเกินกำหนด");
 
   const BarList = ({ data, max, emptyText }) => (
-    <div className="mt-5 space-y-4">
+    <div className="mt-4 space-y-3">
       {data.map((row) => (
         <div key={row.label}>
           <div className="mb-1.5 flex items-start justify-between gap-3 text-sm">
@@ -7286,21 +7288,21 @@ function DecisionAnalyticsCenter({
 
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-7">
+      <div className="border-b border-slate-200 bg-white px-5 py-5 md:px-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">ภาพรวมและวิเคราะห์ข้อมูล</div>
-            <h2 className="mt-1 text-2xl font-black">สรุปสถานการณ์จากเรื่องร้องทุกข์</h2>
-            <p className="mt-1 text-sm text-slate-300">หน้านี้ใช้ดูข้อมูลและผลวิเคราะห์เท่านั้น ไม่มีคำสั่งจัดการเรื่อง</p>
+            <div className="text-xs font-black text-blue-600">วิเคราะห์ข้อมูล</div>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">สถานการณ์เรื่องร้องทุกข์</h2>
+            <p className="mt-1 text-sm text-slate-500">สรุปจากข้อมูลที่ประชาชนแจ้งและผลการดำเนินงานของเจ้าหน้าที่</p>
           </div>
           <div className={`grid w-full gap-3 ${isTao ? "sm:w-[34rem] sm:grid-cols-2" : "sm:w-80"}`}>
             {isTao && (
-              <label className="text-sm font-bold text-slate-200">
+              <label className="text-sm font-bold text-slate-600">
                 หมู่บ้าน
                 <select
                   value={analysisVillage}
                   onChange={(event) => setAnalysisVillage(event.target.value)}
-                  className="mt-1 h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm font-bold text-slate-900"
+                  className="mt-1 h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900"
                 >
                   <option value="all">ทุกหมู่บ้าน</option>
                   {villages.map((village) => (
@@ -7315,7 +7317,7 @@ function DecisionAnalyticsCenter({
               from={analysisDateFrom}
               to={analysisDateTo}
               label="ช่วงข้อมูล"
-              labelClassName="text-sm text-slate-200"
+              labelClassName="text-sm text-slate-600"
               onChange={(nextFrom, nextTo) => {
                 setAnalysisDateFrom(nextFrom);
                 setAnalysisDateTo(nextTo);
@@ -7326,81 +7328,47 @@ function DecisionAnalyticsCenter({
       </div>
 
       <div className="p-5 md:p-7">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-xl font-black text-slate-950">ภาพรวมข้อมูล</h3>
-            <p className="text-sm text-slate-500">คำนวณจาก {rows.length} เรื่องในช่วงเวลาที่เลือก</p>
-          </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">อัปเดตจากข้อมูลระบบ</span>
-        </div>
-        <div className="mb-5 grid gap-3 lg:grid-cols-[1.35fr_.65fr]">
-          <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5">
-            <div className="text-xs font-black uppercase tracking-wider text-blue-700">สรุปเพื่อการตัดสินใจ</div>
-            <div className="mt-2 text-xl font-black text-slate-950">
-              {topCategory
-                ? `ปัญหา “${topCategory.label}” เป็นเรื่องหลักในช่วงนี้`
-                : "ยังมีข้อมูลไม่พอสำหรับสรุปแนวโน้ม"}
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {topCategory
-                ? `พบ ${topCategory.count} เรื่อง${topLocation ? ` และพื้นที่ที่ควรเฝ้าระวังคือ ${topLocation.label}` : ""} ขณะนี้มีงานเกินกำหนด ${overdueRows.length} เรื่อง`
-                : "เมื่อมีเรื่องร้องทุกข์ ระบบจะวิเคราะห์ประเภท พื้นที่ซ้ำ ระยะเวลา และผลการแก้ไขให้โดยอัตโนมัติ"}
-            </p>
-          </div>
-          <div className={`rounded-2xl border p-5 ${trendPercent > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
-            <div className="text-sm font-bold text-slate-600">เทียบช่วงก่อนหน้า</div>
-            <div className={`mt-2 text-3xl font-black ${trendPercent > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-              {!rangeDuration || trendPercent == null ? "—" : `${trendPercent > 0 ? "+" : ""}${trendPercent}%`}
-            </div>
-            <div className="mt-1 text-sm text-slate-500">
-              {!rangeDuration
-                ? "เลือกช่วงวันเพื่อเปรียบเทียบ"
-                : trendPercent == null
-                  ? "ยังไม่มีข้อมูลในช่วงก่อนหน้า"
-                  : trendPercent > 0
-                    ? "จำนวนเรื่องเพิ่มขึ้น"
-                    : trendPercent < 0
-                      ? "จำนวนเรื่องลดลง"
-                      : "จำนวนเรื่องคงที่"}
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 lg:grid-cols-4">
           {[
             ["เรื่องในช่วงนี้", rows.length, "text-slate-950"],
             ["ยังไม่เสร็จ", openRows.length, "text-amber-700"],
             ["เกินกำหนด", overdueRows.length, "text-red-700"],
             ["อัตราแก้สำเร็จ", `${resolutionRate}%`, "text-emerald-700"],
           ].map(([label, value, tone]) => (
-            <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className={`text-2xl font-black md:text-3xl ${tone}`}>{value}</div>
-              <div className="mt-1 text-sm font-bold text-slate-500">{label}</div>
+            <div key={label} className="bg-white p-4">
+              <div className={`text-2xl font-black ${tone}`}>{value}</div>
+              <div className="mt-0.5 text-sm font-bold text-slate-500">{label}</div>
             </div>
           ))}
         </div>
+        <div className="mt-4 flex flex-col gap-1 rounded-xl bg-slate-50 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="font-bold text-slate-700">
+            {topCategory ? `ปัญหาหลัก: ${topCategory.label} ${topCategory.count} เรื่อง` : "ยังไม่มีข้อมูลเพียงพอสำหรับสรุป"}
+            {topLocation && topLocation.count > 1 ? ` · พบซ้ำมากสุดที่ ${topLocation.label}` : ""}
+          </div>
+          <div className="shrink-0 font-bold text-slate-500">
+            เทียบช่วงก่อนหน้า: {!rangeDuration || trendPercent == null ? "ไม่มีข้อมูล" : `${trendPercent > 0 ? "+" : ""}${trendPercent}%`}
+          </div>
+        </div>
 
-        <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+        <article className="mt-4 rounded-2xl border border-slate-200 p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="text-xs font-black text-cyan-700">แนวโน้มตามเวลา</div>
-              <h3 className="text-lg font-black text-slate-950">จำนวนเหตุเพิ่มขึ้นหรือลดลงเมื่อใด</h3>
+              <h3 className="text-lg font-black text-slate-950">แนวโน้มจำนวนเหตุ</h3>
               <p className="mt-1 text-sm text-slate-500">
                 {trendMode === "day" ? "แสดงรายวัน" : trendMode === "week" ? "แสดงรายสัปดาห์" : "แสดงรายเดือน"} จากวันที่ประชาชนแจ้งเหตุ
               </p>
             </div>
-            <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-black text-cyan-800">
-              ข้อมูลจากเรื่องร้องทุกข์ {rows.length} เรื่อง
-            </span>
           </div>
           {trendRows.length ? (
-            <div className="mt-5 overflow-x-auto pb-2">
-              <div className="flex h-52 min-w-[42rem] items-end gap-2 border-b border-slate-200 px-2">
+            <div className="mt-3 overflow-x-auto pb-1">
+              <div className="flex h-40 min-w-[42rem] items-end gap-2 border-b border-slate-200 px-2">
                 {trendRows.map((item) => (
                   <div key={item.key} className="flex h-full min-w-10 flex-1 flex-col items-center justify-end">
                     <div className="mb-1 text-xs font-black text-slate-700">{item.count}</div>
                     <div
                       className={`w-full max-w-12 rounded-t-lg ${item.count ? "bg-cyan-600" : "bg-slate-100"}`}
-                      style={{ height: `${item.count ? Math.max(12, (item.count / maxTrend) * 135) : 4}px` }}
+                      style={{ height: `${item.count ? Math.max(10, (item.count / maxTrend) * 88) : 4}px` }}
                       title={`${item.label}: ${item.count} เรื่อง`}
                     />
                     <div className="mt-2 h-8 text-center text-[10px] font-bold leading-4 text-slate-500">{item.label}</div>
@@ -7415,46 +7383,45 @@ function DecisionAnalyticsCenter({
           )}
         </article>
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <article className="rounded-2xl border border-slate-200 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-black text-blue-600">1 · แยกประเภทปัญหา</div>
-                <h3 className="text-lg font-black text-slate-950">ชุมชนกำลังเจอปัญหาอะไร</h3>
+                <h3 className="text-lg font-black text-slate-950">ประเภทปัญหา</h3>
+                <p className="mt-1 text-sm text-slate-500">สัดส่วนเรื่องที่ประชาชนแจ้ง</p>
               </div>
-              {topCategory && <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">อันดับ 1: {topCategory.label}</span>}
             </div>
             <BarList data={categoryRows} max={maxCategory} emptyText="ยังไม่มีข้อมูลประเภทปัญหา" />
           </article>
           <article className="rounded-2xl border border-slate-200 p-5">
-            <div className="text-xs font-black text-violet-600">2 · ระยะเวลาดำเนินการ</div>
-            <h3 className="text-lg font-black text-slate-950">แต่ละขั้นตอนใช้เวลานานเท่าไร</h3>
-            <p className="mt-1 text-xs text-slate-500">ใช้ค่ากลางของข้อมูลจริง เพื่อไม่ให้เคสที่นานผิดปกติทำให้ผลคลาดเคลื่อน</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <h3 className="text-lg font-black text-slate-950">ระยะเวลาดำเนินการ</h3>
+            <p className="mt-1 text-sm text-slate-500">ค่ากลางของแต่ละขั้นตอนจากเรื่องที่มีข้อมูลครบ</p>
+            <div className="mt-4 divide-y divide-slate-100">
               {responseMetrics.map((metric) => (
-                <div key={metric.label} className="rounded-xl bg-slate-50 p-4">
-                  <div className="text-sm font-black text-slate-900">{metric.label}</div>
-                  <div className="mt-2 text-2xl font-black text-violet-700">
-                    {metric.value == null ? "—" : formatHours(metric.value)}
+                <div key={metric.label} className="flex items-center justify-between gap-4 py-3 first:pt-0">
+                  <div className="min-w-0">
+                    <div className="text-sm font-black text-slate-900">{metric.label}</div>
+                    <div className="mt-0.5 truncate text-xs text-slate-500">
+                      {metric.value == null ? "ยังไม่มีข้อมูลครบขั้นตอน" : `${metric.samples} เรื่องที่มีข้อมูลครบ`}
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs leading-5 text-slate-500">
-                    {metric.value == null ? "ยังไม่มีข้อมูลครบขั้นตอน" : `${metric.description} · ${metric.samples} เรื่อง`}
+                  <div className="shrink-0 text-lg font-black text-slate-950">
+                    {metric.value == null ? "—" : formatHours(metric.value)}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 p-3 text-sm font-bold text-violet-900">
+            <div className="mt-2 border-t border-slate-200 pt-3 text-sm font-bold text-slate-600">
               {slowestStage
-                ? `ขั้นตอนที่ใช้เวลามากที่สุดตอนนี้: ${slowestStage.label} (${formatHours(slowestStage.value)})`
-                : "เมื่อมีข้อมูลครบแต่ละขั้นตอน ระบบจะแสดงจุดที่ใช้เวลานานที่สุดให้"}
+                ? `ใช้เวลามากที่สุด: ${slowestStage.label} (${formatHours(slowestStage.value)})`
+                : "ยังระบุขั้นตอนที่ใช้เวลามากที่สุดไม่ได้"}
             </div>
           </article>
         </div>
 
-        <article className="mt-5 rounded-2xl border border-slate-200 p-5">
+        <article className="mt-4 rounded-2xl border border-slate-200 p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="text-xs font-black text-rose-600">3 · วิเคราะห์เชิงพื้นที่</div>
               <h3 className="text-lg font-black text-slate-950">แผนที่จุดเสี่ยงและเหตุซ้ำ</h3>
               <p className="mt-1 text-sm text-slate-500">วงใหญ่และสีเข้มหมายถึงมีหลายเหตุในบริเวณใกล้กัน</p>
             </div>
@@ -7464,7 +7431,7 @@ function DecisionAnalyticsCenter({
           </div>
           <div className="mt-4">
             {coordinateCount > 0 ? (
-              <SpatialAnalyticsMap incidents={rows} />
+              <SpatialAnalyticsMap incidents={rows} lockToTao={isTao} />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-2xl bg-slate-50 text-sm font-bold text-slate-400">
                 ยังไม่มีพิกัดสำหรับวิเคราะห์บนแผนที่
@@ -8808,23 +8775,6 @@ function TaoDashboard({
                         </div>
                       </div>
                     </div>
-                    {selectedCase.status === "pending" && (
-                      <div className="mb-4">
-                        <div className="mb-2 text-sm font-black text-slate-700">เลือกส่วนงานด่วน</div>
-                        <div className="flex flex-wrap gap-2">
-                          {["กองช่าง", "สำนักปลัด", "งานสาธารณสุข", "งานป้องกันและบรรเทาสาธารณภัย"].map((name) => (
-                            <button
-                              key={name}
-                              type="button"
-                              onClick={() => setCaseDepartment(name)}
-                              className={`rounded-xl border px-3 py-2 text-sm font-bold ${caseDepartment === name ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300"}`}
-                            >
-                              {name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     <div className="mb-4 grid gap-3 sm:grid-cols-2">
                       <label className="text-sm font-bold">
                         หน่วยรับผิดชอบ
