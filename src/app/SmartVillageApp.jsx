@@ -3254,19 +3254,30 @@ function UserDashboard({
                                   ? "หมู่บ้านตรวจสอบและส่งเรื่องให้ อบต. แล้ว"
                                   : "ระบบรับเรื่องแล้ว กำลังรอผู้ดูแลหมู่บ้านตรวจสอบ";
                         const events = [
+                          ...(inc.forwardedToTaoAt ? [{
+                            id: `forwarded-${inc.id}`,
+                            at: inc.forwardedToTaoAt,
+                            title: "หมู่บ้านส่งเรื่องให้ อบต.",
+                            note: "หมู่บ้านตรวจสอบข้อมูลและส่งต่อให้ อบต.ดำเนินการแล้ว",
+                          }] : []),
                           ...(inc.histories || []).map((item) => ({
                             id: `h-${item.id}`,
                             at: item.created_at,
                             title: getStatusLabel(item.to_status),
                             note: item.note === "Incident created" ? "ระบบได้รับเรื่องแจ้งของคุณแล้ว" : item.note,
                           })),
-                          ...(inc.updates || []).map((item) => ({
+                          ...(inc.updates || [])
+                            .filter((item) =>
+                              item.type !== "village_verification" &&
+                              !String(item.message || "").startsWith("หลักฐานยืนยันจากหมู่บ้าน:"),
+                            )
+                            .map((item) => ({
                             id: `u-${item.id}`,
                             at: item.created_at,
                             title: item.type === "completion" ? "ส่งผลการดำเนินงานแล้ว" : "เจ้าหน้าที่อัปเดตความคืบหน้า",
                             note: item.message,
                             image: item.image,
-                          })),
+                            })),
                         ].sort((a, b) => new Date(b.at) - new Date(a.at));
                         return (
                           <>
@@ -8451,6 +8462,41 @@ function TaoDashboard({
                 )}
               </div>
             </section>
+            {(() => {
+              const villageEvidence = (selectedCase.updates || []).filter(
+                (item) =>
+                  item.type === "village_verification" ||
+                  String(item.message || "").startsWith("หลักฐานยืนยันจากหมู่บ้าน:"),
+              );
+              if (!villageEvidence.length) return null;
+              return (
+                <section className="mt-4 overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/50">
+                  <div className="border-b border-blue-100 px-4 py-3">
+                    <h5 className="font-black text-blue-950">ผลตรวจสอบจากหมู่บ้าน</h5>
+                    <p className="mt-0.5 text-xs text-blue-700">ข้อมูลและรูปจากการตรวจหน้างานสำหรับ อบต.ใช้ประกอบการดำเนินการ</p>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    {villageEvidence.map((item) => (
+                      <div key={item.id} className="grid gap-3 rounded-xl bg-white p-4 sm:grid-cols-[1fr_auto]">
+                        <div>
+                          <div className="text-xs font-bold text-slate-500">
+                            {item.user?.name || "ผู้ดูแลหมู่บ้าน"} · {formatThaiDateTime(item.created_at)} น.
+                          </div>
+                          <p className="mt-1 whitespace-pre-wrap font-bold text-slate-800">
+                            {String(item.message || "").replace(/^หลักฐานยืนยันจากหมู่บ้าน:\s*/, "")}
+                          </p>
+                        </div>
+                        {item.image && (
+                          <a href={item.image} target="_blank" rel="noreferrer">
+                            <img src={item.image} alt="รูปตรวจสอบหน้างานจากหมู่บ้าน" className="h-24 w-32 rounded-lg object-cover" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
             <div className="mt-4">
               <IncidentLocationPanel incident={selectedCase} compact />
             </div>
@@ -12014,13 +12060,11 @@ function AdminIncidentModal({
       return alert("กรุณาระบุผลตรวจสอบเบื้องต้นก่อนส่งให้ อบต.");
     setForwardingToTao(true);
     try {
-      if (inspectionImage) {
-        const evidence = new FormData();
-        evidence.append("message", `หลักฐานยืนยันจากหมู่บ้าน: ${forwardNote.trim()}`);
-        evidence.append("image", inspectionImage);
-        await api.addIncidentProgress(inc.id, evidence);
-      }
-      const updated = await api.forwardIncidentToTao(inc.id, forwardNote.trim());
+      const evidence = new FormData();
+      evidence.append("_method", "PATCH");
+      evidence.append("note", forwardNote.trim());
+      if (inspectionImage) evidence.append("inspection_image", inspectionImage);
+      const updated = await api.forwardIncidentToTao(inc.id, evidence);
       onIncidentReplace(updated);
       setForwardNote("");
       setInspectionImage(null);
@@ -12128,14 +12172,62 @@ function AdminIncidentModal({
                   className="mt-2 w-full rounded-xl border border-blue-200 bg-white p-3 font-normal"
                 />
               </label>
-              <button
-                type="button"
-                disabled={forwardingToTao || !forwardNote.trim()}
-                onClick={forwardVerifiedIncident}
-                className="mt-3 w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-40 sm:w-auto"
-              >
-                {forwardingToTao ? "กำลังส่ง..." : "ส่งเรื่องให้ อบต.ดำเนินการ →"}
-              </button>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  disabled={forwardingToTao || !forwardNote.trim()}
+                  onClick={forwardVerifiedIncident}
+                  className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {forwardingToTao
+                    ? "กำลังส่ง..."
+                    : "พบเหตุจริง — ส่งให้ อบต.ดำเนินการ →"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCancelForm(true)}
+                  className="rounded-xl border border-red-300 bg-white px-5 py-3 font-bold text-red-600 hover:bg-red-50"
+                >
+                  ไม่พบเหตุ / ข้อมูลไม่จริง
+                </button>
+              </div>
+
+              {showCancelForm && (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5">
+                  <h3 className="font-black text-red-900">ยุติเรื่องหลังตรวจสอบ</h3>
+                  <p className="mt-1 text-sm text-red-700">
+                    เรื่องนี้จะไม่ถูกส่งให้ อบต. และผู้แจ้งจะเห็นเหตุผลในสถานะของรายการ
+                  </p>
+                  <textarea
+                    autoFocus
+                    value={cancelReason}
+                    onChange={(event) => setCancelReason(event.target.value)}
+                    className="mt-3 h-24 w-full rounded-xl border border-red-200 bg-white p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                    placeholder="ระบุผลตรวจสอบ เช่น ไม่พบเหตุตามที่แจ้ง, ข้อมูลไม่จริง, แจ้งซ้ำ หรืออยู่นอกพื้นที่"
+                    maxLength={500}
+                  />
+                  <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCancelForm(false);
+                        setCancelReason("");
+                      }}
+                      className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-600"
+                    >
+                      กลับไปตรวจสอบ
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!cancelReason.trim()}
+                      onClick={() => onDelete(cancelReason)}
+                      className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      ยืนยันยุติเรื่องและแจ้งผู้ใช้
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -12381,7 +12473,7 @@ function AdminIncidentModal({
             </div>
           )}
 
-          {showCancelForm && (
+          {showCancelForm && !villageMode && (
             <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5">
               <h3 className="font-black text-red-900">ระบุเหตุผลที่ยุติเรื่อง</h3>
               <p className="mt-1 text-sm text-red-700">

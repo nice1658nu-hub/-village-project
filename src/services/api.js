@@ -95,7 +95,11 @@ export const api = {
     return request(`/incidents/${id}/status`, { method: 'PATCH', body: JSON.stringify(payload) });
   },
   createStaff: (payload) => request('/staff', { method: 'POST', body: JSON.stringify(payload) }),
-  forwardIncidentToTao: (id, note = null) => request(`/incidents/${id}/forward-to-tao`, { method: 'PATCH', body: JSON.stringify({ note }) }),
+  forwardIncidentToTao: (id, payload) => request(`/incidents/${id}/forward-to-tao`, {
+    method: 'POST',
+    headers: payload instanceof FormData ? { 'X-HTTP-Method-Override': 'PATCH' } : undefined,
+    body: payload instanceof FormData ? payload : JSON.stringify({ note: payload }),
+  }),
   saveIncidentBudget: (id, payload) => request(`/incidents/${id}/budget`, { method: 'PUT', body: JSON.stringify(payload) }),
   reviewIncidentBudget: (id, payload) => request(`/incidents/${id}/budget/review`, { method: 'PATCH', body: JSON.stringify(payload) }),
   recordBudgetActual: (id, payload) => {

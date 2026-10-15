@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\BudgetRequest;
 use App\Models\Incident;
+use App\Models\IncidentUpdate;
 use App\Models\User;
 use App\Models\VillageNotification;
 use Illuminate\Http\Request;
@@ -22,9 +23,24 @@ class TaoWorkflowController extends Controller
         abort_if(in_array($incident->status, ['resolved', 'cancelled'], true), 409, 'Closed incidents cannot be forwarded.');
         abort_if($incident->requires_tao, 409, 'This incident has already been forwarded to TAO.');
 
-        $data = $request->validate(['note' => ['nullable', 'string', 'max:2000']]);
+        $data = $request->validate([
+            'note' => ['required', 'string', 'max:2000'],
+            'inspection_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+        ]);
+        $inspectionImage = null;
+        if ($request->hasFile('inspection_image')) {
+            $path = $request->file('inspection_image')->store('incident-inspections', 'public');
+            $inspectionImage = Storage::disk('public')->url($path);
+        }
         $old = $incident->only(['requires_tao', 'forwarded_to_tao_at', 'forwarded_by']);
         $incident->update(['requires_tao' => true, 'forwarded_to_tao_at' => now(), 'forwarded_by' => $user->id]);
+        IncidentUpdate::create([
+            'incident_id' => $incident->id,
+            'user_id' => $user->id,
+            'message' => $data['note'],
+            'image' => $inspectionImage,
+            'type' => 'village_verification',
+        ]);
         $this->audit($request, 'incident.forwarded_to_tao', $incident, $old, $incident->only(array_keys($old)));
 
         $incident->supporters()->pluck('users.id')->push($incident->user_id)->unique()->each(fn ($userId) => VillageNotification::create(['user_id' => $userId, 'title' => 'ส่งเรื่องให้ อบต.มะต้องแล้ว', 'description' => $data['note'] ?? $incident->title, 'type' => 'incident_status', 'data' => ['incident_id' => $incident->id]]));
