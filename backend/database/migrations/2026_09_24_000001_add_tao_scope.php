@@ -49,26 +49,6 @@ return new class extends Migration
         DB::table('users')->whereNull('village_id')->whereIn('role', ['user', 'staff'])->update(['village_id' => $phaiThamId]);
         DB::table('incidents')->whereNull('village_id')->update(['village_id' => $phaiThamId]);
 
-        Schema::create('budget_requests', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('incident_id')->unique()->constrained()->cascadeOnDelete();
-            $table->foreignId('requested_by')->constrained('users')->restrictOnDelete();
-            $table->text('reason');
-            $table->json('items')->nullable();
-            $table->decimal('estimated_amount', 12, 2)->default(0);
-            $table->decimal('approved_amount', 12, 2)->nullable();
-            $table->decimal('actual_amount', 12, 2)->nullable();
-            $table->enum('status', ['draft', 'submitted', 'approved', 'rejected', 'completed'])->default('draft')->index();
-            $table->string('fiscal_year', 4)->nullable();
-            $table->string('funding_source')->nullable();
-            $table->string('document_reference')->nullable();
-            $table->text('review_note')->nullable();
-            $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('submitted_at')->nullable();
-            $table->timestamp('reviewed_at')->nullable();
-            $table->timestamps();
-        });
-
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -96,7 +76,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('incident_feedback');
         Schema::dropIfExists('audit_logs');
-        Schema::dropIfExists('budget_requests');
         Schema::table('incidents', function (Blueprint $table) {
             $table->dropConstrainedForeignId('village_id');
             $table->dropConstrainedForeignId('forwarded_by');

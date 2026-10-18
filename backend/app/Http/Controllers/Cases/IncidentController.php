@@ -178,8 +178,7 @@ class IncidentController extends Controller
         }
         return response()->json($incident->fresh([
             'user.village', 'village', 'assignee.village', 'assigner', 'verifier',
-            'histories', 'updates.user', 'budgetRequest.requester',
-            'budgetRequest.reviewer', 'feedback',
+            'histories', 'updates.user', 'feedback',
         ]));
     }
 

@@ -196,6 +196,6 @@ class StaffWorkflowController extends Controller
 
     private function load(Incident $incident): Incident
     {
-        return $incident->fresh(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'budgetRequest', 'feedback']);
+        return $incident->fresh(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'feedback']);
     }
 }

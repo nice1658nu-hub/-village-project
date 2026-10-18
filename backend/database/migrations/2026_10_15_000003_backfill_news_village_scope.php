@@ -14,7 +14,12 @@ return new class extends Migration
             ->join('users', 'users.id', '=', 'news.created_by')
             ->whereNull('news.village_id')
             ->whereNotNull('users.village_id')
-            ->update(['news.village_id' => DB::raw('users.village_id')]);
+            ->select('news.id', 'users.village_id')
+            ->orderBy('news.id')
+            ->get()
+            ->each(fn ($news) => DB::table('news')
+                ->where('id', $news->id)
+                ->update(['village_id' => $news->village_id]));
     }
 
     public function down(): void

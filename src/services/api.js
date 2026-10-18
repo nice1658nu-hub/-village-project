@@ -108,22 +108,6 @@ export const api = {
       body: JSON.stringify({ note: payload }),
     });
   },
-  saveIncidentBudget: (id, payload) => request(`/incidents/${id}/budget`, { method: 'PUT', body: JSON.stringify(payload) }),
-  reviewIncidentBudget: (id, payload) => request(`/incidents/${id}/budget/review`, { method: 'PATCH', body: JSON.stringify(payload) }),
-  recordBudgetActual: (id, payload) => {
-    if (payload instanceof FormData) {
-      payload.append('_method', 'PATCH');
-      return request(`/incidents/${id}/budget/actual`, { method: 'POST', body: payload });
-    }
-    return request(`/incidents/${id}/budget/actual`, { method: 'PATCH', body: JSON.stringify(payload) });
-  },
-  updateProject: (id, payload) => {
-    if (payload instanceof FormData) {
-      payload.append('_method', 'PATCH');
-      return request(`/incidents/${id}/project`, { method: 'POST', body: payload });
-    }
-    return request(`/incidents/${id}/project`, { method: 'PATCH', body: JSON.stringify(payload) });
-  },
   saveIncidentFeedback: (id, payload) => request(`/incidents/${id}/feedback`, { method: 'PUT', body: JSON.stringify(payload) }),
   assignIncident: (id, assigned_to, priority = 1, note = null, department = null, due_at = null) => request(`/incidents/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assigned_to, priority, note, department, due_at }) }),
   startIncident: (id) => request(`/incidents/${id}/start`, { method: 'PATCH', body: JSON.stringify({}) }),
@@ -143,14 +127,6 @@ export const api = {
   updateUserStatus: (id, account_status, approval_note = null) => request(`/users/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ account_status, approval_note }),
-  }),
-  resetUserPassword: (id, password) => request(`/users/${id}/password`, {
-    method: 'PATCH',
-    body: JSON.stringify({ password, password_confirmation: password }),
-  }),
-  saveBudgetSettings: (unit_costs, reserve_percent) => request('/budget-settings', {
-    method: 'PUT',
-    body: JSON.stringify({ unit_costs, reserve_percent }),
   }),
   saveNotificationToken: (payload) => request('/notification-tokens', {
     method: 'POST',

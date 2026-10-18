@@ -1,6 +1,6 @@
 # Backend Application
 
-- `Http/Controllers/Tao/` — งานของฝ่าย อบต.และงบประมาณ
+- `Http/Controllers/Tao/` — งานรับเรื่องที่ส่งต่อให้ฝ่าย อบต.
 - `Http/Controllers/Village/` — งานของผู้ดูแลหมู่บ้านและประชาชนในหมู่บ้าน
 - `Http/Controllers/Cases/` — เรื่องร้องทุกข์ที่ประชาชนสร้าง
 - `Http/Controllers/Shared/` — เข้าสู่ระบบ ข่าว การแจ้งเตือน และข้อมูลตั้งต้น

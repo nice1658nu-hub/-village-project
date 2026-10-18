@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Tao\BudgetSettingController;
-
 use App\Models\Incident;
 use App\Models\News;
 use App\Models\User;
@@ -28,7 +26,7 @@ class BootstrapController extends Controller
     public function authenticated(Request $request)
     {
         $user = $request->user();
-        $incidents = Incident::with(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'budgetRequest.requester', 'budgetRequest.reviewer', 'feedback'])
+        $incidents = Incident::with(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'feedback'])
             ->withCount('supporters')
             // TAO receives a case only after the village has verified and
             // explicitly forwarded it. Unverified village cases are private
@@ -61,9 +59,7 @@ class BootstrapController extends Controller
                 ->latest('published_at')->get(),
             'incidents' => $incidents,
             'notifications' => VillageNotification::where(fn ($q) => $q->where('user_id', $user->id)->orWhereNull('user_id'))
-                ->when($user->role === 'user', fn ($q) => $q->where('type', '!=', 'budget'))
                 ->latest()->get(),
-            'budgetSettings' => $user->isTao() ? BudgetSettingController::payload() : null,
         ]);
     }
 }

@@ -18,7 +18,6 @@ class Incident extends Model
     public function verifier() { return $this->belongsTo(User::class, 'verified_by'); }
     public function updates() { return $this->hasMany(IncidentUpdate::class); }
     public function village() { return $this->belongsTo(Village::class); }
-    public function budgetRequest() { return $this->hasOne(BudgetRequest::class); }
     public function feedback() { return $this->hasOne(IncidentFeedback::class); }
     public function forwarder() { return $this->belongsTo(User::class, 'forwarded_by'); }
     public function supporters() { return $this->belongsToMany(User::class, 'incident_supporters')->withTimestamps(); }

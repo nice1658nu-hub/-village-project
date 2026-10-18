@@ -39,6 +39,6 @@ class IncidentFeedbackController extends Controller
             User::query()->where('account_status', 'approved')->where(fn ($query) => $query->where('id', $incident->assigned_to)->orWhere(fn ($sub) => $sub->whereIn('role', ['village_admin', 'staff'])->where('village_id', $incident->village_id)))->pluck('id')->unique()->each(fn ($userId) => VillageNotification::create(['user_id' => $userId, 'title' => 'ประชาชนขอเปิดเรื่องอีกครั้ง', 'description' => $incident->title.' · '.$data['comment'], 'type' => 'incident_status', 'data' => ['incident_id' => $incident->id, 'status' => 'in_progress']]));
         }
 
-        return response()->json(['feedback' => $feedback, 'incident' => $incident->fresh(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'budgetRequest', 'feedback'])]);
+        return response()->json(['feedback' => $feedback, 'incident' => $incident->fresh(['user.village', 'village', 'assignee.village', 'assigner', 'verifier', 'histories', 'updates.user', 'feedback'])]);
     }
 }

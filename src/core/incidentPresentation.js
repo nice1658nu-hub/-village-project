@@ -1,12 +1,3 @@
-export const projectStatusLabels = {
-  proposed: "เสนอให้ อบต.พิจารณา",
-  approved: "อนุมัติโครงการแล้ว",
-  planned: "เตรียมดำเนินการ",
-  in_progress: "กำลังดำเนินโครงการ",
-  waiting_review: "โครงการรอตรวจรับ",
-  completed: "ปิดโครงการแล้ว",
-};
-
 export const formatThaiDateTime = (value) => {
   if (!value) return "-";
   const date = new Date(value);

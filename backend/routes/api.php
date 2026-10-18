@@ -9,7 +9,6 @@ use App\Http\Controllers\Shared\NotificationController;
 use App\Http\Controllers\Shared\MediaController;
 use App\Http\Controllers\Village\UserApprovalController;
 use App\Http\Controllers\Village\StaffWorkflowController;
-use App\Http\Controllers\Tao\BudgetSettingController;
 use App\Http\Controllers\Tao\TaoWorkflowController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,17 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/incidents/{incident}/progress', [StaffWorkflowController::class, 'progress']);
     Route::post('/incidents/{incident}/submit', [StaffWorkflowController::class, 'submit']);
     Route::patch('/incidents/{incident}/forward-to-tao', [TaoWorkflowController::class, 'forward']);
-    // อบต.: พิจารณาการสนับสนุนและงบประมาณ
-    Route::put('/incidents/{incident}/budget', [TaoWorkflowController::class, 'saveBudget']);
-    Route::patch('/incidents/{incident}/budget/actual', [TaoWorkflowController::class, 'recordActual']);
-    Route::patch('/incidents/{incident}/project', [TaoWorkflowController::class, 'updateProject']);
+    // อบต.: รับเรื่องที่ผู้ดูแลหมู่บ้านตรวจสอบและส่งต่อ
     Route::patch('/incidents/{incident}/status', [IncidentController::class, 'updateStatus']);
 
     Route::middleware('admin')->group(function () {
-        Route::put('/budget-settings', [BudgetSettingController::class, 'update']);
         Route::post('/staff', [StaffWorkflowController::class, 'createStaff']);
         Route::patch('/incidents/{incident}/assign', [StaffWorkflowController::class, 'assign']);
         Route::patch('/incidents/{incident}/review', [StaffWorkflowController::class, 'review']);
-        Route::patch('/incidents/{incident}/budget/review', [TaoWorkflowController::class, 'reviewBudget']);
     });
 });

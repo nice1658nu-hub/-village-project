@@ -6,7 +6,6 @@ import {
   formatThaiDateTime,
   getPriorityMeta,
   getStatusLabel,
-  projectStatusLabels,
 } from "../../core/incidentPresentation";
 import DateRangePicker from "../../shared/DateRangePicker";
 import { formatHours, getHoursDiff } from "../../utils/village";
@@ -55,7 +54,6 @@ export default function AdminReports({ incidents }) {
   })();
   const generatedAt = formatThaiDateTime(new Date().toISOString());
   const fileDate = new Date().toISOString().slice(0, 10);
-  const projects = filtered.filter((item) => item.budgetRequest);
   const reportTotalPages = Math.max(1, Math.ceil(filtered.length / reportPageSize));
   const safeReportPage = Math.min(reportPage, reportTotalPages);
   const visibleReportRows = filtered.slice(
@@ -66,17 +64,6 @@ export default function AdminReports({ incidents }) {
   useEffect(() => {
     setReportPage(1);
   }, [dateFrom, dateTo, statusFilter, categoryFilter, reportPageSize]);
-
-  const downloadBlob = (content, type, fileName) => {
-    const url = URL.createObjectURL(new Blob([content], { type }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
 
   const escapeHtml = (value) =>
     String(value ?? "").replace(
@@ -214,74 +201,6 @@ export default function AdminReports({ incidents }) {
     }
   };
 
-  const exportPdf = async () => {
-    if (!filtered.length) return alert("ไม่มีข้อมูลตามตัวกรองสำหรับออกรายงาน");
-    setExporting("pdf");
-    try {
-      const reportWindow = window.open("", "_blank");
-      if (!reportWindow) throw new Error("Popup was blocked");
-      reportWindow.opener = null;
-      const rows = filtered
-        .map(
-          (item) =>
-            `<tr><td>#${escapeHtml(item.id)}</td><td>${escapeHtml(formatThaiDateTime(item.date))}</td><td><b>${escapeHtml(item.title)}</b><br><small>${escapeHtml(item.location)}</small></td><td>${escapeHtml(item.category)}</td><td>${escapeHtml(getStatusLabel(item.status))}</td><td>${escapeHtml(getPriorityMeta(item.priority).label)}</td><td>${escapeHtml(item.resolvedAt ? formatThaiDateTime(item.resolvedAt) : "-")}</td></tr>`,
-        )
-        .join("");
-      reportWindow.document.write(
-        `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>รายงานการแจ้งเหตุ ${escapeHtml(fileDate)}</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Tahoma,"Noto Sans Thai",sans-serif;color:#0f172a;margin:0}header{display:flex;justify-content:space-between;border-bottom:3px solid #1e3a8a;padding-bottom:12px;margin-bottom:14px}h1{font-size:24px;margin:0;color:#172554}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.card{border:1px solid #cbd5e1;border-radius:8px;padding:10px}.card b{font-size:22px;display:block}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#172554;color:white}th,td{border:1px solid #cbd5e1;padding:6px;text-align:left;vertical-align:top}tr:nth-child(even){background:#f8fafc}.actions{margin:12px 0;padding:12px;background:#eff6ff;border-radius:8px}.actions button{background:#1d4ed8;color:white;border:0;border-radius:8px;padding:10px 16px;font-weight:bold}@media print{.actions{display:none}}</style></head><body><div class="actions"><b>วิธีบันทึก:</b> กดปุ่มด้านล่าง แล้วเลือกเครื่องพิมพ์ “Save as PDF” หรือ “Microsoft Print to PDF”<br><button onclick="window.print()">พิมพ์ / บันทึกเป็น PDF</button></div><header><div><h1>รายงานสรุปการแจ้งเหตุ</h1><b>${escapeHtml(VILLAGE_NAME)}</b></div><div>จัดทำเมื่อ ${escapeHtml(generatedAt)} น.<br>ทั้งหมด ${filtered.length} รายการ</div></header><div class="summary"><div class="card"><b>${filtered.length}</b>ทั้งหมด</div><div class="card"><b>${pendingCount}</b>รอตรวจสอบ</div><div class="card"><b>${activeCount}</b>กำลังดำเนินการ</div><div class="card"><b>${resolvedCount}</b>เสร็จสิ้น</div></div><p><b>ระยะเวลาแก้ไขเฉลี่ย:</b> ${escapeHtml(avgResolveHours == null ? "ยังไม่มีข้อมูล" : formatHours(avgResolveHours))}</p><table><thead><tr><th>เลขที่</th><th>วันที่แจ้ง</th><th>เรื่อง / สถานที่</th><th>หมวดหมู่</th><th>สถานะ</th><th>ความสำคัญ</th><th>วันที่เสร็จ</th></tr></thead><tbody>${rows}</tbody></table></body></html>`,
-      );
-      reportWindow.document.close();
-    } catch (error) {
-      console.error(error);
-      alert("สร้างไฟล์ PDF ไม่สำเร็จ");
-    } finally {
-      setExporting(null);
-    }
-  };
-  const exportProjects = () => {
-    if (!projects.length) return alert("ยังไม่มีข้อมูลโครงการตามตัวกรอง");
-    const headers = [
-      "เลขที่เรื่อง",
-      "ชื่อโครงการ",
-      "หมู่บ้าน",
-      "สถานะโครงการ",
-      "งบเสนอ",
-      "งบอนุมัติ",
-      "ใช้จริง",
-      "ความคืบหน้า",
-      "กำหนดเสร็จ",
-    ];
-    const csvCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
-    const rows = projects.map((item) => [
-      item.referenceNo || item.id,
-      item.budgetRequest.project_title || item.title,
-      `หมู่ ${item.villageMoo || "-"} ${item.villageName || ""}`,
-      projectStatusLabels[item.budgetRequest.project_status] ||
-        item.budgetRequest.status,
-      item.budgetRequest.estimated_amount || 0,
-      item.budgetRequest.approved_amount || 0,
-      item.budgetRequest.actual_amount || 0,
-      `${item.budgetRequest.progress_percent || 0}%`,
-      item.budgetRequest.expected_end_date || "-",
-    ]);
-    downloadBlob(
-      `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`,
-      "text/csv;charset=utf-8",
-      `smart-village-projects-${fileDate}.csv`,
-    );
-  };
-  const exportProjectsPdf = () => {
-    if (!projects.length) return alert("ยังไม่มีข้อมูลโครงการตามตัวกรอง");
-    const reportWindow = window.open("", "_blank");
-    if (!reportWindow) return alert("กรุณาอนุญาต Popup เพื่อสร้างรายงาน PDF");
-    reportWindow.opener = null;
-    const rows = projects.map((item) => {
-      const project = item.budgetRequest;
-      return `<tr><td>${escapeHtml(item.referenceNo || item.id)}</td><td><b>${escapeHtml(project.project_title || item.title)}</b><br><small>หมู่ ${escapeHtml(item.villageMoo || "-")} ${escapeHtml(item.villageName || "")}</small></td><td>${escapeHtml(projectStatusLabels[project.project_status] || project.status)}</td><td>${escapeHtml(Number(project.approved_amount || 0).toLocaleString("th-TH"))}</td><td>${escapeHtml(Number(project.actual_amount || 0).toLocaleString("th-TH"))}</td><td>${escapeHtml(`${project.progress_percent || 0}%`)}</td><td>${escapeHtml(project.expected_end_date || "-")}</td></tr>`;
-    }).join("");
-    reportWindow.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>รายงานโครงการ ${escapeHtml(fileDate)}</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Tahoma,sans-serif;color:#0f172a}h1{color:#172554;margin-bottom:4px}.actions{padding:12px;background:#eff6ff;border-radius:8px;margin-bottom:15px}.actions button{background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:bold}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#172554;color:#fff}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left;vertical-align:top}@media print{.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">พิมพ์ / บันทึกเป็น PDF</button></div><h1>รายงานโครงการและงบประมาณ</h1><p>${escapeHtml(VILLAGE_NAME)} · จัดทำเมื่อ ${escapeHtml(generatedAt)} น. · ${projects.length} โครงการ</p><table><thead><tr><th>เลขอ้างอิง</th><th>โครงการ / หมู่บ้าน</th><th>สถานะ</th><th>อนุมัติ</th><th>ใช้จริง</th><th>คืบหน้า</th><th>กำหนดเสร็จ</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
-    reportWindow.document.close();
-  };
 
   return (
     <div className="space-y-6 animate-fadeIn">

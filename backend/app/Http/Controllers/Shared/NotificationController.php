@@ -15,7 +15,6 @@ class NotificationController extends Controller
         return response()->json([
             'notifications' => VillageNotification::query()
                 ->where(fn ($query) => $query->where('user_id', $request->user()->id)->orWhereNull('user_id'))
-                ->when($request->user()->role === 'user', fn ($query) => $query->where('type', '!=', 'budget'))
                 ->latest()
                 ->limit(50)
                 ->get(),
