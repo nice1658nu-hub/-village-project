@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120">
+  <defs>
+    <style>
+      text{font-family:Tahoma,'Noto Sans Thai',sans-serif;fill:#1d2939}.title{font-size:28px;font-weight:700}.actor-name{font-size:20px;font-weight:700;text-anchor:middle}.group{font-size:18px;font-weight:700;text-anchor:middle;fill:#344054}.case{fill:#fff5d6;stroke:#b88217;stroke-width:2}.case-text{font-size:18px;font-weight:600;text-anchor:middle;dominant-baseline:middle}.boundary{fill:#fff;stroke:#344054;stroke-width:3}.divider{stroke:#d0d5dd;stroke-width:2;stroke-dasharray:8 8}.actor{fill:none;stroke:#344054;stroke-width:3;stroke-linecap:round}.link{fill:none;stroke:#667085;stroke-width:2}
+    </style>
+  </defs>
+  <rect width="1600" height="1120" fill="#fff"/>
+  <text x="800" y="45" class="title" text-anchor="middle">Use Case Diagram ระบบแจ้งเหตุ ติดตาม และวิเคราะห์ปัญหาชุมชนอัจฉริยะ</text>
+  <rect x="250" y="90" width="1100" height="970" class="boundary"/>
+  <text x="800" y="128" font-size="19" font-weight="700" text-anchor="middle">ขอบเขตระบบ</text>
+  <line x1="690" y1="145" x2="690" y2="1035" class="divider"/>
+  <text x="475" y="175" class="group">งานของหมู่บ้านและประชาชน</text>
+  <text x="1020" y="175" class="group">งานขององค์การบริหารส่วนตำบล</text>
+
+  <!-- actors -->
+  <circle cx="105" cy="240" r="27" class="actor"/><line x1="105" y1="267" x2="105" y2="340" class="actor"/><line x1="62" y1="305" x2="148" y2="305" class="actor"/><line x1="105" y1="340" x2="67" y2="397" class="actor"/><line x1="105" y1="340" x2="143" y2="397" class="actor"/><text x="105" y="430" class="actor-name">ประชาชน</text>
+  <circle cx="105" cy="700" r="27" class="actor"/><line x1="105" y1="727" x2="105" y2="800" class="actor"/><line x1="62" y1="765" x2="148" y2="765" class="actor"/><line x1="105" y1="800" x2="67" y2="857" class="actor"/><line x1="105" y1="800" x2="143" y2="857" class="actor"/><text x="105" y="890" class="actor-name">ผู้ดูแลหมู่บ้าน</text>
+  <circle cx="1495" cy="485" r="27" class="actor"/><line x1="1495" y1="512" x2="1495" y2="585" class="actor"/><line x1="1452" y1="550" x2="1538" y2="550" class="actor"/><line x1="1495" y1="585" x2="1457" y2="642" class="actor"/><line x1="1495" y1="585" x2="1533" y2="642" class="actor"/><text x="1495" y="675" class="actor-name">เจ้าหน้าที่ อบต.</text>
+
+  <!-- citizen cases -->
+  <ellipse cx="465" cy="245" rx="175" ry="42" class="case"/><text x="465" y="245" class="case-text">สมัครสมาชิก / เข้าสู่ระบบ</text>
+  <ellipse cx="465" cy="350" rx="175" ry="42" class="case"/><text x="465" y="350" class="case-text">ดูข่าวสารและประกาศ</text>
+  <ellipse cx="465" cy="455" rx="175" ry="42" class="case"/><text x="465" y="455" class="case-text">แจ้งเหตุพร้อมรูปและพิกัด</text>
+  <ellipse cx="465" cy="560" rx="175" ry="42" class="case"/><text x="465" y="560" class="case-text">ติดตามและประเมินผล</text>
+
+  <!-- village cases -->
+  <ellipse cx="465" cy="700" rx="175" ry="42" class="case"/><text x="465" y="700" class="case-text">ตรวจสอบเหตุในพื้นที่</text>
+  <ellipse cx="465" cy="805" rx="175" ry="42" class="case"/><text x="465" y="805" class="case-text">บันทึกผลและรูปหน้างาน</text>
+  <ellipse cx="465" cy="910" rx="175" ry="42" class="case"/><text x="465" y="910" class="case-text">ส่งเรื่องให้ อบต. / ยุติเรื่อง</text>
+  <ellipse cx="465" cy="1015" rx="175" ry="42" class="case"/><text x="465" y="1015" class="case-text">ตอบข้อมูลเพิ่มเติมให้ อบต.</text>
+
+  <!-- TAO cases -->
+  <ellipse cx="1015" cy="245" rx="190" ry="42" class="case"/><text x="1015" y="245" class="case-text">รับเรื่องจากหมู่บ้าน</text>
+  <ellipse cx="1015" cy="350" rx="190" ry="42" class="case"/><text x="1015" y="350" class="case-text">ขอข้อมูลเพิ่มเติมจากหมู่บ้าน</text>
+  <ellipse cx="1015" cy="455" rx="190" ry="42" class="case"/><text x="1015" y="455" class="case-text">มอบหมายหน่วยงานและกำหนดเวลา</text>
+  <ellipse cx="1015" cy="560" rx="190" ry="42" class="case"/><text x="1015" y="560" class="case-text">บันทึกความคืบหน้า</text>
+  <ellipse cx="1015" cy="665" rx="190" ry="42" class="case"/><text x="1015" y="665" class="case-text">บันทึกผลและปิดเรื่อง</text>
+  <ellipse cx="1015" cy="770" rx="190" ry="42" class="case"/><text x="1015" y="770" class="case-text">จัดการงบประมาณและโครงการ</text>
+  <ellipse cx="1015" cy="875" rx="190" ry="42" class="case"/><text x="1015" y="875" class="case-text">วิเคราะห์ข้อมูลและแผนที่</text>
+  <ellipse cx="1015" cy="980" rx="190" ry="42" class="case"/><text x="1015" y="980" class="case-text">ออกรายงานและดูผลประเมิน</text>
+
+  <!-- associations: short and grouped -->
+  <path d="M148 285 L290 245 M148 300 L290 350 M148 315 L290 455 M148 330 L290 560" class="link"/>
+  <path d="M148 740 L290 700 M148 755 L290 805 M148 770 L290 910 M148 785 L290 1015" class="link"/>
+  <path d="M1452 525 L1205 245 M1452 535 L1205 350 M1452 545 L1205 455 M1452 555 L1205 560 M1452 565 L1205 665 M1452 575 L1205 770 M1452 585 L1205 875 M1452 595 L1205 980" class="link"/>
+</svg>

@@ -26,7 +26,7 @@ class StaffWorkflowController extends Controller
             'village_id' => ['required', 'integer', 'exists:villages,id'],
         ]);
         $staff = User::create($data + [
-            'house_no' => '-', 'role' => 'village_admin', 'village_id' => $data['village_id'], 'account_status' => 'approved',
+            'role' => 'village_admin', 'village_id' => $data['village_id'], 'account_status' => 'approved',
             'approved_by' => $request->user()->id, 'approved_at' => now(),
         ]);
         return response()->json(['user' => $staff], 201);

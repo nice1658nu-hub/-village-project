@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <style>
+      text{font-family:Tahoma,'Noto Sans Thai',sans-serif;fill:#172033}.title{font-size:30px;font-weight:700}.head{font-size:22px;font-weight:700;text-anchor:middle}.body{font-size:17px;text-anchor:middle}.box{stroke-width:3}.actor{fill:#f1f5ff;stroke:#334a9f}.system{fill:#fff9e8;stroke:#a86b08}.db{fill:#effcf4;stroke:#137333}.service{fill:#faf2ff;stroke:#6f2da8}.arrow{fill:none;stroke:#475467;stroke-width:3}.label{font-size:15px;font-weight:700;fill:#344054;text-anchor:middle}.small{font-size:16px;text-anchor:middle}
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475467"/></marker>
+  </defs>
+  <rect width="1600" height="1000" fill="#fff"/>
+  <text x="110" y="65" class="title">กรอบแนวคิดในการพัฒนาระบบ</text>
+
+  <!-- left actors -->
+  <rect x="80" y="130" width="390" height="190" rx="25" class="box actor"/>
+  <text x="275" y="175" class="head">ประชาชน</text>
+  <text x="275" y="215" class="body">ดูข่าวสารและแจ้งเหตุพร้อมรูปภาพ/พิกัด</text>
+  <text x="275" y="250" class="body">ติดตามสถานะและร่วมยืนยันเหตุ</text>
+  <text x="275" y="285" class="body">ให้คะแนน แสดงความคิดเห็น หรือขอเปิดเรื่องใหม่</text>
+
+  <rect x="80" y="405" width="390" height="215" rx="25" class="box actor"/>
+  <text x="275" y="450" class="head">ผู้ดูแลหมู่บ้าน</text>
+  <text x="275" y="490" class="body">รับเรื่องและตรวจสอบหน้างาน</text>
+  <text x="275" y="525" class="body">แนบหลักฐาน ส่งต่อ และตอบข้อมูลให้ อบต.</text>
+  <text x="275" y="560" class="body">จัดการสมาชิก ข่าวสาร และข้อเสนอโครงการ</text>
+  <text x="275" y="595" class="body">ติดตามงานและดูรายงานของหมู่บ้าน</text>
+
+  <rect x="80" y="705" width="390" height="215" rx="25" class="box actor"/>
+  <text x="275" y="750" class="head">เจ้าหน้าที่ อบต.</text>
+  <text x="275" y="790" class="body">รับเรื่องที่หมู่บ้านส่งต่อและขอข้อมูลเพิ่ม</text>
+  <text x="275" y="825" class="body">มอบหมายหน่วยงาน กำหนดเวลา และปิดเรื่อง</text>
+  <text x="275" y="860" class="body">บริหารงบประมาณ โครงการ และเนื้อหาส่วนกลาง</text>
+  <text x="275" y="895" class="body">วิเคราะห์ข้อมูล ดูผลประเมิน และออกรายงาน</text>
+
+  <!-- central system -->
+  <rect x="610" y="245" width="480" height="510" rx="28" class="box system"/>
+  <text x="850" y="298" class="head">ระบบแจ้งเหตุ ติดตาม และวิเคราะห์</text>
+  <text x="850" y="330" class="head">ปัญหาชุมชนอัจฉริยะ</text>
+  <line x1="665" y1="357" x2="1035" y2="357" stroke="#d58a16" stroke-width="2"/>
+  <text x="850" y="405" class="small">จัดการผู้ใช้และสิทธิ์ตามบทบาท</text>
+  <text x="850" y="445" class="small">รับแจ้งเหตุ รูปภาพ พิกัด และป้องกันรายการซ้ำ</text>
+  <text x="850" y="485" class="small">ตรวจสอบ ส่งต่อ มอบหมาย และติดตามสถานะ</text>
+  <text x="850" y="525" class="small">บันทึกความคืบหน้า หลักฐาน และประวัติการทำงาน</text>
+  <text x="850" y="565" class="small">จัดการงบประมาณและติดตามโครงการ</text>
+  <text x="850" y="605" class="small">ข่าวสาร การแจ้งเตือน และผลประเมิน 1–5 ดาว</text>
+  <text x="850" y="645" class="small">วิเคราะห์ประเภท ระยะเวลา แนวโน้ม และจุดเสี่ยง</text>
+  <text x="850" y="685" class="small">ออกรายงาน Excel/PDF และบันทึก Audit Log</text>
+
+  <!-- right dependencies -->
+  <rect x="1230" y="150" width="300" height="300" rx="25" class="box db"/>
+  <text x="1380" y="195" class="head">ฐานข้อมูล MySQL</text>
+  <text x="1380" y="240" class="body">ข้อมูลผู้ใช้และหมู่บ้าน</text>
+  <text x="1380" y="275" class="body">เหตุแจ้ง ประวัติ และความคืบหน้า</text>
+  <text x="1380" y="310" class="body">งบประมาณและโครงการ</text>
+  <text x="1380" y="345" class="body">ข่าว การแจ้งเตือน และคะแนนประเมิน</text>
+  <text x="1380" y="380" class="body">ข้อมูลสนับสนุนและ Audit Log</text>
+
+  <rect x="1230" y="565" width="300" height="300" rx="25" class="box service"/>
+  <text x="1380" y="610" class="head">บริการที่เชื่อมต่อ</text>
+  <text x="1380" y="660" class="body">Leaflet / OpenStreetMap</text>
+  <text x="1380" y="700" class="body">Firebase Cloud Messaging</text>
+  <text x="1380" y="740" class="body">บริการอีเมลสำหรับกู้รหัสผ่าน</text>
+  <text x="1380" y="780" class="body">พื้นที่จัดเก็บรูปภาพและหลักฐาน</text>
+  <text x="1380" y="820" class="body">ส่งออกไฟล์ Excel และ PDF</text>
+
+  <!-- arrows -->
+  <path d="M470 220 C535 220 545 330 610 350" class="arrow" marker-end="url(#arrow)"/>
+  <rect x="485" y="237" width="135" height="28" rx="6" fill="#fff"/><text x="552" y="257" class="label">รับและแสดงข้อมูล</text>
+  <path d="M470 510 H610" class="arrow" marker-end="url(#arrow)"/><rect x="487" y="486" width="110" height="28" rx="6" fill="#fff"/><text x="542" y="506" class="label">จัดการเหตุ</text>
+  <path d="M470 810 C545 810 545 700 610 680" class="arrow" marker-end="url(#arrow)"/><rect x="488" y="745" width="125" height="28" rx="6" fill="#fff"/><text x="550" y="765" class="label">บริหารและวิเคราะห์</text>
+  <path d="M1090 365 C1160 365 1160 300 1230 300" class="arrow" marker-end="url(#arrow)"/><rect x="1110" y="315" width="105" height="28" rx="6" fill="#fff"/><text x="1162" y="335" class="label">จัดเก็บข้อมูล</text>
+  <path d="M1090 620 C1160 620 1160 700 1230 700" class="arrow" marker-end="url(#arrow)"/><rect x="1115" y="645" width="90" height="28" rx="6" fill="#fff"/><text x="1160" y="665" class="label">เชื่อมต่อ</text>
+
+  <text x="800" y="965" font-size="21" text-anchor="middle">กรอบการทำงานจากผู้ใช้งาน → ระบบประมวลผล → ฐานข้อมูลและบริการภายนอก</text>
+</svg>

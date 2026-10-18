@@ -30,7 +30,6 @@ return new class extends Migration
                 'name' => "แอดมินหมู่ {$village->moo} {$village->name}",
                 'phone' => $phone,
                 'email' => $email,
-                'house_no' => '-',
                 'village_id' => $village->id,
                 'role' => 'village_admin',
                 'account_status' => 'approved',

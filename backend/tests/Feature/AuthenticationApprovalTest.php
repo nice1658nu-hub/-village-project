@@ -21,7 +21,7 @@ class AuthenticationApprovalTest extends TestCase
             'role' => 'village_admin', 'village_id' => $village->id, 'account_status' => 'approved',
         ]);
         $response = $this->postJson('/api/register', [
-            'name' => 'สมชาย ใจดี', 'phone' => '0812345678', 'houseNo' => '99/10',
+            'name' => 'สมชาย ใจดี', 'phone' => '0812345678',
             'password' => 'password123', 'password_confirmation' => 'password123',
             'email' => 'resident@example.com', 'villageId' => $village->id,
         ]);

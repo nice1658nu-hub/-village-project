@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone', 20)->unique();
             $table->string('email')->nullable()->unique();
-            $table->string('house_no', 50);
             $table->enum('role', ['admin', 'staff', 'user'])->default('user')->index();
             $table->enum('account_status', ['pending', 'approved', 'rejected', 'suspended'])->default('pending')->index();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();

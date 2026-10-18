@@ -17,7 +17,7 @@ return new class extends Migration
 
         DB::table('users')->updateOrInsert(['phone' => 'tao'], [
             'name' => 'ศูนย์รับเรื่องร้องทุกข์ อบต.มะต้อง', 'email' => 'tao@matong.local',
-            'house_no' => '-', 'village_id' => null, 'role' => 'tao', 'account_status' => 'approved',
+            'village_id' => null, 'role' => 'tao', 'account_status' => 'approved',
             'approved_at' => $now, 'password' => Hash::make('Tao@2569'), 'created_at' => $now, 'updated_at' => $now,
         ]);
 
@@ -25,7 +25,7 @@ return new class extends Migration
             $moo = (string) $village->moo;
             DB::table('users')->updateOrInsert(['phone' => "moo{$moo}"], [
                 'name' => "แอดมินหมู่ {$village->moo} {$village->name}", 'email' => "village{$moo}@matong.local",
-                'house_no' => '-', 'village_id' => $village->id, 'role' => 'village_admin', 'account_status' => 'approved',
+                'village_id' => $village->id, 'role' => 'village_admin', 'account_status' => 'approved',
                 'approved_at' => $now, 'password' => Hash::make("moo{$moo}@69"), 'created_at' => $now, 'updated_at' => $now,
             ]);
         }

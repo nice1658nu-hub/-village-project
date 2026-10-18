@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1280" viewBox="0 0 1800 1280">
+  <defs>
+    <style>
+      text { font-family: "Tahoma", "Noto Sans Thai", sans-serif; fill: #263442; }
+      .title { font-size: 30px; font-weight: 700; text-anchor: middle; }
+      .entity { fill: #fff; stroke: #475467; stroke-width: 2.5; rx: 8; }
+      .head { fill: #f6b8a8; stroke: #475467; stroke-width: 2.5; }
+      .name { font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .field { font-size: 16px; }
+      .key { font-size: 14px; font-weight: 700; fill: #175cd3; }
+      .relation { fill: none; stroke: #475467; stroke-width: 2.5; }
+      .cardinality { font-size: 18px; font-weight: 700; fill: #344054; }
+    </style>
+  </defs>
+  <rect width="1800" height="1280" fill="#fff"/>
+  <text x="900" y="45" class="title">ER Diagram ระบบแจ้งเหตุ ติดตาม และวิเคราะห์ปัญหาชุมชนอัจฉริยะ</text>
+
+  <!-- relations behind entities -->
+  <path d="M330 245 H470" class="relation"/><text x="340" y="235" class="cardinality">1</text><text x="442" y="235" class="cardinality">N</text>
+  <path d="M710 275 H790" class="relation"/><text x="718" y="265" class="cardinality">1</text><text x="762" y="265" class="cardinality">N</text>
+  <path d="M950 390 V495 H345 V560" class="relation"/><text x="960" y="414" class="cardinality">1</text><text x="355" y="548" class="cardinality">N</text>
+  <path d="M1030 390 V485 H730 V560" class="relation"/><text x="1040" y="414" class="cardinality">1</text><text x="740" y="548" class="cardinality">N</text>
+  <path d="M1110 390 V500 H1115 V560" class="relation"/><text x="1120" y="414" class="cardinality">1</text><text x="1125" y="548" class="cardinality">0..1</text>
+  <path d="M1190 390 V480 H1500 V560" class="relation"/><text x="1200" y="414" class="cardinality">1</text><text x="1510" y="548" class="cardinality">0..1</text>
+  <path d="M870 390 V1005 H350 V1070" class="relation"/><text x="880" y="414" class="cardinality">1</text><text x="360" y="1058" class="cardinality">N</text>
+  <path d="M580 390 V1040 H730 V1070" class="relation"/><text x="590" y="414" class="cardinality">1</text><text x="740" y="1058" class="cardinality">N</text>
+  <path d="M580 390 V1030 H1110 V1070" class="relation"/><text x="1080" y="1058" class="cardinality">N</text>
+  <path d="M210 340 V1020 H1480 V1070" class="relation"/><text x="220" y="365" class="cardinality">1</text><text x="1490" y="1058" class="cardinality">N</text>
+
+  <!-- villages -->
+  <rect x="70" y="130" width="260" height="210" class="entity"/>
+  <rect x="70" y="130" width="260" height="48" class="head"/>
+  <text x="200" y="162" class="name">VILLAGES</text>
+  <text x="90" y="207" class="field">id</text><text x="275" y="207" class="key">PK</text>
+  <text x="90" y="240" class="field">moo</text><text x="275" y="240" class="key">UK</text>
+  <text x="90" y="273" class="field">name</text>
+  <text x="90" y="306" class="field">is_active</text>
+
+  <!-- users -->
+  <rect x="470" y="100" width="240" height="290" class="entity"/>
+  <rect x="470" y="100" width="240" height="48" class="head"/>
+  <text x="590" y="132" class="name">USERS</text>
+  <text x="490" y="178" class="field">id</text><text x="655" y="178" class="key">PK</text>
+  <text x="490" y="209" class="field">village_id</text><text x="655" y="209" class="key">FK</text>
+  <text x="490" y="240" class="field">name</text>
+  <text x="490" y="271" class="field">phone</text><text x="655" y="271" class="key">UK</text>
+  <text x="490" y="302" class="field">email</text><text x="655" y="302" class="key">UK</text>
+  <text x="490" y="333" class="field">role</text>
+  <text x="490" y="364" class="field">account_status</text>
+
+  <!-- incidents -->
+  <rect x="790" y="80" width="480" height="310" class="entity"/>
+  <rect x="790" y="80" width="480" height="48" class="head"/>
+  <text x="1030" y="112" class="name">INCIDENTS</text>
+  <text x="810" y="158" class="field">id (PK)</text>
+  <text x="810" y="190" class="field">reference_no (UK)</text>
+  <text x="810" y="222" class="field">user_id, village_id (FK)</text>
+  <text x="810" y="254" class="field">assigned_to, assigned_by (FK)</text>
+  <text x="810" y="286" class="field">verified_by, forwarded_by (FK)</text>
+  <text x="810" y="318" class="field">title, category, description, location</text>
+  <text x="810" y="350" class="field">lat, lng, status, priority, due_at</text>
+
+  <!-- history -->
+  <rect x="90" y="560" width="330" height="260" class="entity"/>
+  <rect x="90" y="560" width="330" height="48" class="head"/>
+  <text x="255" y="592" class="name">INCIDENT_STATUS_HISTORIES</text>
+  <text x="110" y="640" class="field">id (PK)</text>
+  <text x="110" y="674" class="field">incident_id (FK)</text>
+  <text x="110" y="708" class="field">changed_by (FK)</text>
+  <text x="110" y="742" class="field">from_status, to_status</text>
+  <text x="110" y="776" class="field">note</text>
+
+  <!-- updates -->
+  <rect x="505" y="560" width="330" height="260" class="entity"/>
+  <rect x="505" y="560" width="330" height="48" class="head"/>
+  <text x="670" y="592" class="name">INCIDENT_UPDATES</text>
+  <text x="525" y="640" class="field">id (PK)</text>
+  <text x="525" y="674" class="field">incident_id (FK)</text>
+  <text x="525" y="708" class="field">user_id (FK)</text>
+  <text x="525" y="742" class="field">message, image</text>
+  <text x="525" y="776" class="field">type</text>
+
+  <!-- feedback -->
+  <rect x="920" y="560" width="330" height="260" class="entity"/>
+  <rect x="920" y="560" width="330" height="48" class="head"/>
+  <text x="1085" y="592" class="name">INCIDENT_FEEDBACK</text>
+  <text x="940" y="640" class="field">id (PK)</text>
+  <text x="940" y="674" class="field">incident_id (FK, UK)</text>
+  <text x="940" y="708" class="field">user_id (FK)</text>
+  <text x="940" y="742" class="field">rating</text>
+  <text x="940" y="776" class="field">comment</text>
+
+  <!-- budget requests -->
+  <rect x="1335" y="560" width="385" height="350" class="entity"/>
+  <rect x="1335" y="560" width="385" height="48" class="head"/>
+  <text x="1528" y="592" class="name">BUDGET_REQUESTS</text>
+  <text x="1355" y="640" class="field">id (PK)</text>
+  <text x="1355" y="674" class="field">incident_id (FK, UK)</text>
+  <text x="1355" y="708" class="field">requested_by, reviewed_by (FK)</text>
+  <text x="1355" y="742" class="field">project_title, reason, urgency</text>
+  <text x="1355" y="776" class="field">estimated_amount</text>
+  <text x="1355" y="810" class="field">approved_amount, actual_amount</text>
+  <text x="1355" y="844" class="field">status, project_status</text>
+  <text x="1355" y="878" class="field">progress_percent, evidence_url</text>
+
+  <!-- supporters -->
+  <rect x="90" y="1070" width="300" height="155" class="entity"/>
+  <rect x="90" y="1070" width="300" height="48" class="head"/>
+  <text x="240" y="1102" class="name">INCIDENT_SUPPORTERS</text>
+  <text x="110" y="1152" class="field">incident_id (PK, FK)</text>
+  <text x="110" y="1186" class="field">user_id (PK, FK)</text>
+
+  <!-- news -->
+  <rect x="505" y="1070" width="300" height="155" class="entity"/>
+  <rect x="505" y="1070" width="300" height="48" class="head"/>
+  <text x="655" y="1102" class="name">NEWS</text>
+  <text x="525" y="1152" class="field">id (PK), created_by (FK)</text>
+  <text x="525" y="1186" class="field">village_id (FK), title, content</text>
+
+  <!-- notifications -->
+  <rect x="920" y="1070" width="320" height="155" class="entity"/>
+  <rect x="920" y="1070" width="320" height="48" class="head"/>
+  <text x="1080" y="1102" class="name">VILLAGE_NOTIFICATIONS</text>
+  <text x="940" y="1152" class="field">id (PK), user_id (FK)</text>
+  <text x="940" y="1186" class="field">title, description, type, read_at</text>
+
+  <!-- budget settings -->
+  <rect x="1370" y="1070" width="320" height="155" class="entity"/>
+  <rect x="1370" y="1070" width="320" height="48" class="head"/>
+  <text x="1530" y="1102" class="name">BUDGET_SETTINGS</text>
+  <text x="1390" y="1152" class="field">id (PK), updated_by (FK)</text>
+  <text x="1390" y="1186" class="field">category, unit_cost, reserve_percent</text>
+</svg>

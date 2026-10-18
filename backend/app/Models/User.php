@@ -23,7 +23,6 @@ class User extends Authenticatable
         'name',
         'phone',
         'email',
-        'house_no',
         'village_id',
         'role',
         'account_status',

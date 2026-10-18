@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
 
         User::updateOrCreate(['phone' => 'admin'], [
             'name' => 'เจ้าหน้าที่ อบต.มะต้อง',
-            'house_no' => '-',
             'email' => 'admin@smartvillage.local',
             'role' => 'admin',
             'account_status' => 'approved',
@@ -54,7 +53,6 @@ class DatabaseSeeder extends Seeder
 
             User::updateOrCreate(['phone' => 'Village'.$number], [
                 'name' => 'ผู้ประสานงานหมู่ '.$moo,
-                'house_no' => '-',
                 'email' => 'village'.$number.'@smartvillage.local',
                 'role' => 'staff',
                 'village_id' => Village::where('moo', $moo)->value('id'),

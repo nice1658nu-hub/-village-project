@@ -34,7 +34,7 @@ return new class extends Migration
         ]);
 
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('village_id')->nullable()->after('house_no')->constrained()->nullOnDelete();
+            $table->foreignId('village_id')->nullable()->after('email')->constrained()->nullOnDelete();
         });
 
         Schema::table('incidents', function (Blueprint $table) {

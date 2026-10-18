@@ -23,7 +23,7 @@ User::query()->where('role', 'user')->where('account_status', 'pending')->each(f
             VillageNotification::create([
                 'user_id' => $admin->id,
                 'title' => 'มีคำขอสมัครสมาชิกใหม่',
-                'description' => $user->name.' · บ้านเลขที่ '.$user->house_no,
+                'description' => $user->name,
                 'type' => 'user_registration',
                 'data' => ['user_id' => $user->id, 'village_id' => $user->village_id],
             ]);

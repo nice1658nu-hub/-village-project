@@ -22,7 +22,6 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users,phone'],
             'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
-            'houseNo' => ['required', 'string', 'max:50'],
             'villageId' => ['nullable', 'integer', 'exists:villages,id'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
@@ -33,13 +32,12 @@ class AuthController extends Controller
             'email.required' => 'กรุณากรอกอีเมลกู้คืนบัญชี',
             'email.email' => 'รูปแบบอีเมลไม่ถูกต้อง',
             'email.unique' => 'อีเมลนี้ผูกกับบัญชีอื่นอยู่แล้ว กรุณาใช้อีเมลอื่น หรือเข้าสู่ระบบด้วยบัญชีเดิม',
-            'houseNo.required' => 'กรุณากรอกบ้านเลขที่',
             'villageId.exists' => 'ไม่พบหมู่บ้านที่เลือก กรุณาเลือกใหม่',
             'password.min' => 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',
         ]);
 
         $user = User::create([
-            'name' => $data['name'], 'phone' => $data['phone'], 'email' => Str::lower($data['email']), 'house_no' => $data['houseNo'], 'village_id' => $data['villageId'] ?? Village::where('moo', 5)->value('id'),
+            'name' => $data['name'], 'phone' => $data['phone'], 'email' => Str::lower($data['email']), 'village_id' => $data['villageId'] ?? Village::where('moo', 5)->value('id'),
             'password' => $data['password'], 'role' => 'user', 'account_status' => 'approved', 'approved_at' => now(),
         ]);
 

@@ -18,7 +18,7 @@ class StaffWorkflowTest extends TestCase
         Storage::fake('public');
         $admin = User::factory()->admin()->create();
         $resident = User::factory()->create();
-        $staff = User::factory()->create(['role' => 'staff', 'house_no' => '-']);
+        $staff = User::factory()->create(['role' => 'staff']);
         $incident = Incident::create([
             'user_id' => $resident->id, 'title' => 'ถนนชำรุด', 'category' => 'ถนน',
             'description' => 'มีหลุมขนาดใหญ่', 'location' => 'หน้าหมู่บ้าน',

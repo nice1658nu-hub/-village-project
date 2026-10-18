@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1750" height="1250" viewBox="0 0 1750 1250">
+  <defs><style>
+    text{font-family:Tahoma,'Noto Sans Thai',sans-serif;fill:#263442}.title{font-size:29px;font-weight:700;text-anchor:middle}.box{fill:#fff;stroke:#475467;stroke-width:2.5}.head{fill:#f6b8a8;stroke:#475467;stroke-width:2.5}.name{font-size:20px;font-weight:700;text-anchor:middle}.field{font-size:15px}.key{font-size:13px;font-weight:700;fill:#175cd3}.rel{fill:none;stroke:#475467;stroke-width:2.5}.card{font-size:17px;font-weight:700}.label{font-size:14px;fill:#475467;text-anchor:middle}
+  </style></defs>
+  <rect width="1750" height="1250" fill="#fff"/>
+  <text x="875" y="44" class="title">ER Diagram ระบบแจ้งเหตุ ติดตาม และวิเคราะห์ปัญหาชุมชนอัจฉริยะ</text>
+
+  <!-- relationship lines -->
+  <path d="M875 285 V330 H285 V390" class="rel"/><text x="855" y="318" class="card">1</text><text x="295" y="380" class="card">N</text><text x="560" y="320" class="label">มีสมาชิก</text>
+  <path d="M875 285 V390" class="rel"/><text x="885" y="320" class="card">1</text><text x="885" y="380" class="card">N</text><text x="935" y="340" class="label">มีเหตุแจ้ง</text>
+  <path d="M285 625 H650" class="rel"/><text x="300" y="615" class="card">1</text><text x="625" y="615" class="card">N</text><text x="470" y="608" class="label">แจ้งเหตุ</text>
+  <path d="M790 720 V770 H460 V815" class="rel"/><text x="800" y="745" class="card">1</text><text x="470" y="805" class="card">N</text>
+  <path d="M850 720 V815" class="rel"/><text x="860" y="745" class="card">1</text><text x="860" y="805" class="card">N</text>
+  <path d="M910 720 V770 H1240 V815" class="rel"/><text x="920" y="745" class="card">1</text><text x="1250" y="805" class="card">0..1</text>
+  <path d="M970 720 V755 H1590 V815" class="rel"/><text x="980" y="745" class="card">1</text><text x="1600" y="805" class="card">0..1</text>
+  <path d="M700 720 V1110 H300 V1140" class="rel"/><text x="710" y="745" class="card">1</text><text x="310" y="1130" class="card">N</text>
+  <path d="M285 680 V1090 H675 V1140" class="rel"/><text x="295" y="705" class="card">1</text><text x="685" y="1130" class="card">N</text>
+  <path d="M800 285 V305 H1425 V390" class="rel"/><text x="810" y="300" class="card">1</text><text x="1435" y="380" class="card">N</text><text x="1130" y="297" class="label">เผยแพร่ข่าว</text>
+
+  <!-- Village -->
+  <rect x="740" y="85" width="270" height="200" rx="7" class="box"/><rect x="740" y="85" width="270" height="48" rx="7" class="head"/><text x="875" y="117" class="name">VILLAGES</text>
+  <text x="760" y="165" class="field">id</text><text x="960" y="165" class="key">PK</text><text x="760" y="198" class="field">moo</text><text x="960" y="198" class="key">UK</text><text x="760" y="231" class="field">name</text><text x="760" y="264" class="field">is_active</text>
+
+  <!-- Users -->
+  <rect x="120" y="390" width="330" height="290" rx="7" class="box"/><rect x="120" y="390" width="330" height="48" rx="7" class="head"/><text x="285" y="422" class="name">USERS</text>
+  <text x="140" y="470" class="field">id (PK)</text><text x="140" y="503" class="field">village_id (FK)</text><text x="140" y="536" class="field">name, phone (UK), email (UK)</text><text x="140" y="569" class="field">house_no</text><text x="140" y="602" class="field">role</text><text x="140" y="635" class="field">account_status, password</text>
+
+  <!-- Incidents -->
+  <rect x="650" y="390" width="450" height="330" rx="7" class="box"/><rect x="650" y="390" width="450" height="48" rx="7" class="head"/><text x="875" y="422" class="name">INCIDENTS</text>
+  <text x="670" y="470" class="field">id (PK), reference_no (UK)</text><text x="670" y="503" class="field">user_id, village_id (FK)</text><text x="670" y="536" class="field">assigned_to, assigned_by (FK)</text><text x="670" y="569" class="field">verified_by, forwarded_by (FK)</text><text x="670" y="602" class="field">title, category, description, location</text><text x="670" y="635" class="field">lat, lng, image, resolved_image</text><text x="670" y="668" class="field">status, priority, department, due_at</text><text x="670" y="701" class="field">requires_tao, resolved_at</text>
+
+  <!-- News -->
+  <rect x="1290" y="390" width="310" height="255" rx="7" class="box"/><rect x="1290" y="390" width="310" height="48" rx="7" class="head"/><text x="1445" y="422" class="name">NEWS</text>
+  <text x="1310" y="470" class="field">id (PK)</text><text x="1310" y="503" class="field">created_by, village_id (FK)</text><text x="1310" y="536" class="field">title, content</text><text x="1310" y="569" class="field">image, video_url</text><text x="1310" y="602" class="field">display_section, published_at</text>
+
+  <!-- children row -->
+  <rect x="300" y="815" width="320" height="225" rx="7" class="box"/><rect x="300" y="815" width="320" height="48" rx="7" class="head"/><text x="460" y="847" class="name">STATUS_HISTORIES</text><text x="320" y="895" class="field">id (PK)</text><text x="320" y="928" class="field">incident_id, changed_by (FK)</text><text x="320" y="961" class="field">from_status, to_status</text><text x="320" y="994" class="field">note</text>
+  <rect x="700" y="815" width="300" height="225" rx="7" class="box"/><rect x="700" y="815" width="300" height="48" rx="7" class="head"/><text x="850" y="847" class="name">INCIDENT_UPDATES</text><text x="720" y="895" class="field">id (PK)</text><text x="720" y="928" class="field">incident_id, user_id (FK)</text><text x="720" y="961" class="field">message, image</text><text x="720" y="994" class="field">type</text>
+  <rect x="1080" y="815" width="320" height="225" rx="7" class="box"/><rect x="1080" y="815" width="320" height="48" rx="7" class="head"/><text x="1240" y="847" class="name">INCIDENT_FEEDBACK</text><text x="1100" y="895" class="field">id (PK)</text><text x="1100" y="928" class="field">incident_id (FK, UK)</text><text x="1100" y="961" class="field">user_id (FK), rating</text><text x="1100" y="994" class="field">comment</text>
+  <rect x="1450" y="815" width="260" height="225" rx="7" class="box"/><rect x="1450" y="815" width="260" height="48" rx="7" class="head"/><text x="1580" y="847" class="name">BUDGET_REQUESTS</text><text x="1470" y="895" class="field">id (PK)</text><text x="1470" y="928" class="field">incident_id (FK, UK)</text><text x="1470" y="961" class="field">amount, status</text><text x="1470" y="994" class="field">project_status</text>
+
+  <!-- bottom -->
+  <rect x="150" y="1125" width="300" height="110" rx="7" class="box"/><rect x="150" y="1125" width="300" height="43" rx="7" class="head"/><text x="300" y="1154" class="name">INCIDENT_SUPPORTERS</text><text x="170" y="1192" class="field">id (PK)</text><text x="170" y="1220" class="field">incident_id + user_id (FK, UK)</text>
+  <rect x="520" y="1125" width="330" height="110" rx="7" class="box"/><rect x="520" y="1125" width="330" height="43" rx="7" class="head"/><text x="685" y="1154" class="name">VILLAGE_NOTIFICATIONS</text><text x="540" y="1192" class="field">id (PK), user_id (FK)</text><text x="540" y="1220" class="field">title, description, type, read_at</text>
+</svg>
