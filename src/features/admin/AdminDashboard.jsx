@@ -18,6 +18,7 @@ import AdminReports from "../reports/AdminReports";
 import { AppLogo, USE_MOCK_DATA, getNotificationTargetTab, normalizeIncident, normalizeNews, normalizeUser } from "../../app/runtime";
 
 import AdminIncidentModal from "./AdminIncidentModal";
+import VillageOverviewDashboard from "../village/VillageOverviewDashboard";
 export default function AdminDashboard({
   activeTab,
   setActiveTab,
