@@ -25,11 +25,13 @@ class IncidentFeedbackTest extends TestCase
         ]);
 
         $this->actingAs($resident)->putJson("/api/incidents/{$incident->id}/feedback", [
-            'rating' => 5, 'comment' => 'แก้ไขเรียบร้อย',
-        ])->assertOk()->assertJsonPath('feedback.rating', 5);
+            'decision' => 'confirm', 'rating' => 5, 'comment' => 'แก้ไขเรียบร้อย',
+        ])->assertOk()
+            ->assertJsonPath('feedback.rating', 5)
+            ->assertJsonPath('feedback.resolution_confirmed', true);
 
         $this->actingAs($other)->putJson("/api/incidents/{$incident->id}/feedback", [
-            'rating' => 1,
+            'decision' => 'confirm', 'rating' => 1,
         ])->assertForbidden();
     }
 }

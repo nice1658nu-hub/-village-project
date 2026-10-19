@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Incident;
 use App\Models\User;
+use App\Models\Village;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -17,10 +18,13 @@ class StaffWorkflowTest extends TestCase
     {
         Storage::fake('public');
         $admin = User::factory()->admin()->create();
-        $resident = User::factory()->create();
-        $staff = User::factory()->create(['role' => 'staff']);
+        $village = Village::firstOrFail();
+        $resident = User::factory()->create(['village_id' => $village->id]);
+        $staff = User::factory()->create(['role' => 'staff', 'village_id' => $village->id]);
         $incident = Incident::create([
-            'user_id' => $resident->id, 'title' => 'ถนนชำรุด', 'category' => 'ถนน',
+            'user_id' => $resident->id, 'village_id' => $village->id,
+            'requires_tao' => true, 'forwarded_to_tao_at' => now(),
+            'title' => 'ถนนชำรุด', 'category' => 'ถนน',
             'description' => 'มีหลุมขนาดใหญ่', 'location' => 'หน้าหมู่บ้าน',
             'lat' => 17.1155, 'lng' => 100.2088, 'status' => 'pending',
         ]);

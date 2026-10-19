@@ -14,22 +14,20 @@ class AuthenticationApprovalTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_creates_a_pending_account_without_a_token(): void
+    public function test_registration_creates_an_approved_account_without_a_token(): void
     {
         $village = Village::where('moo', 5)->firstOrFail();
-        $villageAdmin = User::factory()->create([
-            'role' => 'village_admin', 'village_id' => $village->id, 'account_status' => 'approved',
-        ]);
         $response = $this->postJson('/api/register', [
             'name' => 'สมชาย ใจดี', 'phone' => '0812345678',
             'password' => 'password123', 'password_confirmation' => 'password123',
             'email' => 'resident@example.com', 'villageId' => $village->id,
         ]);
 
-        $response->assertCreated()->assertJsonPath('user.account_status', 'pending')->assertJsonMissing(['token']);
-        $this->assertDatabaseHas('users', ['phone' => '0812345678', 'account_status' => 'pending']);
-        $this->assertDatabaseHas('village_notifications', [
-            'user_id' => $villageAdmin->id, 'type' => 'user_registration', 'title' => 'มีคำขอสมัครสมาชิกใหม่',
+        $response->assertCreated()->assertJsonPath('user.account_status', 'approved')->assertJsonMissing(['token']);
+        $this->assertDatabaseHas('users', [
+            'phone' => '0812345678',
+            'village_id' => $village->id,
+            'account_status' => 'approved',
         ]);
     }
 
@@ -90,6 +88,7 @@ class AuthenticationApprovalTest extends TestCase
 
     public function test_user_can_reset_password_through_recovery_email_without_admin(): void
     {
+        config(['mail.default' => 'smtp']);
         Notification::fake();
         $user = User::factory()->create([
             'phone' => '0812345678',
@@ -121,6 +120,7 @@ class AuthenticationApprovalTest extends TestCase
 
     public function test_forgot_password_does_not_reveal_unknown_emails(): void
     {
+        config(['mail.default' => 'smtp']);
         Notification::fake();
         $this->postJson('/api/forgot-password', ['email' => 'unknown@example.com'])
             ->assertOk()->assertJsonStructure(['message']);
