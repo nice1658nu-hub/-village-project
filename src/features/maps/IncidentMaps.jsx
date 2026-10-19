@@ -12,7 +12,7 @@ const VILLAGE_MAP_BOUNDS = [
   [17.16, 100.24],
 ];
 
-class MapErrorBoundary extends React.Component {
+export class MapErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { error: null };
@@ -86,7 +86,7 @@ function CurrentLocationButton({ onSelectPoint }) {
   );
 }
 
-function RealVillageMapPicker({ incidents, selectedPoint, onSelectPoint }) {
+export function RealVillageMapPicker({ incidents, selectedPoint, onSelectPoint }) {
   return (
     <div className="relative isolate z-0 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
       <div className="px-4 py-3 border-b border-gray-100 bg-slate-50">

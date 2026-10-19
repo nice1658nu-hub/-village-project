@@ -17,7 +17,7 @@ import CitizenFeedback from "../citizen/CitizenFeedback";
 import AdminReports from "../reports/AdminReports";
 import { AppLogo, USE_MOCK_DATA, getNotificationTargetTab, normalizeIncident, normalizeNews, normalizeUser } from "../../app/runtime";
 
-import { VillageMapPicker } from "../maps/IncidentMaps";
+import { MapErrorBoundary, RealVillageMapPicker } from "../maps/IncidentMaps";
 import NewsModal from "../../shared/NewsModal";
 export default function UserDashboard({
   activeTab,
