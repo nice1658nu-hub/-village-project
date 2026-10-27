@@ -151,11 +151,13 @@ export default function AdminReports({ incidents }) {
           const fill = index % 2 ? "#F8FAFC" : "#FFFFFF";
           const createdAt = item.date ? new Date(item.date) : null;
           const resolvedAt = item.resolvedAt ? new Date(item.resolvedAt) : null;
+          const createdAtIsValid = createdAt && !Number.isNaN(createdAt.getTime());
+          const resolvedAtIsValid = resolvedAt && !Number.isNaN(resolvedAt.getTime());
           return [
             bodyCell(`#${item.id}`, { align: "center", backgroundColor: fill }),
-            bodyCell(createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : "-", {
-              type: createdAt && !Number.isNaN(createdAt.getTime()) ? Date : String,
-              format: "dd/mm/yyyy hh:mm",
+            bodyCell(createdAtIsValid ? createdAt : "-", {
+              type: createdAtIsValid ? Date : String,
+              ...(createdAtIsValid ? { format: "dd/mm/yyyy hh:mm" } : {}),
               align: "center",
               backgroundColor: fill,
             }),
@@ -166,9 +168,9 @@ export default function AdminReports({ incidents }) {
             bodyCell(item.category || "-", { backgroundColor: fill }),
             bodyCell(getStatusLabel(item.status), { align: "center", backgroundColor: fill }),
             bodyCell(getPriorityMeta(item.priority).label, { align: "center", backgroundColor: fill }),
-            bodyCell(resolvedAt && !Number.isNaN(resolvedAt.getTime()) ? resolvedAt : "-", {
-              type: resolvedAt && !Number.isNaN(resolvedAt.getTime()) ? Date : String,
-              format: "dd/mm/yyyy hh:mm",
+            bodyCell(resolvedAtIsValid ? resolvedAt : "-", {
+              type: resolvedAtIsValid ? Date : String,
+              ...(resolvedAtIsValid ? { format: "dd/mm/yyyy hh:mm" } : {}),
               align: "center",
               backgroundColor: fill,
             }),
