@@ -241,6 +241,32 @@ export default function DecisionAnalyticsCenter({
   const locationCompleteness = rows.length
     ? Math.round((coordinateCount / rows.length) * 100)
     : 0;
+  const completedForFeedback = rows.filter(
+    (item) => item.status === "resolved",
+  );
+  const feedbackRows = completedForFeedback.filter((item) => {
+    const rating = Number(item.feedback?.rating);
+    return Number.isInteger(rating) && rating >= 1 && rating <= 5;
+  });
+  const averageRating = feedbackRows.length
+    ? feedbackRows.reduce(
+        (sum, item) => sum + Number(item.feedback.rating),
+        0,
+      ) / feedbackRows.length
+    : null;
+  const feedbackResponseRate = completedForFeedback.length
+    ? Math.round((feedbackRows.length / completedForFeedback.length) * 100)
+    : 0;
+  const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => ({
+    rating,
+    count: feedbackRows.filter(
+      (item) => Number(item.feedback?.rating) === rating,
+    ).length,
+  }));
+  const maxRatingCount = Math.max(
+    1,
+    ...ratingDistribution.map((item) => item.count),
+  );
   const departmentRows = Object.values(
     openRows.reduce((result, item) => {
       const label = item.department || "ยังไม่มอบหมาย";
@@ -430,6 +456,80 @@ export default function DecisionAnalyticsCenter({
             </div>
           </article>
         </div>
+
+        <article className="mt-4 rounded-2xl border border-slate-200 p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">ความพึงพอใจของผู้แจ้งเหตุ</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                คะแนนจากประชาชนหลังยืนยันผลของเรื่องที่เสร็จสิ้น
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-xl bg-amber-50 px-4 py-3 text-center">
+                <div className="text-2xl font-black text-amber-600">
+                  {averageRating == null ? "—" : averageRating.toFixed(2)}
+                </div>
+                <div className="text-xs font-bold text-amber-800">คะแนนเฉลี่ย / 5</div>
+              </div>
+              <div className="rounded-xl bg-blue-50 px-4 py-3 text-center">
+                <div className="text-2xl font-black text-blue-700">
+                  {feedbackRows.length}
+                </div>
+                <div className="text-xs font-bold text-blue-800">รายการที่ประเมิน</div>
+              </div>
+              <div className="col-span-2 rounded-xl bg-emerald-50 px-4 py-3 text-center sm:col-span-1">
+                <div className="text-2xl font-black text-emerald-700">
+                  {feedbackResponseRate}%
+                </div>
+                <div className="text-xs font-bold text-emerald-800">อัตราการประเมิน</div>
+              </div>
+            </div>
+          </div>
+
+          {feedbackRows.length ? (
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+              <div className="space-y-2.5">
+                {ratingDistribution.map((item) => (
+                  <div key={item.rating} className="grid grid-cols-[3.5rem_1fr_2rem] items-center gap-3 text-sm">
+                    <div className="font-bold text-slate-700">{item.rating} ดาว</div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-amber-400"
+                        style={{ width: `${(item.count / maxRatingCount) * 100}%` }}
+                      />
+                    </div>
+                    <div className="text-right font-black text-slate-900">{item.count}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl bg-slate-50 p-4">
+                <div className="text-sm font-black text-slate-800">ความคิดเห็นล่าสุด</div>
+                <div className="mt-3 space-y-2">
+                  {feedbackRows
+                    .filter((item) => item.feedback?.comment?.trim())
+                    .slice(0, 3)
+                    .map((item) => (
+                      <div key={item.id} className="rounded-lg bg-white px-3 py-2 text-sm text-slate-600">
+                        <span className="font-black text-amber-600">{item.feedback.rating}/5</span>
+                        {" · "}{item.feedback.comment}
+                      </div>
+                    ))}
+                  {!feedbackRows.some((item) => item.feedback?.comment?.trim()) && (
+                    <div className="py-4 text-center text-sm text-slate-400">ยังไม่มีความคิดเห็นเพิ่มเติม</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl bg-slate-50 py-8 text-center text-sm font-bold text-slate-400">
+              ยังไม่มีผู้แจ้งเหตุให้คะแนนในช่วงข้อมูลที่เลือก
+            </div>
+          )}
+          <div className="mt-3 text-xs font-medium text-slate-500">
+            ประเมินแล้ว {feedbackRows.length} จาก {completedForFeedback.length} เรื่องที่เสร็จสิ้น
+          </div>
+        </article>
 
         <article className="mt-4 rounded-2xl border border-slate-200 p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
