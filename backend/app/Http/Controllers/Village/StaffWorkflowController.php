@@ -131,6 +131,31 @@ class StaffWorkflowController extends Controller
         return response()->json($this->load($incident));
     }
 
+    public function cancel(Request $request, Incident $incident)
+    {
+        $user = $request->user();
+        abort_unless(
+            $user->isVillageCoordinator() && (int) $user->village_id === (int) $incident->village_id,
+            403,
+            'คุณไม่มีสิทธิ์ยุติเรื่องของหมู่บ้านนี้'
+        );
+        abort_if($incident->requires_tao, 409, 'เรื่องนี้ส่งต่อ อบต. แล้ว กรุณาให้อบต.เป็นผู้ยุติเรื่อง');
+        abort_if(in_array($incident->status, ['resolved', 'cancelled'], true), 409, 'เรื่องนี้สิ้นสุดแล้ว');
+
+        $data = $request->validate([
+            'note' => ['required', 'string', 'max:2000'],
+        ]);
+        $from = $incident->status;
+        $incident->update([
+            'status' => 'cancelled',
+            'resolved_at' => null,
+        ]);
+        $this->history($incident, $user->id, $from, 'cancelled', $data['note']);
+        $this->notifyResident($incident, 'ยุติเรื่องแล้ว', $data['note'], 'cancelled');
+
+        return response()->json($this->load($incident));
+    }
+
     public function review(Request $request, Incident $incident)
     {
         abort_unless($request->user()->isTao(), 403);

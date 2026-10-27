@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/incidents/{incident}/start', [StaffWorkflowController::class, 'start']);
     Route::post('/incidents/{incident}/progress', [StaffWorkflowController::class, 'progress']);
     Route::post('/incidents/{incident}/submit', [StaffWorkflowController::class, 'submit']);
+    Route::patch('/incidents/{incident}/cancel-by-village', [StaffWorkflowController::class, 'cancel']);
     Route::patch('/incidents/{incident}/forward-to-tao', [TaoWorkflowController::class, 'forward']);
     // อบต.: รับเรื่องที่ผู้ดูแลหมู่บ้านตรวจสอบและส่งต่อ
     Route::patch('/incidents/{incident}/status', [IncidentController::class, 'updateStatus']);

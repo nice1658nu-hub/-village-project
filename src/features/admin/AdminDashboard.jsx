@@ -228,10 +228,12 @@ export default function AdminDashboard({
     if (!cleanReason) return alert("กรุณาระบุเหตุผลที่ยุติเรื่อง");
 
     try {
-      const data = await api.updateIncidentStatus(id, {
-        status: "cancelled",
-        note: `ยุติเรื่อง: ${cleanReason}`,
-      });
+      const data = villageMode
+        ? await api.cancelVillageIncident(id, cleanReason)
+        : await api.updateIncidentStatus(id, {
+            status: "cancelled",
+            note: `ยุติเรื่อง: ${cleanReason}`,
+          });
       const cancelledIncident = normalizeIncident(data);
       setIncidents((items) =>
         items.map((item) => item.id === id ? cancelledIncident : item),

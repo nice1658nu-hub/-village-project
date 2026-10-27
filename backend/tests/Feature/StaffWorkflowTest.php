@@ -64,4 +64,37 @@ class StaffWorkflowTest extends TestCase
 
         $this->actingAs($otherStaff)->patchJson("/api/incidents/{$incident->id}/start")->assertForbidden();
     }
+
+    public function test_village_coordinator_can_cancel_a_local_incident_before_forwarding(): void
+    {
+        $village = Village::firstOrFail();
+        $resident = User::factory()->create(['village_id' => $village->id]);
+        $coordinator = User::factory()->create([
+            'role' => 'village_admin',
+            'village_id' => $village->id,
+            'account_status' => 'approved',
+        ]);
+        $incident = Incident::create([
+            'user_id' => $resident->id,
+            'village_id' => $village->id,
+            'requires_tao' => false,
+            'title' => 'น้ำท่วม',
+            'category' => 'อื่นๆ',
+            'description' => 'ตรวจสอบแล้วไม่พบเหตุ',
+            'location' => 'หมู่บ้าน',
+            'lat' => 17.1155,
+            'lng' => 100.2088,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($coordinator)
+            ->patchJson("/api/incidents/{$incident->id}/cancel-by-village", ['note' => 'ยุติเรื่อง: ไม่พบเหตุจริง'])
+            ->assertOk()
+            ->assertJsonPath('status', 'cancelled');
+
+        $this->assertDatabaseHas('incident_status_histories', [
+            'incident_id' => $incident->id,
+            'to_status' => 'cancelled',
+        ]);
+    }
 }

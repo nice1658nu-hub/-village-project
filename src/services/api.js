@@ -94,6 +94,10 @@ export const api = {
     }
     return request(`/incidents/${id}/status`, { method: 'PATCH', body: JSON.stringify(payload) });
   },
+  cancelVillageIncident: (id, reason) => request(`/incidents/${id}/cancel-by-village`, {
+    method: 'PATCH',
+    body: JSON.stringify({ note: `ยุติเรื่อง: ${reason}` }),
+  }),
   createStaff: (payload) => request('/staff', { method: 'POST', body: JSON.stringify(payload) }),
   forwardIncidentToTao: (id, payload) => {
     if (payload instanceof FormData) {
